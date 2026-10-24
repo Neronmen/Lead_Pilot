@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import type { HealthCheck, HealthResponse } from '@leadpilot/shared';
 import type Redis from 'ioredis';
+import { PrismaService } from '../prisma/prisma.service';
 import { REDIS_CLIENT } from '../redis/redis.module';
 
 export const CHECK_TIMEOUT_MS = 2_000;
@@ -9,7 +10,10 @@ export const CHECK_TIMEOUT_MS = 2_000;
 export class HealthService {
   private readonly logger = new Logger(HealthService.name);
 
-  constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(REDIS_CLIENT) private readonly redis: Redis,
+  ) {}
 
   /** Liveness: the process is up and serving HTTP. No dependency checks. */
   liveness(): HealthResponse {
@@ -18,7 +22,10 @@ export class HealthService {
 
   /** Readiness: every dependency the API needs answers within the timeout. */
   async readiness(): Promise<HealthResponse> {
-    const results = await Promise.all([this.runCheck('redis', () => this.redis.ping())]);
+    const results = await Promise.all([
+      this.runCheck('database', () => this.prisma.$queryRaw`SELECT 1`),
+      this.runCheck('redis', () => this.redis.ping()),
+    ]);
     const checks = Object.fromEntries(results);
     const allUp = results.every(([, check]) => check.status === 'up');
     return { status: allUp ? 'ok' : 'error', checks };

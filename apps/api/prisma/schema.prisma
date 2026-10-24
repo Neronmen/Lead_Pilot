@@ -1,0 +1,479 @@
+// LeadPilot schema v1 — fields, relations and indexes only (no business logic).
+//
+// Conventions
+// - IDs are UUIDv7: time-ordered, so inserts stay index-friendly and ids sort
+//   by creation time.
+// - Every tenant table carries `workspaceId`, including child tables, so any
+//   query can be scoped to a workspace without a join (see CLAUDE.md, Tenancy).
+// - Global tables (no workspaceId): User, RefreshToken, PromptVersion,
+//   Enrichment (public website data cached per domain).
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql" // URL comes from prisma.config.ts
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum SourceType {
+  WEBHOOK
+  FORM
+  CSV
+}
+
+/// Where the lead is in the processing pipeline.
+enum LeadStatus {
+  NEW
+  PROCESSING
+  NEEDS_REVIEW
+  ROUTED
+  FAILED
+}
+
+/// What sales did with the lead (set by reps).
+enum LeadOutcome {
+  NONE
+  CONTACTED
+  QUALIFIED
+  WON
+  LOST
+}
+
+enum LeadTier {
+  HOT
+  WARM
+  COLD
+  JUNK
+}
+
+enum IntegrationType {
+  EMAIL
+  SLACK
+  TELEGRAM
+  HUBSPOT
+  WEBHOOK
+}
+
+enum ActionStatus {
+  PENDING
+  RUNNING
+  SUCCEEDED
+  FAILED
+  DEAD
+}
+
+// ─── Tenancy & identity ─────────────────────────────────────────────────────
+
+model Workspace {
+  id              String   @id @default(uuid(7)) @db.Uuid
+  name            String
+  slug            String   @unique
+  /// ISO-3166 alpha-2, used as the default region for E.164 phone parsing.
+  defaultCountry  String?  @db.Char(2)
+  /// Scores below this confidence go to the review queue.
+  reviewThreshold Float    @default(0.6)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  memberships  Membership[]
+  teams        Team[]
+  sources      Source[]
+  leads        Lead[]
+  invites      Invite[]
+  icpRubric    IcpRubric?
+  routingRules RoutingRule[]
+  integrations Integration[]
+  auditLogs    AuditLog[]
+}
+
+model User {
+  id           String   @id @default(uuid(7)) @db.Uuid
+  /// Stored lowercased.
+  email        String   @unique
+  passwordHash String
+  name         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  memberships   Membership[]
+  refreshTokens RefreshToken[]
+  ownedLeads    Lead[]         @relation("LeadOwner")
+}
+
+model Membership {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  workspaceId String   @db.Uuid
+  userId      String   @db.Uuid
+  role        Role     @default(MEMBER)
+  createdAt   DateTime @default(now())
+
+  workspace Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  teams     TeamMember[]
+
+  @@unique([workspaceId, userId])
+  @@index([userId])
+}
+
+model Team {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  workspaceId String   @db.Uuid
+  name        String
+  createdAt   DateTime @default(now())
+
+  workspace Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  members   TeamMember[]
+
+  @@unique([workspaceId, name])
+}
+
+/// Not in SPEC §6: needed for round-robin assignment within a team.
+model TeamMember {
+  teamId         String    @db.Uuid
+  membershipId   String    @db.Uuid
+  workspaceId    String    @db.Uuid
+  /// Round-robin cursor (M4): the member assigned longest ago goes next.
+  lastAssignedAt DateTime?
+
+  team       Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+
+  @@id([teamId, membershipId])
+  @@index([workspaceId])
+}
+
+model Invite {
+  id          String    @id @default(uuid(7)) @db.Uuid
+  workspaceId String    @db.Uuid
+  email       String
+  role        Role      @default(MEMBER)
+  tokenHash   String    @unique
+  invitedById String    @db.Uuid
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, email])
+}
+
+model RefreshToken {
+  id           String    @id @default(uuid(7)) @db.Uuid
+  userId       String    @db.Uuid
+  tokenHash    String    @unique
+  /// All tokens from one login share a family; reuse of a rotated token revokes the family.
+  familyId     String    @db.Uuid
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  replacedById String?   @db.Uuid
+  createdAt    DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([familyId])
+}
+
+// ─── Ingestion ──────────────────────────────────────────────────────────────
+
+model Source {
+  id            String     @id @default(uuid(7)) @db.Uuid
+  workspaceId   String     @db.Uuid
+  name          String
+  type          SourceType
+  /// Public part of the API key: shown in the UI and used to look the key up.
+  apiKeyPrefix  String     @unique
+  /// SHA-256 of the full key (high-entropy random key, so no slow hash needed).
+  apiKeyHash    String
+  /// AES-256-GCM encrypted.
+  hmacSecretEnc String?
+  enabled       Boolean    @default(true)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  workspace       Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  leads           Lead[]
+  idempotencyKeys IdempotencyKey[]
+
+  @@index([workspaceId])
+}
+
+model IdempotencyKey {
+  id             String   @id @default(uuid(7)) @db.Uuid
+  workspaceId    String   @db.Uuid
+  sourceId       String   @db.Uuid
+  key            String
+  /// Same key with a different body is rejected (422) instead of replayed.
+  requestHash    String
+  responseStatus Int?
+  responseBody   Json?
+  createdAt      DateTime @default(now())
+  /// createdAt + 24h.
+  expiresAt      DateTime
+
+  source Source @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceId, key])
+  @@index([expiresAt])
+}
+
+// ─── Leads ──────────────────────────────────────────────────────────────────
+
+/// One deduplicated person. Each submission's raw payload is kept as a
+/// LeadEvent ("ingested"); `rawPayload` holds the latest one.
+model Lead {
+  id           String      @id @default(uuid(7)) @db.Uuid
+  workspaceId  String      @db.Uuid
+  /// Source of the first submission; later sources appear in events.
+  sourceId     String      @db.Uuid
+  email        String?
+  /// E.164.
+  phone        String?
+  firstName    String?
+  lastName     String?
+  company      String?
+  domain       String?
+  country      String?     @db.Char(2)
+  customFields Json        @default("{}")
+  rawPayload   Json
+  status       LeadStatus  @default(NEW)
+  outcome      LeadOutcome @default(NONE)
+  /// Deal size once known, in the workspace's currency; used for revenue by source.
+  dealValue    Decimal?    @db.Decimal(14, 2)
+  tier         LeadTier?
+  score        Int?
+  confidence   Float?
+  isFreeMail   Boolean     @default(false)
+  ownerId      String?     @db.Uuid
+  /// e.g. { "hubspot": "123" }
+  externalIds  Json        @default("{}")
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  workspace  Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  source     Source      @relation(fields: [sourceId], references: [id], onDelete: Restrict)
+  owner      User?       @relation("LeadOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  events     LeadEvent[]
+  scores     Score[]
+  actionRuns ActionRun[]
+  feedback   Feedback[]
+
+  /// DB-level dedup guard: two concurrent ingests cannot create the same email twice.
+  /// Postgres allows many NULLs, so leads without email are unaffected.
+  @@unique([workspaceId, email])
+  @@index([workspaceId, phone])
+  @@index([workspaceId, domain])
+  @@index([workspaceId, createdAt])
+  @@index([workspaceId, status])
+  @@index([workspaceId, tier])
+  @@index([workspaceId, ownerId])
+  @@index([workspaceId, sourceId])
+}
+
+/// Timeline entry. `type` is a string ("ingested", "merged", "enriched", ...)
+/// so new event kinds need no migration.
+model LeadEvent {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  workspaceId String   @db.Uuid
+  leadId      String   @db.Uuid
+  type        String
+  data        Json     @default("{}")
+  /// Null means the system did it.
+  actorUserId String?  @db.Uuid
+  createdAt   DateTime @default(now())
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, leadId, createdAt])
+}
+
+// ─── Pipeline: enrichment & scoring ─────────────────────────────────────────
+
+/// Global cache (not per workspace): holds only public website metadata.
+model Enrichment {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  domain    String   @unique
+  provider  String
+  data      Json
+  fetchedAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@index([expiresAt])
+}
+
+/// Global, versioned prompts. Workspaces customize scoring via IcpRubric.
+model PromptVersion {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  /// e.g. "lead-score"
+  name      String
+  version   Int
+  template  String
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  scores Score[]
+
+  @@unique([name, version])
+}
+
+model Score {
+  id              String   @id @default(uuid(7)) @db.Uuid
+  workspaceId     String   @db.Uuid
+  leadId          String   @db.Uuid
+  promptVersionId String   @db.Uuid
+  /// "anthropic" | "openai" | "mock" | "rules"
+  provider        String
+  model           String
+  /// The validated LLM JSON.
+  output          Json
+  score           Int
+  tier            LeadTier
+  confidence      Float
+  isSpam          Boolean
+  /// True when the rule-based fallback produced this score.
+  isFallback      Boolean  @default(false)
+  inputTokens     Int      @default(0)
+  outputTokens    Int      @default(0)
+  costUsd         Decimal  @default(0) @db.Decimal(12, 6)
+  latencyMs       Int
+  createdAt       DateTime @default(now())
+
+  lead          Lead          @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  promptVersion PromptVersion @relation(fields: [promptVersionId], references: [id], onDelete: Restrict)
+  feedback      Feedback[]
+
+  @@index([workspaceId, leadId, createdAt])
+  @@index([workspaceId, createdAt])
+}
+
+model IcpRubric {
+  id            String   @id @default(uuid(7)) @db.Uuid
+  workspaceId   String   @unique @db.Uuid
+  industries    String[]
+  /// e.g. ["11-50", "51-200"]
+  companySizes  String[]
+  countries     String[]
+  budgetSignals String[]
+  disqualifiers String[]
+  notes         String?
+  updatedAt     DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+/// Human override of an AI score; used as labels by the eval script.
+model Feedback {
+  id            String    @id @default(uuid(7)) @db.Uuid
+  workspaceId   String    @db.Uuid
+  leadId        String    @db.Uuid
+  scoreId       String?   @db.Uuid
+  userId        String    @db.Uuid
+  previousTier  LeadTier?
+  previousScore Int?
+  newTier       LeadTier
+  newScore      Int?
+  note          String?
+  createdAt     DateTime  @default(now())
+
+  lead  Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  score Score? @relation(fields: [scoreId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId, createdAt])
+}
+
+// ─── Routing & actions ──────────────────────────────────────────────────────
+
+model RoutingRule {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  workspaceId String   @db.Uuid
+  name        String
+  /// Evaluated ascending; first match wins (unless alwaysRun).
+  order       Int
+  /// Validated by a shared zod schema.
+  conditions  Json
+  actions     Json
+  enabled     Boolean  @default(true)
+  alwaysRun   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace  Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  actionRuns ActionRun[]
+
+  @@index([workspaceId, order])
+}
+
+model Integration {
+  id          String          @id @default(uuid(7)) @db.Uuid
+  workspaceId String          @db.Uuid
+  type        IntegrationType
+  name        String
+  /// AES-256-GCM encrypted JSON config (tokens, webhook URLs).
+  configEnc   String
+  enabled     Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  workspace  Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  actionRuns ActionRun[]
+
+  @@index([workspaceId, type])
+}
+
+model ActionRun {
+  id            String       @id @default(uuid(7)) @db.Uuid
+  workspaceId   String       @db.Uuid
+  leadId        String       @db.Uuid
+  ruleId        String?      @db.Uuid
+  integrationId String?      @db.Uuid
+  /// "assign" | "email" | "slack" | ...
+  type          String
+  /// leadId + step: makes the job idempotent (a retry cannot create a second run).
+  jobKey        String       @unique
+  status        ActionStatus @default(PENDING)
+  attempts      Int          @default(0)
+  lastError     String?
+  payload       Json?
+  startedAt     DateTime?
+  finishedAt    DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  lead        Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  rule        RoutingRule? @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+  integration Integration? @relation(fields: [integrationId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId, leadId])
+  @@index([workspaceId, status])
+}
+
+// ─── Audit ──────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  workspaceId String   @db.Uuid
+  actorUserId String?  @db.Uuid
+  /// e.g. "routing_rule.updated"
+  action      String
+  entityType  String
+  entityId    String?
+  before      Json?
+  /// Secrets are redacted before writing.
+  after       Json?
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, createdAt])
+  @@index([workspaceId, entityType, entityId])
+}

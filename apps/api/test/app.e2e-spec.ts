@@ -1,7 +1,10 @@
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { errorBodySchema, healthResponseSchema } from '@leadpilot/shared';
+import { PrismaPg } from '@prisma/adapter-pg';
 import Redis from 'ioredis';
 import request from 'supertest';
+import { PrismaClient } from '../src/generated/prisma/client';
+import { PrismaService } from '../src/prisma/prisma.service';
 import { REDIS_CLIENT } from '../src/redis/redis.module';
 import { createTestApp } from './utils/create-test-app';
 
@@ -24,11 +27,11 @@ describe('App (e2e)', () => {
   });
 
   describe('GET /health/ready', () => {
-    it('returns 200 when Redis is reachable', async () => {
+    it('returns 200 when Postgres and Redis are reachable', async () => {
       const res = await request(app.getHttpServer()).get('/health/ready').expect(200);
       expect(healthResponseSchema.parse(res.body)).toEqual({
         status: 'ok',
-        checks: { redis: { status: 'up' } },
+        checks: { database: { status: 'up' }, redis: { status: 'up' } },
       });
     });
   });
@@ -112,11 +115,41 @@ describe('App (e2e) with Redis down', () => {
     const res = await request(app.getHttpServer()).get('/health/ready').expect(503);
     expect(healthResponseSchema.parse(res.body)).toEqual({
       status: 'error',
-      checks: { redis: { status: 'down', message: 'unavailable' } },
+      checks: { database: { status: 'up' }, redis: { status: 'down', message: 'unavailable' } },
     });
   });
 
   it('GET /health/live still returns 200', async () => {
     await request(app.getHttpServer()).get('/health/live').expect(200);
+  });
+});
+
+describe('App (e2e) with Postgres down', () => {
+  let app: NestExpressApplication;
+  // Nothing listens on port 1: the pool fails to connect.
+  const deadDb = new PrismaClient({
+    adapter: new PrismaPg({
+      connectionString: 'postgresql://nobody:nothing@127.0.0.1:1/nothing_test',
+      connectionTimeoutMillis: 1_000,
+    }),
+  });
+
+  beforeAll(async () => {
+    app = await createTestApp((builder) =>
+      builder.overrideProvider(PrismaService).useValue(deadDb),
+    );
+  });
+
+  afterAll(async () => {
+    await app.close();
+    await deadDb.$disconnect();
+  });
+
+  it('GET /health/ready returns 503 and names the failing check', async () => {
+    const res = await request(app.getHttpServer()).get('/health/ready').expect(503);
+    expect(healthResponseSchema.parse(res.body)).toEqual({
+      status: 'error',
+      checks: { database: { status: 'down', message: 'unavailable' }, redis: { status: 'up' } },
+    });
   });
 });

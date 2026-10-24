@@ -9,6 +9,8 @@ export const envSchema = z.object({
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   API_PORT: z.coerce.number().int().min(1).max(65535).default(3001),
   WEB_ORIGIN: z.url().default('http://localhost:3000'),
+  // Required: no sensible default, and guessing could point at the wrong database.
+  DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
   REDIS_URL: z.url().default('redis://localhost:6379'),
 });
 

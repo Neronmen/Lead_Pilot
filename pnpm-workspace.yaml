@@ -2,9 +2,13 @@ packages:
   - apps/*
   - packages/*
 
-# Install scripts are blocked unless listed here as true. These three only
-# compile fallbacks (prebuilt binaries ship as optional deps) or send telemetry.
+# Install scripts are blocked unless listed here as true.
+# - prisma, @prisma/engines: download the schema engine that `prisma migrate` needs.
+# - the others only compile fallbacks (prebuilt binaries ship as optional deps)
+#   or send telemetry, so they stay off.
 allowBuilds:
   '@parcel/watcher': false
+  '@prisma/engines': true
   '@scarf/scarf': false
+  prisma: true
   unrs-resolver: false

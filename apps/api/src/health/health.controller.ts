@@ -22,7 +22,7 @@ export class HealthController {
   }
 
   @Get('ready')
-  @ApiOperation({ summary: 'Readiness probe: Redis (and, from M0 step 4, Postgres) reachable' })
+  @ApiOperation({ summary: 'Readiness probe: Postgres and Redis reachable' })
   @ApiOkResponse({ description: 'All dependencies are up' })
   @ApiServiceUnavailableResponse({
     description:
