@@ -15,6 +15,8 @@ describe('Prisma schema v1 (e2e)', () => {
 
   afterAll(async () => {
     await prisma.workspace.deleteMany({ where: { slug: { startsWith: 'schema-test-' } } });
+    // Users are global (not tenant data), so they do not cascade from workspaces.
+    await prisma.user.deleteMany({ where: { email: { startsWith: 'schema-test-' } } });
     await prisma.$disconnect();
   });
 
@@ -94,5 +96,104 @@ describe('Prisma schema v1 (e2e)', () => {
     expect(await prisma.lead.count({ where: { workspaceId: workspace.id } })).toBe(0);
     expect(await prisma.leadEvent.count({ where: { workspaceId: workspace.id } })).toBe(0);
     expect(await prisma.source.count({ where: { workspaceId: workspace.id } })).toBe(0);
+  });
+
+  describe('constraints relied on by later milestones', () => {
+    it('Source.apiKeyPrefix is unique across all workspaces (API key lookup)', async () => {
+      const { source } = await createWorkspaceWithSource('f');
+      const other = await prisma.workspace.create({ data: { name: 'Other', slug: `${slug}-g` } });
+      await expect(
+        prisma.source.create({
+          data: {
+            workspaceId: other.id,
+            name: 'Copycat',
+            type: 'FORM',
+            apiKeyPrefix: source.apiKeyPrefix,
+            apiKeyHash: 'sha256-other',
+          },
+        }),
+      ).rejects.toMatchObject({ code: 'P2002' });
+    });
+
+    it('IdempotencyKey is unique per (sourceId, key) but reusable on another source', async () => {
+      const one = await createWorkspaceWithSource('h');
+      const two = await createWorkspaceWithSource('i');
+      const expiresAt = new Date('2030-01-01T00:00:00.000Z');
+      const idem = (ws: typeof one) =>
+        prisma.idempotencyKey.create({
+          data: {
+            workspaceId: ws.workspace.id,
+            sourceId: ws.source.id,
+            key: 'order-123',
+            requestHash: 'hash-a',
+            expiresAt,
+          },
+        });
+
+      await idem(one);
+      await expect(idem(one)).rejects.toMatchObject({ code: 'P2002' });
+      await expect(idem(two)).resolves.toBeDefined();
+    });
+
+    it('Membership is unique per (workspaceId, userId); a user can join several workspaces', async () => {
+      const one = await prisma.workspace.create({ data: { name: 'One', slug: `${slug}-j` } });
+      const two = await prisma.workspace.create({ data: { name: 'Two', slug: `${slug}-k` } });
+      const user = await prisma.user.create({
+        data: { email: `${slug}-user@example.test`, passwordHash: 'argon2-placeholder' },
+      });
+
+      await prisma.membership.create({ data: { workspaceId: one.id, userId: user.id } });
+      await expect(
+        prisma.membership.create({
+          data: { workspaceId: one.id, userId: user.id, role: 'ADMIN' },
+        }),
+      ).rejects.toMatchObject({ code: 'P2002' });
+      await expect(
+        prisma.membership.create({ data: { workspaceId: two.id, userId: user.id } }),
+      ).resolves.toMatchObject({ role: 'MEMBER' });
+    });
+
+    it('a Source that still has leads cannot be deleted (Lead.sourceId onDelete Restrict)', async () => {
+      const { workspace, source } = await createWorkspaceWithSource('l');
+      await prisma.lead.create({
+        data: { workspaceId: workspace.id, sourceId: source.id, rawPayload: {} },
+      });
+
+      await expect(prisma.source.delete({ where: { id: source.id } })).rejects.toBeInstanceOf(
+        Prisma.PrismaClientKnownRequestError,
+      );
+      expect(await prisma.source.count({ where: { id: source.id } })).toBe(1);
+      expect(await prisma.lead.count({ where: { sourceId: source.id } })).toBe(1);
+    });
+
+    it('rejects a lead email that is not lowercased (keeps the dedup guard case-proof)', async () => {
+      const { workspace, source } = await createWorkspaceWithSource('n');
+      await expect(
+        prisma.lead.create({
+          data: {
+            workspaceId: workspace.id,
+            sourceId: source.id,
+            email: 'Jane@Northwind.io',
+            rawPayload: {},
+          },
+        }),
+      ).rejects.toThrow(/Lead_email_lowercase_check/);
+    });
+
+    it('deleting a Source without leads cascades to its idempotency keys', async () => {
+      const { workspace, source } = await createWorkspaceWithSource('m');
+      await prisma.idempotencyKey.create({
+        data: {
+          workspaceId: workspace.id,
+          sourceId: source.id,
+          key: 'k-1',
+          requestHash: 'hash',
+          expiresAt: new Date('2030-01-01T00:00:00.000Z'),
+        },
+      });
+
+      await prisma.source.delete({ where: { id: source.id } });
+      expect(await prisma.idempotencyKey.count({ where: { sourceId: source.id } })).toBe(0);
+    });
   });
 });

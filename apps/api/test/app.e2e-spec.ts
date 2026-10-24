@@ -1,8 +1,10 @@
+import { ConfigService } from '@nestjs/config';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { errorBodySchema, healthResponseSchema } from '@leadpilot/shared';
 import { PrismaPg } from '@prisma/adapter-pg';
 import Redis from 'ioredis';
 import request from 'supertest';
+import type { Env } from '../src/config/env.schema';
 import { PrismaClient } from '../src/generated/prisma/client';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { REDIS_CLIENT } from '../src/redis/redis.module';
@@ -89,6 +91,53 @@ describe('App (e2e)', () => {
       const res = await request(app.getHttpServer()).get('/health/live');
       expect(res.headers['x-powered-by']).toBeUndefined();
     });
+  });
+
+  describe('CORS', () => {
+    const webOrigin = () => app.get<ConfigService<Env, true>>(ConfigService).get('WEB_ORIGIN');
+
+    it('allows the web origin with credentials', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/health/live')
+        .set('origin', webOrigin())
+        .expect(200);
+      expect(res.headers['access-control-allow-origin']).toBe(webOrigin());
+      expect(res.headers['access-control-allow-credentials']).toBe('true');
+    });
+
+    it('answers a preflight from the web origin', async () => {
+      const res = await request(app.getHttpServer())
+        .options('/health/live')
+        .set('origin', webOrigin())
+        .set('access-control-request-method', 'POST')
+        .set('access-control-request-headers', 'content-type')
+        .expect(204);
+      expect(res.headers['access-control-allow-origin']).toBe(webOrigin());
+    });
+
+    it('never reflects a foreign origin', async () => {
+      // With a fixed-string origin the cors package always sends WEB_ORIGIN;
+      // the browser then blocks the mismatch. What matters is that the
+      // caller's origin is never echoed back (that would allow it).
+      const res = await request(app.getHttpServer())
+        .get('/health/live')
+        .set('origin', 'https://evil.example')
+        .expect(200);
+      expect(res.headers['access-control-allow-origin']).not.toBe('https://evil.example');
+      expect(res.headers['access-control-allow-origin']).toBe(webOrigin());
+      expect(res.headers['vary']).toMatch(/origin/i);
+    });
+  });
+});
+
+describe('App (e2e) shutdown', () => {
+  it('app.close() quits the live Redis connection', async () => {
+    const app = await createTestApp();
+    const redis = app.get<Redis>(REDIS_CLIENT);
+    await expect(redis.ping()).resolves.toBe('PONG');
+
+    await app.close();
+    expect(redis.status).toBe('end');
   });
 });
 

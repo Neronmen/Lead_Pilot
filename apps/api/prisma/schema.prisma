@@ -236,6 +236,8 @@ model Lead {
   workspaceId  String      @db.Uuid
   /// Source of the first submission; later sources appear in events.
   sourceId     String      @db.Uuid
+  /// Stored lowercased; a CHECK constraint in the migrations enforces it, so
+  /// the dedup guard below cannot be bypassed by letter case.
   email        String?
   /// E.164.
   phone        String?
@@ -273,11 +275,14 @@ model Lead {
   @@unique([workspaceId, email])
   @@index([workspaceId, phone])
   @@index([workspaceId, domain])
+  /// Overview charts (leads per day, junk rate) and the unfiltered leads list.
   @@index([workspaceId, createdAt])
-  @@index([workspaceId, status])
-  @@index([workspaceId, tier])
-  @@index([workspaceId, ownerId])
-  @@index([workspaceId, sourceId])
+  /// Leads list filters and the review queue (status = NEEDS_REVIEW): filter,
+  /// then sort and paginate by date from the same index, without a sort step.
+  @@index([workspaceId, status, createdAt])
+  @@index([workspaceId, tier, createdAt])
+  @@index([workspaceId, ownerId, createdAt])
+  @@index([workspaceId, sourceId, createdAt])
 }
 
 /// Timeline entry. `type` is a string ("ingested", "merged", "enriched", ...)

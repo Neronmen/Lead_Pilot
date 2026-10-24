@@ -21,6 +21,9 @@ export class PrismaService extends PrismaClient implements OnModuleDestroy {
         // TCP timeout (minutes) instead of failing.
         connectionTimeoutMillis: 5_000,
       }),
+      // The default "pretty" format prints the whole query call, arguments
+      // included (emails, password hashes), and errors end up in our logs.
+      errorFormat: 'minimal',
     });
   }
 

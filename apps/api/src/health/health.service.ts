@@ -40,7 +40,8 @@ export class HealthService {
       return [name, { status: 'up' }];
     } catch (err) {
       // The endpoint is public: log the real reason, return a generic one.
-      this.logger.warn(`Readiness check "${name}" failed: ${(err as Error).message}`);
+      const reason = err instanceof Error ? err.message : String(err);
+      this.logger.warn(`Readiness check "${name}" failed: ${reason}`);
       return [name, { status: 'down', message: 'unavailable' }];
     }
   }

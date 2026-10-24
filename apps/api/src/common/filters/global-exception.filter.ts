@@ -19,6 +19,7 @@ export interface ErrorResponse {
 const CODE_BY_STATUS: Partial<Record<number, string>> = {
   [HttpStatus.BAD_REQUEST]: ErrorCode.VALIDATION_FAILED,
   [HttpStatus.TOO_MANY_REQUESTS]: ErrorCode.RATE_LIMITED,
+  [HttpStatus.INTERNAL_SERVER_ERROR]: ErrorCode.INTERNAL,
 };
 
 const INTERNAL_ERROR: ErrorResponse = {
@@ -51,7 +52,11 @@ export function toErrorResponse(exception: unknown): ErrorResponse {
 
   if (exception instanceof HttpException) {
     const status = exception.getStatus();
-    if (status >= 500) return INTERNAL_ERROR;
+    // Keep the real status (a 503 tells clients to retry, a 500 does not), but
+    // never pass a server-side message through: it may describe internals.
+    if (status >= 500) {
+      return { status, body: envelope(codeForStatus(status), INTERNAL_ERROR.body.error.message) };
+    }
     const { message, details } = readHttpExceptionBody(exception);
     return { status, body: envelope(codeForStatus(status), message, details) };
   }

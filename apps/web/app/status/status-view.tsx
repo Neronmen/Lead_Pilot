@@ -96,7 +96,9 @@ function OverallBadge({ status }: { status: HealthResponse['status'] }) {
 
 function LoadingState() {
   return (
-    <div className="flex flex-col gap-2" aria-busy="true" aria-label="Loading">
+    // role="status" makes screen readers announce the hidden text.
+    <div className="flex flex-col gap-2" role="status" aria-busy="true">
+      <span className="sr-only">Loading…</span>
       <Skeleton className="h-5 w-40" />
       <Skeleton className="h-5 w-32" />
     </div>

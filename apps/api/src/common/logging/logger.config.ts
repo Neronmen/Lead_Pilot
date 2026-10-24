@@ -18,6 +18,18 @@ export function resolveRequestId(req: IncomingMessage, res: ServerResponse): str
   return id;
 }
 
+const SECRET_KEYS = [
+  'password',
+  'passwordHash',
+  'token',
+  'accessToken',
+  'refreshToken',
+  'apiKey',
+  'secret',
+  'authorization',
+  'cookie',
+];
+
 export function buildLoggerParams(config: ConfigService<Env, true>): Params {
   const isDev = config.get('NODE_ENV', { infer: true }) === 'development';
 
@@ -34,6 +46,12 @@ export function buildLoggerParams(config: ConfigService<Env, true>): Params {
           url: req.url.split('?')[0],
         }),
         res: (res: { statusCode: number }) => ({ statusCode: res.statusCode }),
+      },
+      // Defence in depth: if an object with a secret-looking field ever reaches
+      // a log call (e.g. inside an error), print a placeholder instead.
+      redact: {
+        paths: SECRET_KEYS.flatMap((key) => [key, `*.${key}`]),
+        censor: '[redacted]',
       },
       // Probes hit these every few seconds; they would drown real traffic.
       autoLogging: { ignore: (req) => req.url?.startsWith('/health') ?? false },

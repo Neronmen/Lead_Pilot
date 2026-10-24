@@ -1,6 +1,8 @@
 {
   "$schema": "https://turborepo.com/schema.json",
-  "globalDependencies": ["tsconfig.base.json", "eslint.config.mjs"],
+  // .env is loaded by the apps themselves (Turbo never sees its values), so it
+  // must be part of the hash, or editing it would replay a stale cached build.
+  "globalDependencies": ["tsconfig.base.json", "eslint.config.mjs", ".env"],
   "globalEnv": ["NODE_ENV"],
   "tasks": {
     "db:generate": {

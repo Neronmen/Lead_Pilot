@@ -53,5 +53,9 @@ async function toApiError(res: Response): Promise<ApiError> {
 export async function fetchHealth(probe: 'live' | 'ready'): Promise<HealthResponse> {
   const res = await request(`/health/${probe}`, { cache: 'no-store' });
   if (res.status !== 200 && res.status !== 503) throw await toApiError(res);
-  return healthResponseSchema.parse(await res.json());
+  // A 503 can also come from a proxy (HTML page), so validate before trusting it.
+  const parsed = healthResponseSchema.safeParse(await res.json().catch(() => null));
+  if (!parsed.success)
+    throw new ApiError(res.status, 'UNKNOWN', `Unexpected ${res.status} response`);
+  return parsed.data;
 }
