@@ -121,6 +121,12 @@ Every step is a background job (BullMQ + Redis) with retries, exponential backof
 ## 7. Milestones (each ends with passing tests + a commit)
 
 - **M0 – Foundation**: monorepo, docker-compose, NestJS + Next.js skeletons, Prisma schema v1, CI, health checks, Swagger, logging.
+- **D – UI Design**: design the web app before any page is built.
+  - Screens: Login, Overview dashboard, Leads list (filters, search, saved views), Lead detail (contact, enrichment, AI reasons, timeline, actions, override form), Review queue, Routing rules editor with "test against sample lead", Settings (sources & API keys, ICP rubric, integrations, members).
+  - Style: modern B2B SaaS, clean and data-dense, light and dark mode, built on shadcn/ui so it is directly implementable. Realistic sample data, not lorem ipsum.
+  - Medium: a Claude Design artifact if available in the environment; otherwise static HTML mockups in `/design` that open in a browser.
+  - Output: the design, plus `docs/design-notes.md` listing every field, filter and metric the screens need, and any gap versus the Prisma schema (propose schema changes, don't apply them).
+  - Done when the developer approves the design.
 - **M1 – Auth & tenancy**: signup/login/refresh, workspaces, roles, invites, workspace isolation tests.
 - **M2 – Ingestion**: sources, API keys, HMAC, idempotency, normalization, dedup, timeline events, rate limit.
 - **M3 – Pipeline**: BullMQ queues, enrichment, LLM scoring with mock + real adapters, prompt versions, cost tracking, review queue.
