@@ -1,0 +1,63 @@
+# Local infrastructure for LeadPilot.
+#   docker compose up -d               -> postgres, redis, mailpit
+#   docker compose --profile n8n up -d -> also n8n (outgoing-webhook playground)
+name: leadpilot
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: leadpilot
+      POSTGRES_PASSWORD: leadpilot
+      POSTGRES_DB: leadpilot
+    ports:
+      - '5432:5432'
+    volumes:
+      # Postgres 18 images keep data under /var/lib/postgresql/<major>/
+      - postgres-data:/var/lib/postgresql
+      - ./infra/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U leadpilot -d leadpilot']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:8-alpine
+    # AOF on so queued jobs survive a container restart.
+    command: ['redis-server', '--appendonly', 'yes']
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - '1025:1025' # SMTP
+      - '8025:8025' # web UI
+    healthcheck:
+      test: ['CMD', '/mailpit', 'readyz']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  n8n:
+    image: n8nio/n8n:latest
+    profiles: ['n8n']
+    ports:
+      - '5678:5678'
+    environment:
+      N8N_SECURE_COOKIE: 'false'
+    volumes:
+      - n8n-data:/home/node/.n8n
+
+volumes:
+  postgres-data:
+  redis-data:
+  n8n-data:
