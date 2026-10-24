@@ -3,7 +3,7 @@
 Read `SPEC.md` for the product. This file is how we build it.
 
 ## Working style
-- Always plan before coding a milestone or any change touching more than 3 files. Show the plan, wait for approval.
+- Always plan before coding a milestone or any change touching more than 3 files. Show the plan, wait for approval. Every milestone plan first pulls its items from `docs/backlog.md`.
 - Work in small steps: one feature → tests → review → commit. Never leave the repo in a broken state.
 - After finishing a feature, delegate to the `tester` subagent, then the `code-reviewer` subagent. Fix what they report before committing.
 - If something in SPEC.md is ambiguous, ask instead of guessing. If you deviate from SPEC.md, say so and why.
@@ -16,11 +16,15 @@ Read `SPEC.md` for the product. This file is how we build it.
 - Local infra: `docker compose up -d` (postgres, redis, mailpit, optional n8n).
 
 ## Commands (keep this section up to date as scripts are added)
-- Install: `pnpm install`
-- Dev all: `pnpm dev`
-- Test api: `pnpm --filter api test` / e2e: `pnpm --filter api test:e2e`
-- Lint + typecheck: `pnpm lint && pnpm typecheck`
-- DB: `pnpm --filter api prisma migrate dev`, seed: `pnpm --filter api seed`
+- Requirements: Node 24 (`.nvmrc`), pnpm 12 (`packageManager` in package.json), Docker Desktop running.
+- Setup: `cp .env.example .env`, `docker compose up -d`, `pnpm install`, `pnpm --filter api db:migrate`
+- Dev all: `pnpm dev` (api :3001, web :3000, Swagger :3001/docs, status page :3000/status). If the developer already runs it, reuse it; never start a second copy.
+- Test: `pnpm test` (all unit) · api unit `pnpm --filter api test` · api e2e `pnpm --filter api test:e2e` (uses `leadpilot_test`, needs docker up) · shared `pnpm --filter @leadpilot/shared test`
+- Lint + typecheck + format: `pnpm lint && pnpm typecheck && pnpm format:check` (fix formatting: `pnpm format`)
+- Build: `pnpm build` (`nest build` wipes `apps/api/dist`, which a running `pnpm dev` uses)
+- DB: new migration `pnpm --filter api db:migrate --name <name>` · apply `pnpm --filter api db:deploy` · regenerate client `pnpm --filter api db:generate` (Turbo also runs it before build/lint/typecheck/test)
+- Seed: `pnpm --filter api seed` (not yet: arrives in M6)
+- CI: `.github/workflows/ci.yml` runs format, lint, typecheck, unit, e2e, build on push to main and on PRs.
 
 ## Code conventions
 - TypeScript strict. No `any` unless commented.
