@@ -32,7 +32,7 @@ Read `SPEC.md` for the product. This file is how we build it.
 - Secrets in DB encrypted with the crypto helper (AES-256-GCM). API keys stored hashed, shown once.
 - Jobs must be idempotent and safe to retry. Use job ids derived from lead id + step.
 - Web: server components by default, client components only when needed. Data fetching via TanStack Query on the client. UI from shadcn/ui. Every page has loading, empty, and error states.
-- No web page is implemented without an approved design. The design link and notes live in `docs/design-notes.md`; implement M5 to match them.
+- No web page is implemented without an approved design. The design link and notes live in `docs/design-notes.md`; implement M5 to match them. Internal dev/diagnostic pages (like /status) are exempt; every user-facing page needs an approved design.
 
 ## Git
 - Conventional commits (`feat(ingest): add HMAC verification`).
