@@ -9,6 +9,8 @@
     },
     "build": {
       "dependsOn": ["^build", "db:generate"],
+      // Inlined into the web bundle at build time, so it is part of the cache key.
+      "env": ["NEXT_PUBLIC_API_URL"],
       "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
     },
     "dev": {
@@ -27,6 +29,9 @@
     },
     "test:e2e": {
       "dependsOn": ["^build", "db:generate"],
+      // Turbo hides env vars from tasks unless listed. These reach the e2e run
+      // without affecting the cache key (the task is not cached anyway).
+      "passThroughEnv": ["DATABASE_URL", "DATABASE_URL_TEST", "REDIS_URL", "LOG_LEVEL"],
       "cache": false
     }
   }
