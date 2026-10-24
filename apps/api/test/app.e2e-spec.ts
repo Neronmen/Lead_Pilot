@@ -1,0 +1,122 @@
+import type { NestExpressApplication } from '@nestjs/platform-express';
+import { errorBodySchema, healthResponseSchema } from '@leadpilot/shared';
+import Redis from 'ioredis';
+import request from 'supertest';
+import { REDIS_CLIENT } from '../src/redis/redis.module';
+import { createTestApp } from './utils/create-test-app';
+
+describe('App (e2e)', () => {
+  let app: NestExpressApplication;
+
+  beforeAll(async () => {
+    app = await createTestApp();
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  describe('GET /health/live', () => {
+    it('returns 200 with the health shape', async () => {
+      const res = await request(app.getHttpServer()).get('/health/live').expect(200);
+      expect(healthResponseSchema.parse(res.body)).toEqual({ status: 'ok', checks: {} });
+    });
+  });
+
+  describe('GET /health/ready', () => {
+    it('returns 200 when Redis is reachable', async () => {
+      const res = await request(app.getHttpServer()).get('/health/ready').expect(200);
+      expect(healthResponseSchema.parse(res.body)).toEqual({
+        status: 'ok',
+        checks: { redis: { status: 'up' } },
+      });
+    });
+  });
+
+  describe('errors', () => {
+    it('returns the error envelope for an unknown route', async () => {
+      const res = await request(app.getHttpServer()).get('/does-not-exist').expect(404);
+      expect(errorBodySchema.parse(res.body).error.code).toBe('NOT_FOUND');
+    });
+
+    it('returns VALIDATION_FAILED for a malformed JSON body', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/does-not-exist')
+        .set('content-type', 'application/json')
+        .send('{bad')
+        .expect(400);
+      expect(errorBodySchema.parse(res.body).error.code).toBe('VALIDATION_FAILED');
+    });
+
+    it('returns PAYLOAD_TOO_LARGE for an oversized body', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/does-not-exist')
+        .set('content-type', 'application/json')
+        .send(JSON.stringify({ blob: 'a'.repeat(200_000) }))
+        .expect(413);
+      expect(errorBodySchema.parse(res.body).error.code).toBe('PAYLOAD_TOO_LARGE');
+    });
+  });
+
+  describe('request id', () => {
+    it('echoes a valid incoming x-request-id', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/health/live')
+        .set('x-request-id', 'trace-42')
+        .expect(200);
+      expect(res.headers['x-request-id']).toBe('trace-42');
+    });
+
+    it('generates one when missing', async () => {
+      const res = await request(app.getHttpServer()).get('/health/live').expect(200);
+      expect(res.headers['x-request-id']).toMatch(/^[0-9a-f-]{36}$/);
+    });
+  });
+
+  describe('platform', () => {
+    it('serves the OpenAPI document at /docs-json', async () => {
+      const res = await request(app.getHttpServer()).get('/docs-json').expect(200);
+      expect(res.body.info.title).toBe('LeadPilot API');
+      expect(Object.keys(res.body.paths)).toEqual(
+        expect.arrayContaining(['/health/live', '/health/ready']),
+      );
+    });
+
+    it('does not advertise Express', async () => {
+      const res = await request(app.getHttpServer()).get('/health/live');
+      expect(res.headers['x-powered-by']).toBeUndefined();
+    });
+  });
+});
+
+describe('App (e2e) with Redis down', () => {
+  let app: NestExpressApplication;
+  // Nothing listens on port 1; no retries and no offline queue -> ping fails at once.
+  const deadRedis = new Redis('redis://127.0.0.1:1', {
+    lazyConnect: true,
+    enableOfflineQueue: false,
+    retryStrategy: () => null,
+  });
+
+  beforeAll(async () => {
+    app = await createTestApp((builder) =>
+      builder.overrideProvider(REDIS_CLIENT).useValue(deadRedis),
+    );
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it('GET /health/ready returns 503 and names the failing check', async () => {
+    const res = await request(app.getHttpServer()).get('/health/ready').expect(503);
+    expect(healthResponseSchema.parse(res.body)).toEqual({
+      status: 'error',
+      checks: { redis: { status: 'down', message: 'unavailable' } },
+    });
+  });
+
+  it('GET /health/live still returns 200', async () => {
+    await request(app.getHttpServer()).get('/health/live').expect(200);
+  });
+});

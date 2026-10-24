@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // No "type": "module" in package.json -> compiles to CommonJS. NestJS 12
+    // ships as ESM; Node 24 loads it through require(esm). Same setup as the
+    // official Nest 12 starter.
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "declaration": false,
+    "removeComments": true,
+    "incremental": true,
+    "types": ["node", "jest"],
+    "rootDir": ".",
+    "outDir": "./dist"
+  },
+  "include": ["src", "test"]
+}
