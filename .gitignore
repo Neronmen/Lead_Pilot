@@ -28,3 +28,6 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 .idea/
+
+# Next.js (regenerated on every dev/build)
+next-env.d.ts
