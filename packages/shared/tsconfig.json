@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // "nodenext" + no "type": "module" in package.json -> emits CommonJS,
+    // which both NestJS (CJS) and Next.js can consume.
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    // Source imports use ".ts" extensions so Node can run tests straight from
+    // source (built-in type stripping); tsc rewrites them to ".js" on build.
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
+    "erasableSyntaxOnly": true,
+    "types": ["node"],
+    "noEmit": true
+  },
+  "include": ["src", "test"]
+}
