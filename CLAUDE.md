@@ -2,6 +2,9 @@
 
 Read `SPEC.md` for the product. This file is how we build it.
 
+## Hard constraints
+- Zero-cost project: never add a paid service, paid API, or anything requiring a credit card. Mock providers are the default. Real services must have a free tier and stay optional.
+
 ## Working style
 - Always plan before coding a milestone or any change touching more than 3 files. Show the plan, wait for approval. Every milestone plan first pulls its items from `docs/backlog.md`.
 - Work in small steps: one feature → tests → review → commit. Never leave the repo in a broken state.

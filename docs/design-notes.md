@@ -2,13 +2,13 @@
 
 **Design canvas:** https://claude.ai/artifact/VjAxmCrJVRUxSPxGzwAT5f (private until shared from the page's Share menu)
 
-**Status:** milestone D in progress. Batch 1 (foundations, landing, auth, overview, leads list) is redone in the "refined cyber" direction and awaits approval. Per-screen field, filter and metric lists are added here as each batch is approved; M5 implements the screens to match.
+**Status:** milestone D in progress. Batch 1 (foundations, landing, auth, overview, leads list) is redone in the "refined cyber" direction; the accent is approved (electric cyan) and the screens await batch 1 feedback. Batch 2 does not start until that feedback is in. Per-screen field, filter and metric lists are added here as each batch is approved; M5 implements the screens to match.
 
 ## Visual direction: refined cyber
 
 - **Dark is the default theme, light is the alternate.** Both are complete; neither is an automatic inversion.
 - **Surfaces:** near-black blue-violet, layered by lightness: background → card → raised → hover. Layers are separated by lightness and 1px borders, not shadows.
-- **One neon accent**, used only for primary actions, focus rings, the Hot tier and key highlights. Two options are on the Foundations board: electric cyan (default) and acid lime.
+- **One neon accent**, used only for primary actions, focus rings, the Hot tier and key highlights. **Approved: accent A, electric cyan.** (Acid lime, accent B, was the rejected alternative.)
 - **Glow only on accent elements:** focused controls, the primary button, Hot badges. Never on body text or numbers.
 - **Texture:** a subtle grid with fine noise, limited to the app background and the landing hero.
 - **Type:** Geist for UI and Geist Mono for numbers, IDs and eyebrow labels. Both ship a Vietnamese subset.
@@ -25,8 +25,7 @@
 | border | `#24263A` | `#E2E3EC` |
 | foreground | `#ECEDF5` (16.1:1 on card) | `#0D0E1A` (19.2:1) |
 | muted text | `#9A9DB8` (7.1:1 on card) | `#565A73` (6.3:1 on bg) |
-| accent, cyan | `#22E1F0`; text on it `#031417` (11.7:1) | `#0A7D8C`; white text 4.9:1 |
-| accent, lime | `#B8F23A`; text on it `#0D1400` (14.1:1) | `#4D7C0F`; white text 5.0:1 |
+| accent (cyan, approved) | `#22E1F0`; text on it `#031417` (11.7:1) | `#0A7D8C`; white text 4.9:1 |
 | tier Hot | the accent | the accent |
 | tier Warm | `#D8B26A` (9.4:1) | `#8A5A0B` (5.9:1) |
 | tier Cold | `#B4A6E0` (8.5:1) | `#5B4BA8` (7.0:1) |
@@ -37,9 +36,9 @@ Every tier badge always shows its text label, so color is never the only signal.
 
 Chart series by source were run through the dataviz palette validator (lightness band, chroma, colorblind separation, contrast) against each surface:
 
-| Series | Dark (cyan accent) | Light (cyan accent) |
+| Series | Dark | Light |
 |---|---|---|
-| 1 · Website form | `#00A0B3` (lime accent: `#6FA51F`) | `#0089A3` (lime accent: `#4E8A0E`) |
+| 1 · Website form | `#00A0B3` | `#0089A3` |
 | 2 · LinkedIn Ads | `#8E7BEA` | `#6B55D9` |
 | 3 · Partner webhook | `#C08A1F` | `#B07400` |
 | 4 · CSV import | `#4C7FE0` | `#2F64D6` |
