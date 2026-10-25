@@ -103,6 +103,14 @@ Every step is a background job (BullMQ + Redis) with retries, exponential backof
 - Seed script creating a demo workspace with ~200 realistic fake leads across sources and tiers.
 - **Eval script**: `pnpm eval` runs the scorer on a labeled set of 50 leads (`evals/leads.jsonl`) and prints accuracy, confusion matrix by tier, avg cost, avg latency. Compares two prompt versions.
 
+### 4.9 Internationalization (EN + VI)
+- The web app ships in English and Vietnamese, using next-intl (or an equivalent library for the App Router). Every user-facing string lives in message files (`messages/en.json`, `messages/vi.json`). No hard-coded UI text.
+- Language switcher in the app shell, on login and on the landing page. Order of precedence: the user's saved choice (`User.locale`), then the workspace default (`Workspace.defaultLocale`), then the browser's `Accept-Language`.
+- Dates, numbers and currency are formatted with the active locale (`Intl`). Money is shown in the workspace currency (USD or VND); VND has no minor units.
+- The API never returns translated text. Errors carry a stable `code` (and `details`), and the web app maps codes to messages.
+- Outgoing email templates and the AI `suggestedReply` use the lead's language when it is known, otherwise the workspace default locale.
+- Layouts must hold with Vietnamese text, which typically runs 20–30% longer than English. Never use fixed-width buttons or labels that truncate.
+
 ## 5. Tech stack
 
 - Monorepo: pnpm workspaces + Turborepo

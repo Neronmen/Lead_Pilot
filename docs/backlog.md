@@ -22,13 +22,9 @@ Items raised in reviews that belong to a later milestone. Each milestone plan st
 - The embeddable form posts from customer origins, so the ingest route needs its own CORS policy. Do not widen the global single-origin `credentials: true` CORS.
 - Normalise lead emails to lowercase before insert. The database rejects mixed-case emails (`Lead_email_lowercase_check`).
 
-## D – UI design (raise in docs/design-notes.md)
+## D – UI design
 
-- `Lead.dealValue` is "in the workspace's currency", but Workspace has no `currency` column.
-- SPEC §4.7 "saved views" has no model yet.
-- Leads search (email, name, company) will need `pg_trgm` GIN indexes.
-- PromptVersion allows several active versions per name. Add a partial unique index `ON "PromptVersion"(name) WHERE "isActive"`.
-- CHECK constraints: `score` 0–100, `confidence` and `reviewThreshold` 0–1.
+- Moved to the "Schema gaps" section of [design-notes.md](design-notes.md), which now holds all schema proposals from the design work. Apply them in the milestone that first needs each one (M1: locale fields, M2: email/status, M5: saved views, search indexes).
 
 ## M6 – Polish & deploy
 
