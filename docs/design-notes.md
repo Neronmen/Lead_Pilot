@@ -2,13 +2,14 @@
 
 **Design canvas:** https://claude.ai/artifact/VjAxmCrJVRUxSPxGzwAT5f (private until shared from the page's Share menu)
 
-**Status:** milestone D in progress. Batch 1 (foundations, landing, auth, overview, leads list) is redone in the "refined cyber" direction; the accent is approved (electric cyan) and the screens await batch 1 feedback. Batch 2 does not start until that feedback is in. Per-screen field, filter and metric lists are added here as each batch is approved; M5 implements the screens to match.
+**Status:** milestone D in progress. Batch 1 (foundations, landing, auth, overview, leads list): direction approved, and the six feedback fixes are applied on the canvas. Batch 2 (lead detail, review queue) is on the canvas and awaits feedback; batch 3 does not start until that feedback is in. Per-screen field, filter and metric lists are added here as each batch is approved; M5 implements the screens to match.
 
 ## Visual direction: refined cyber
 
 - **Dark is the default theme, light is the alternate.** Both are complete; neither is an automatic inversion.
 - **Surfaces:** near-black blue-violet, layered by lightness: background → card → raised → hover. Layers are separated by lightness and 1px borders, not shadows.
 - **One neon accent**, used only for primary actions, focus rings, the Hot tier and key highlights. **Approved: accent A, electric cyan.** (Acid lime, accent B, was the rejected alternative.)
+- **Cyan and teal are reserved** for the accent and the Hot tier. Charts and other categorical colors never use them.
 - **Glow only on accent elements:** focused controls, the primary button, Hot badges. Never on body text or numbers.
 - **Texture:** a subtle grid with fine noise, limited to the app background and the landing hero.
 - **Type:** Geist for UI and Geist Mono for numbers, IDs and eyebrow labels. Both ship a Vietnamese subset.
@@ -34,15 +35,30 @@
 
 Every tier badge always shows its text label, so color is never the only signal.
 
-Chart series by source were run through the dataviz palette validator (lightness band, chroma, colorblind separation, contrast) against each surface:
+Chart series by source contain no cyan or teal. They were run through the dataviz palette validator against each card surface: lightness band, chroma floor, colorblind and normal-vision separation of stacked neighbours, and 3:1 contrast all pass. Other is a deliberate neutral, so it is the one slot below the chroma floor.
 
 | Series | Dark | Light |
 |---|---|---|
-| 1 · Website form | `#00A0B3` | `#0089A3` |
-| 2 · LinkedIn Ads | `#8E7BEA` | `#6B55D9` |
-| 3 · Partner webhook | `#C08A1F` | `#B07400` |
-| 4 · CSV import | `#4C7FE0` | `#2F64D6` |
-| Other (folded) | `#5A5D78` | `#9A9CB0` |
+| 1 · Website form (blue) | `#3987E5` | `#2A78D6` |
+| 2 · LinkedIn Ads (orange) | `#D95926` | `#EB6834` |
+| 3 · Partner webhook (violet) | `#9085E9` | `#6250D6` |
+| 4 · CSV import (amber) | `#C98500` | `#B07400` |
+| Other (folded, neutral) | `#6F7290` | `#8A8DA3` |
+
+Blue and violet are never neighbours in the stack order: side by side they fail colorblind separation.
+
+## Batch 1 decisions (direction approved)
+
+- **Overview:** KPI row, then Needs attention (the most actionable panel) as a full-width row, then the leads-per-day chart at full width, then source revenue beside Tier distribution. Tier distribution sizes to its content; its "Open leads list" link sits in the card header.
+- **Leads list:** every row is 56 px. Name, email, company and meta stay on one line each and truncate with a tooltip. Source shows an icon and a short name (Web form, Zapier, LinkedIn, CSV, Widget) with the full source name in the tooltip. The Free email flag sits inline after the company name.
+- **Hero pipeline (landing and login):** denser and brighter particles that bunch up on the Sources side (3,200 points on landing, 1,800 on login). Login's right panel holds a framed pipeline stage with source, gate and tier labels above the pitch and the sample lead card.
+- **Landing:** Pricing is replaced by "Under the hood": ingest → queue → enrich → score → route → actions inside a tenant boundary, with notes for signed requests (HMAC), idempotency, the evaluation set and the dead-letter queue. The page ends at the footer, with no empty space below it.
+
+## Batch 2 (awaiting feedback)
+
+- **Lead detail:** header with score, tier, confidence, status, owner and the next action; Why this score (signed reasons, suggested reply in the lead's language, prompt version, tokens, latency, cost); a filterable timeline of every event, newest first; contact, enrichment, actions with retry, and the override form.
+- **Review queue:** oldest-first list plus one focused lead; the AI suggestion with a confidence meter against the threshold; the signals it weighed; the lead's own words and website. Approve (A), set a tier (1–4) or skip (S), with undo, an optional note for evals and session progress.
+- **States:** lead loading, lead not found (also what another workspace's lead returns), empty queue and queue load error.
 
 ## Motion
 
@@ -78,3 +94,8 @@ Found in the i18n work:
 9. `User.locale` (`en` | `vi`, nullable: null means use the workspace default).
 10. `Workspace.defaultLocale` (`en` | `vi`).
 11. `Lead.locale`, or a detected language, so email templates and `suggestedReply` follow the lead's language.
+
+Found in batch 2:
+
+12. `Feedback.kind` (`approve` | `override` | `skip`) and `Feedback.note`, so approvals and the reviewer's note also become eval data, not only overrides.
+13. `Lead.jobTitle` and a company size (on `Lead` or `Enrichment`). Lead detail and the review queue show both, and the data model has neither outside `customFields`.
