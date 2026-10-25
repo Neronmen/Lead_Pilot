@@ -2,7 +2,7 @@
 
 **Design canvas:** https://claude.ai/artifact/VjAxmCrJVRUxSPxGzwAT5f (private until shared from the page's Share menu)
 
-**Status:** milestone D in progress. Batch 1 (foundations, landing, auth, overview, leads list): direction approved, and the six feedback fixes are applied on the canvas. Batch 2 (lead detail, review queue): approved, with the audience rule and chart fix applied. Batch 3 (routing rules, sources and API keys, ICP rubric) is in progress. Per-screen field, filter and metric lists are added here as each batch is approved; M5 implements the screens to match.
+**Status:** milestone D in progress. Batch 1 (foundations, landing, auth, overview, leads list): direction approved, and the six feedback fixes are applied on the canvas. Batch 2 (lead detail, review queue): approved, with the audience rule and chart fix applied. Batch 3 (routing rules, sources and API keys, ICP rubric) is on the canvas and awaits feedback. Batch 4 (integrations, members and roles, prompt versions, audit log) waits for that feedback. Per-screen field, filter and metric lists are added here as each batch is approved; M5 implements the screens to match.
 
 ## Visual direction: refined cyber
 
@@ -69,6 +69,14 @@ Blue and violet are never neighbours in the stack order, and magenta never sits 
 - **Review queue:** oldest-first list plus one focused lead; the AI suggestion with a confidence meter against the threshold; the signals it weighed; the lead's own words and website. Approve (A), set a tier (1–4) or skip (S), with undo, an optional note for evals and session progress.
 - **States:** lead loading, lead not found (also what another workspace's lead returns), empty queue and queue load error.
 
+## Batch 3 (awaiting feedback)
+
+- **Routing rules:** ordered table (drag to reorder, on/off switch, matches in the last 30 days, an "Always" tag), the selected rule's editor (when: AND conditions plus "or" groups; then: ordered actions; "Always run this rule"), and "Test with a sample lead": a dry run that walks every rule in order and says which one decides, which were skipped and why, and what would happen. Nothing is sent.
+- **Settings › Sources & API keys:** settings sub-navigation; a "copy it now" banner that shows a new key exactly once; a sources table (type, key prefix, signature, leads in 30 days, last lead, with silent sources flagged); the selected source's endpoint, keys with revoke, the HMAC switch with secret rotation, and embed or curl snippets that mention Idempotency-Key.
+- **Settings › ICP rubric:** removable chips for target industries, countries, buying signals and disqualifiers; company size range; free-text notes for the AI; tier bands; the review threshold with a live "how many leads would go to review" estimate; save, with an optional re-score of open leads and its estimated AI cost.
+- **States:** no rules yet, first-run sources, revoke-key confirmation in the page (never a browser dialog), and a rubric validation error.
+- Settings is technical by design (see Audience rule) and is Admin/Owner only.
+
 ## Motion
 
 - **In-app motion is micro-interaction only, 150–400 ms.** It never blocks input, and nothing waits for an animation to finish.
@@ -108,3 +116,10 @@ Found in batch 2:
 
 12. `Feedback.kind` (`approve` | `override` | `skip`) and `Feedback.note`, so approvals and the reviewer's note also become eval data, not only overrides.
 13. `Lead.jobTitle` and a company size (on `Lead` or `Enrichment`). Lead detail and the review queue show both, and the data model has neither outside `customFields`.
+
+Found in batch 3:
+
+14. `RoutingRule.name` and `RoutingRule.alwaysRun`. SPEC §4.5 has the "always run" flag, but the data model doesn't.
+15. An `ApiKey` model (`sourceId`, `name`, `prefix`, `hash`, `createdAt`, `lastUsedAt`, `revokedAt`) in place of the single `Source.apiKeyHash`, so a source can rotate keys without downtime.
+16. Tier bands (`hotMin`, `warmMin`) on `IcpRubric` or `Workspace`. Today the 80 and 55 cut-offs exist only in the UI.
+17. `Source.lastLeadAt`, or an index that makes it cheap, for the "silent for 14 days" flag.
