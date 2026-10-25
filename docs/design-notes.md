@@ -2,14 +2,23 @@
 
 **Design canvas:** https://claude.ai/artifact/VjAxmCrJVRUxSPxGzwAT5f (private until shared from the page's Share menu)
 
-**Status:** milestone D in progress. Batch 1 (foundations, landing, auth, overview, leads list): direction approved, and the six feedback fixes are applied on the canvas. Batch 2 (lead detail, review queue) is on the canvas and awaits feedback; batch 3 does not start until that feedback is in. Per-screen field, filter and metric lists are added here as each batch is approved; M5 implements the screens to match.
+**Status:** milestone D in progress. Batch 1 (foundations, landing, auth, overview, leads list): direction approved, and the six feedback fixes are applied on the canvas. Batch 2 (lead detail, review queue): approved, with the audience rule and chart fix applied. Batch 3 (routing rules, sources and API keys, ICP rubric) is in progress. Per-screen field, filter and metric lists are added here as each batch is approved; M5 implements the screens to match.
 
 ## Visual direction: refined cyber
 
 - **Dark is the default theme, light is the alternate.** Both are complete; neither is an automatic inversion.
 - **Surfaces:** near-black blue-violet, layered by lightness: background → card → raised → hover. Layers are separated by lightness and 1px borders, not shadows.
 - **One neon accent**, used only for primary actions, focus rings, the Hot tier and key highlights. **Approved: accent A, electric cyan.** (Acid lime, accent B, was the rejected alternative.)
-- **Cyan and teal are reserved** for the accent and the Hot tier. Charts and other categorical colors never use them.
+- **Cyan and teal are reserved** for the accent and the Hot tier, and amber for the Warm tier. Charts and other categorical colors never use them.
+
+## Audience rule
+
+- **Daily-work screens** (Overview, Leads, Lead detail, Review queue) speak plain language to sales reps: what happened, what it means, what to do next.
+- **Technical detail** (prompt version, tokens, latency, cost, HTTP codes, idempotency keys, the dead-letter queue, signatures, error codes) sits behind a "Technical details" disclosure that only Admin and Owner see. Members never see the control.
+- **Landing** leads with outcomes. "Under the hood" sits lower down for technical buyers.
+- **Settings** may be technical: it is where admins configure sources, keys, rubric and rules.
+- Example: a failed action reads "Couldn't send to n8n after 5 tries. Paused." with a Retry button. `502 Bad Gateway`, the attempt count and the job id are in the disclosure.
+- Still to align with this rule: the Overview "LLM cost this month" KPI and the sidebar spend meter become Admin/Owner only.
 - **Glow only on accent elements:** focused controls, the primary button, Hot badges. Never on body text or numbers.
 - **Texture:** a subtle grid with fine noise, limited to the app background and the landing hero.
 - **Type:** Geist for UI and Geist Mono for numbers, IDs and eyebrow labels. Both ship a Vietnamese subset.
@@ -40,12 +49,12 @@ Chart series by source contain no cyan or teal. They were run through the datavi
 | Series | Dark | Light |
 |---|---|---|
 | 1 · Website form (blue) | `#3987E5` | `#2A78D6` |
-| 2 · LinkedIn Ads (orange) | `#D95926` | `#EB6834` |
+| 2 · LinkedIn Ads (magenta) | `#D55181` | `#B8407F` |
 | 3 · Partner webhook (violet) | `#9085E9` | `#6250D6` |
-| 4 · CSV import (amber) | `#C98500` | `#B07400` |
+| 4 · CSV import (orange) | `#D95926` | `#EB6834` |
 | Other (folded, neutral) | `#6F7290` | `#8A8DA3` |
 
-Blue and violet are never neighbours in the stack order: side by side they fail colorblind separation.
+Blue and violet are never neighbours in the stack order, and magenta never sits next to the grey Other: either pair fails colorblind separation side by side.
 
 ## Batch 1 decisions (direction approved)
 
@@ -54,9 +63,9 @@ Blue and violet are never neighbours in the stack order: side by side they fail 
 - **Hero pipeline (landing and login):** denser and brighter particles that bunch up on the Sources side (3,200 points on landing, 1,800 on login). Login's right panel holds a framed pipeline stage with source, gate and tier labels above the pitch and the sample lead card.
 - **Landing:** Pricing is replaced by "Under the hood": ingest → queue → enrich → score → route → actions inside a tenant boundary, with notes for signed requests (HMAC), idempotency, the evaluation set and the dead-letter queue. The page ends at the footer, with no empty space below it.
 
-## Batch 2 (awaiting feedback)
+## Batch 2 decisions (approved)
 
-- **Lead detail:** header with score, tier, confidence, status, owner and the next action; Why this score (signed reasons, suggested reply in the lead's language, prompt version, tokens, latency, cost); a filterable timeline of every event, newest first; contact, enrichment, actions with retry, and the override form.
+- **Lead detail:** header with score, tier, status, owner and the next action; "Why it's Hot" (signed reasons in plain words, suggested reply in the lead's language); a filterable activity list, newest first, in plain language; contact, about the company, follow-ups sent (with Retry when paused), and "Disagree with the AI?" to change the rating. Score metadata and raw event lines are behind Technical details (Admin/Owner). The canvas has a sales-rep view without them.
 - **Review queue:** oldest-first list plus one focused lead; the AI suggestion with a confidence meter against the threshold; the signals it weighed; the lead's own words and website. Approve (A), set a tier (1–4) or skip (S), with undo, an optional note for evals and session progress.
 - **States:** lead loading, lead not found (also what another workspace's lead returns), empty queue and queue load error.
 
