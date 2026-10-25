@@ -2,7 +2,7 @@
 
 **Design canvas:** https://claude.ai/artifact/VjAxmCrJVRUxSPxGzwAT5f (private until shared from the page's Share menu)
 
-**Status:** milestone D in progress. Batch 1 (foundations, landing, auth, overview, leads list): direction approved, and the six feedback fixes are applied on the canvas. Batch 2 (lead detail, review queue): approved, with the audience rule and chart fix applied. Batch 3 (routing rules, sources and API keys, ICP rubric) is on the canvas and awaits feedback. Batch 4 (integrations, members and roles, prompt versions, audit log) waits for that feedback. Per-screen field, filter and metric lists are added here as each batch is approved; M5 implements the screens to match.
+**Status:** milestone D in progress. Batch 1 (foundations, landing, auth, overview, leads list): direction approved, and the six feedback fixes are applied on the canvas. Batch 2 (lead detail, review queue): approved, with the audience rule and chart fix applied. Batch 3 (setup checklist, lead sources, ideal customer, routing rules, Advanced / Developer) is on the canvas and awaits feedback. Batch 4 (integrations, team, change history) waits for that feedback. Per-screen field, filter and metric lists are added here as each batch is approved; M5 implements the screens to match.
 
 ## Visual direction: refined cyber
 
@@ -16,7 +16,10 @@
 - **Daily-work screens** (Overview, Leads, Lead detail, Review queue) speak plain language to sales reps: what happened, what it means, what to do next.
 - **Technical detail** (prompt version, tokens, latency, cost, HTTP codes, idempotency keys, the dead-letter queue, signatures, error codes) sits behind a "Technical details" disclosure that only Admin and Owner see. Members never see the control.
 - **Landing** leads with outcomes. "Under the hood" sits lower down for technical buyers.
-- **Settings** may be technical: it is where admins configure sources, keys, rubric and rules.
+- **Settings and the Routing rules editor** are used by the customer's Owner/Admin: a sales manager or ops person, not a developer. Members don't see Settings or Routing rules at all, not even in the sidebar.
+  - Every Settings screen is written for a non-technical admin: one-click "Connect Slack" or "Connect HubSpot" flows; "copy this snippet" or "email it to your web developer" for the embed form; the ICP rubric as plain questions (industries, company size, countries, buying signals, deal-breakers); routing rules that read as sentences ("If tier is Hot and country is US → assign to Mia, notify #hot-leads").
+  - API keys, HMAC secrets, raw webhooks, endpoints and prompt versions live in a separate **Advanced / Developer** tab in Settings. Nothing else in Settings shows them.
+  - New workspaces get a short **setup checklist**: connect a source → describe your ideal customer → connect Slack or email → invite your team.
 - Example: a failed action reads "Couldn't send to n8n after 5 tries. Paused." with a Retry button. `502 Bad Gateway`, the attempt count and the job id are in the disclosure.
 - Still to align with this rule: the Overview "LLM cost this month" KPI and the sidebar spend meter become Admin/Owner only.
 - **Glow only on accent elements:** focused controls, the primary button, Hot badges. Never on body text or numbers.
@@ -71,11 +74,16 @@ Blue and violet are never neighbours in the stack order, and magenta never sits 
 
 ## Batch 3 (awaiting feedback)
 
-- **Routing rules:** ordered table (drag to reorder, on/off switch, matches in the last 30 days, an "Always" tag), the selected rule's editor (when: AND conditions plus "or" groups; then: ordered actions; "Always run this rule"), and "Test with a sample lead": a dry run that walks every rule in order and says which one decides, which were skipped and why, and what would happen. Nothing is sent.
-- **Settings › Sources & API keys:** settings sub-navigation; a "copy it now" banner that shows a new key exactly once; a sources table (type, key prefix, signature, leads in 30 days, last lead, with silent sources flagged); the selected source's endpoint, keys with revoke, the HMAC switch with secret rotation, and embed or curl snippets that mention Idempotency-Key.
-- **Settings › ICP rubric:** removable chips for target industries, countries, buying signals and disqualifiers; company size range; free-text notes for the AI; tier bands; the review threshold with a live "how many leads would go to review" estimate; save, with an optional re-score of open leads and its estimated AI cost.
-- **States:** no rules yet, first-run sources, revoke-key confirmation in the page (never a browser dialog), and a rubric validation error.
-- Settings is technical by design (see Audience rule) and is Admin/Owner only.
+Designed for a non-technical Owner/Admin (see Audience rule).
+
+- **Settings menu:** Get started, Lead sources, Ideal customer, Integrations, Team, Change history, and Advanced / Developer last and muted.
+- **Get started (setup checklist):** four steps with progress: connect a source → describe your ideal customer → connect Slack or email (one-click "Connect Slack", or "Use email instead") → invite your team (they join as Members). Done steps show what was set up and a Change link. A "Load sample leads" option for people who are only exploring. The same list shows on Overview until it's finished.
+- **Lead sources:** your sources with a plain status ("Working · 487 leads in the last 30 days", or "Quiet: no leads for 14 days, check that Livestorm is still connected"). The website form is three steps: copy the snippet or "Email it to your web developer", choose which fields the form asks for, check it's working. Add a source: website form, Zapier/Make/n8n, upload a spreadsheet, or "another tool" (which leads to Advanced / Developer).
+- **Ideal customer:** plain questions: which industries, which countries, what tells you a lead is ready to buy, what are your deal-breakers, how big are the companies, anything else the AI should know. Also: when a lead is Hot, Warm or Cold (score cut-offs), and when someone should double-check (the review threshold, with how many leads that would have sent to review last month). Saving can also ask the AI to look again at open leads.
+- **Routing rules:** each rule reads as one sentence under its name ("If tier is Hot and country is US or Canada → assign to the next account executive, notify #hot-leads, email the owner, add to HubSpot"). The editor is "If … then …", and "Test with a sample lead" says which rule decides and why, without sending anything.
+- **Advanced / Developer:** API keys (a new key shown once), endpoints per source, HMAC signature and secret rotation, embed and curl snippets, outgoing webhook signing, and prompt versions with evaluation accuracy and cost per lead.
+- **Members:** the sidebar hides Routing rules and Settings for Members.
+- **States:** no rules yet, first-run sources, revoke-key confirmation in the page (never a browser dialog), and an Ideal customer field error.
 
 ## Motion
 
