@@ -2,7 +2,7 @@
 
 **Design canvas:** https://claude.ai/artifact/VjAxmCrJVRUxSPxGzwAT5f (private until shared from the page's Share menu)
 
-**Status:** milestone D in progress. Batch 1 (foundations, landing, auth, overview, leads list): direction approved, and the six feedback fixes are applied on the canvas. Batch 2 (lead detail, review queue): approved, with the audience rule and chart fix applied. Batches 3 and 4 (setup checklist, general, lead sources, ideal customer, routing rules, integrations, team, change history, Advanced / Developer) are on the canvas and await feedback. Every board was rendered with Playwright and checked; see Self-check below. Per-screen field, filter and metric lists are added here as each batch is approved; M5 implements the screens to match.
+**Status:** milestone D done: all four batches approved and the milestone closed on 2026-10-26. Batch 1 covers foundations, landing, auth, overview and the leads list; batch 2 lead detail and the review queue; batches 3 and 4 the setup checklist, general, lead sources, ideal customer, routing rules, integrations, team, change history and Advanced / Developer. Every board was rendered with Playwright and checked; see Self-check below. M5 implements the screens to match. Schema gaps are applied in the milestone that first needs each one (see the end of this file).
 
 ## Visual direction: refined cyber
 
@@ -72,7 +72,7 @@ Blue and violet are never neighbours in the stack order, and magenta never sits 
 - **Review queue:** oldest-first list plus one focused lead; the AI suggestion with a confidence meter against the threshold; the signals it weighed; the lead's own words and website. Approve (A), set a tier (1–4) or skip (S), with undo, an optional note for evals and session progress.
 - **States:** lead loading, lead not found (also what another workspace's lead returns), empty queue and queue load error.
 
-## Batch 3 (awaiting feedback)
+## Batch 3 decisions (approved)
 
 Designed for a non-technical Owner/Admin (see Audience rule).
 
@@ -85,7 +85,7 @@ Designed for a non-technical Owner/Admin (see Audience rule).
 - **Members:** the sidebar hides Routing rules and Settings for Members.
 - **States:** no rules yet, first-run sources, revoke-key confirmation in the page (never a browser dialog), and an Ideal customer field error.
 
-## Batch 4 (awaiting feedback)
+## Batch 4 decisions (approved)
 
 - **General:** workspace name, language, currency, time zone, and the monthly AI cost limit. The page says in plain words what happens at the limit: leads keep arriving and are saved, they're rated by simple rules and marked "Rated without AI", the AI resumes on the 1st or when the limit is raised, and those leads can be looked at again later. Owner and admins get an email at 80% and 100%. In demo mode the built-in sample AI is free.
 - **Integrations:** Slack, Email, HubSpot, "Send to another tool" (webhook) and Telegram, each in a connected, not connected or needs-attention state. Connected tools have "Send test message", with the result shown under the card. Errors say what happened and what to do ("HubSpot stopped accepting new contacts because the connection expired… Reconnect"). Webhook addresses and secrets stay in Advanced / Developer.
@@ -142,7 +142,7 @@ One term per concept, on every board. Product names (LeadPilot, Slack, HubSpot, 
 - **Money:** deal values and revenue are shown in the workspace currency (USD or VND). LLM cost is always shown in USD, because providers bill in USD, formatted with the active locale (`4,18 US$` in Vietnamese).
 - **Country names and relative times** come from `Intl.DisplayNames` and `Intl.RelativeTimeFormat`, so they are never written into message files.
 
-## Schema gaps (proposed, not applied)
+## Schema gaps (proposed; applied per milestone)
 
 From the backlog:
 1. `Workspace.currency` (`USD` | `VND`). `Lead.dealValue` is "in the workspace's currency", but nothing stores which currency that is.

@@ -135,6 +135,7 @@ Every step is a background job (BullMQ + Redis) with retries, exponential backof
   - Medium: a Claude Design artifact if available in the environment; otherwise static HTML mockups in `/design` that open in a browser.
   - Output: the design, plus `docs/design-notes.md` listing every field, filter and metric the screens need, and any gap versus the Prisma schema (propose schema changes, don't apply them).
   - Done when the developer approves the design.
+  - **Status: done.** Approved and closed on 2026-10-26.
 - **M1 – Auth & tenancy**: signup/login/refresh, workspaces, roles, invites, workspace isolation tests.
 - **M2 – Ingestion**: sources, API keys, HMAC, idempotency, normalization, dedup, timeline events, rate limit.
 - **M3 – Pipeline**: BullMQ queues, enrichment, LLM scoring with mock + real adapters, prompt versions, cost tracking, review queue.
