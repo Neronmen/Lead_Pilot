@@ -45,6 +45,17 @@ const JWT_AUDIENCE = 'leadpilot-api';
             ttl: 60_000,
             limit: config.get('AUTH_REFRESH_RATE_LIMIT_PER_MINUTE', { infer: true }),
           },
+          // Email-sending invite routes, counted per workspace (not per IP).
+          {
+            name: 'invites',
+            ttl: 60_000,
+            limit: config.get('INVITE_RATE_LIMIT_PER_MINUTE', { infer: true }),
+          },
+          {
+            name: 'invitesDay',
+            ttl: 24 * 60 * 60_000,
+            limit: config.get('INVITE_RATE_LIMIT_PER_DAY', { infer: true }),
+          },
         ],
       }),
     }),

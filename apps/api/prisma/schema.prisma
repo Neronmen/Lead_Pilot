@@ -203,20 +203,23 @@ model TeamMember {
 }
 
 model Invite {
-  id          String    @id @default(uuid(7)) @db.Uuid
-  workspaceId String    @db.Uuid
+  id             String    @id @default(uuid(7)) @db.Uuid
+  workspaceId    String    @db.Uuid
   /// Stored lowercased (CHECK constraint). One pending invite per address and
   /// workspace (partial unique index); resending rotates the token in place.
-  email       String
-  role        Role      @default(MEMBER)
+  email          String
+  role           Role      @default(MEMBER)
   /// SHA-256 of the random token in the link (high entropy, so no slow hash).
-  tokenHash   String    @unique
+  tokenHash      String    @unique
   /// Null once the inviting user's account is deleted.
-  invitedById String?   @db.Uuid
-  expiresAt   DateTime
-  acceptedAt  DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  invitedById    String?   @db.Uuid
+  /// Wrong passwords tried on this invite by an existing account. After 5 the
+  /// invite expires (an admin can Resend); resending resets it.
+  failedAttempts Int       @default(0)
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   invitedBy User?     @relation("InviteInvitedBy", fields: [invitedById], references: [id], onDelete: SetNull)

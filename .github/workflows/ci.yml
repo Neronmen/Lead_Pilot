@@ -37,6 +37,13 @@ jobs:
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 5s --health-timeout 3s --health-retries 10
+      # Invite emails go here (the Mailpit e2e test reads them back over its API).
+      mailpit:
+        image: axllent/mailpit:v1.32.0
+        ports: ['1025:1025', '8025:8025']
+        options: >-
+          --health-cmd "/mailpit readyz"
+          --health-interval 5s --health-timeout 3s --health-retries 10
 
     # No .env in CI: the apps read these straight from the environment.
     # Only the test database exists here, so both URLs point at it.
@@ -44,6 +51,9 @@ jobs:
       DATABASE_URL: postgresql://leadpilot:leadpilot@localhost:5432/leadpilot_test
       DATABASE_URL_TEST: postgresql://leadpilot:leadpilot@localhost:5432/leadpilot_test
       REDIS_URL: redis://localhost:6379
+      SMTP_HOST: localhost
+      SMTP_PORT: '1025'
+      MAILPIT_API_URL: http://localhost:8025
       NEXT_PUBLIC_API_URL: http://localhost:3001
 
     steps:

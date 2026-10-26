@@ -27,11 +27,23 @@ export const createInvitesRequestSchema = z.strictObject({
   role: assignableRoleSchema,
 });
 
-export const inviteResultStatusSchema = z.enum(['invited', 'already_member', 'already_invited']);
+/**
+ * `email_failed`: the invite is saved but the email could not be sent; the
+ * admin retries with Resend.
+ */
+export const inviteResultStatusSchema = z.enum([
+  'invited',
+  'already_member',
+  'already_invited',
+  'email_failed',
+]);
 
 export const createInvitesResponseSchema = z.object({
   results: z.array(z.object({ email: z.string(), status: inviteResultStatusSchema })),
 });
+
+/** `POST /invites/:id/resend`: `invited` or `email_failed`. */
+export const resendInviteResponseSchema = z.object({ status: inviteResultStatusSchema });
 
 /** A pending invite in `GET /invites`. */
 export const pendingInviteSchema = z.object({
@@ -93,6 +105,7 @@ export const changeRoleRequestSchema = z.strictObject({ role: assignableRoleSche
 export type CreateInvitesRequest = z.infer<typeof createInvitesRequestSchema>;
 export type CreateInvitesResponse = z.infer<typeof createInvitesResponseSchema>;
 export type InviteResultStatus = z.infer<typeof inviteResultStatusSchema>;
+export type ResendInviteResponse = z.infer<typeof resendInviteResponseSchema>;
 export type PendingInvite = z.infer<typeof pendingInviteSchema>;
 export type InvitePreviewRequest = z.infer<typeof invitePreviewRequestSchema>;
 export type InvitePreviewResponse = z.infer<typeof invitePreviewResponseSchema>;

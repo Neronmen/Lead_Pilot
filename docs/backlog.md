@@ -23,6 +23,8 @@ Items raised in reviews that belong to a later milestone. Each milestone plan st
 
 - The auth rate limiter (`@nestjs/throttler`) keeps its counters in memory, so each API instance counts on its own. Move its storage to Redis when the Redis-backed queues arrive.
 
+- Real SMTP: `SmtpEmailProvider` has no authentication or TLS (Mailpit only). Add `SMTP_USER`/`SMTP_PASS` and required TLS (or a free-tier provider such as Resend behind the same `EmailProvider` interface) before sending real mail. Invites are sent inside the request until the M3 job queue exists; move them to a BullMQ job then.
+- Demo mode with no `SMTP_HOST` keeps invite emails only in memory (last 100), so the invite flow cannot be completed there. Either default `SMTP_HOST` to Mailpit in the demo setup (docker compose runs it) or show the invite link in the Team page when no mail server is configured (M6 seed and demo).
 - Delete spent refresh tokens: a daily job removing rows revoked or expired more than a day ago.
 
 ## M4 – Routing & actions
@@ -42,7 +44,8 @@ Items raised in reviews that belong to a later milestone. Each milestone plan st
 ## Later (no milestone yet)
 
 - Ownership transfer: Owner hands the workspace to an Admin. Until then, nobody can grant, change or remove the OWNER role.
-- Password reset by email ("Forgot password?" on the Login design). Works in dev through Mailpit; production needs a free-tier email provider.
+- Password reset by email ("Forgot password?" on the Login design). Works in dev through Mailpit; production needs a free-tier email provider. **Required before any production use:** signup has no email verification, so someone can register `victim@example.com` first, and when the victim is invited they would have to know that account's password. Reset (or letting an invite link, which proves control of the mailbox, take over an account that never signed in) closes this.
 - Rate limit login per email as well as per IP (an attack spread over many IPs against one account), and consider an absolute session lifetime: each refresh renews the 14-day expiry, so an active session never ends on its own.
+- Refresh-token reuse detection is strict (decided in M1). If users report random sign-outs (two tabs refreshing together, or a refresh response lost on reload), add a short reuse interval: a replaced token presented again within ~10 s gets a sibling token in the same family instead of revoking the family. Trade-off: a thief using a copied token inside that window is not detected.
 - Bind access tokens to their sign-in (`sid` = familyId, checked in the guard) if 15 minutes of access after logout or reuse detection ever matters.
 - Account deletion: deleting a User cascades to their memberships, and `Lead.owner` (NoAction) blocks that while they own leads. Unassign their leads in every workspace first, and block it for workspace owners until ownership transfer exists.

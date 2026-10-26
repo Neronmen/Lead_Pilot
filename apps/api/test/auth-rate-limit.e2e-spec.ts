@@ -34,6 +34,16 @@ describe('Auth rate limit (e2e)', () => {
     expect(res.headers['retry-after']).toBeDefined();
   }, 30_000); // argon2 per attempt: slow when e2e files run in parallel
 
+  it('limits the public invite routes per IP too', async () => {
+    const attempt = () =>
+      request(app.getHttpServer())
+        .post('/auth/invites/preview')
+        .send({ token: 'x'.repeat(43) });
+    for (let i = 0; i < LIMIT; i += 1) await attempt().expect(400);
+    const res = await attempt().expect(429);
+    expect(errorBodySchema.parse(res.body).error.code).toBe('RATE_LIMITED');
+  });
+
   it('counts each route separately and does not limit signed-in calls', async () => {
     // Login is used up by the test above; refresh still has its own budget.
     await request(app.getHttpServer()).post('/auth/refresh').expect(401);

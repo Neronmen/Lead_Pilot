@@ -24,8 +24,6 @@ export const ErrorCode = {
   // Team (M1).
   /** Unknown, expired, cancelled or already used: one code for all of them. */
   INVITE_INVALID: 'INVITE_INVALID',
-  /** The signed-in account's email is not the address the invite was sent to. */
-  INVITE_EMAIL_MISMATCH: 'INVITE_EMAIL_MISMATCH',
   /** Nobody can grant, change or remove the OWNER role (transfer comes later). */
   OWNER_IMMUTABLE: 'OWNER_IMMUTABLE',
   /** Nobody can change their own role or remove themselves. */

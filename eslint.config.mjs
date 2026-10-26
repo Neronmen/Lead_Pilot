@@ -78,12 +78,15 @@ export default tseslint.config(
     // - health/: `SELECT 1` readiness probe, touches no table.
     // - auth/: runs before a workspace is known (global users, a user's
     //   memberships across workspaces at login, the per-request guard).
+    // - invites/invite-accept.service.ts: finds an invite by its token across
+    //   workspaces, before the person has a session.
     files: [
       'apps/api/src/prisma/**/*.ts',
       'apps/api/src/health/**/*.ts',
       'apps/api/src/auth/auth.service.ts',
       'apps/api/src/auth/session.service.ts',
       'apps/api/src/auth/jwt-auth.guard.ts',
+      'apps/api/src/invites/invite-accept.service.ts',
     ],
     rules: { 'no-restricted-imports': 'off', 'no-restricted-syntax': 'off' },
   },

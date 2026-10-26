@@ -35,6 +35,25 @@ export const envSchema = z
     AUTH_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(1).default(10),
     // Refresh runs on every page load and tab, so it gets a larger budget.
     AUTH_REFRESH_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(1).default(60),
+    // Invite and resend requests per workspace: they send email, so they are
+    // limited per minute and per day (one request is up to 20 addresses).
+    INVITE_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(1).default(5),
+    INVITE_RATE_LIMIT_PER_DAY: z.coerce.number().int().min(1).default(30),
+    // Outgoing email. With no SMTP_HOST the app uses an in-memory mock (demo
+    // mode); docker compose runs Mailpit on localhost:1025 for development.
+    // The SMTP provider has no authentication or TLS yet: Mailpit only.
+    SMTP_HOST: z
+      .string()
+      .optional()
+      .transform((host) => (host ? host : undefined)),
+    SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(1025),
+    EMAIL_FROM: z
+      .string()
+      .regex(
+        /^([^<>@]+ <[^\s<>@]+@[^\s<>@]+>|[^\s<>@]+@[^\s<>@]+)$/,
+        'must look like name@host or Name <name@host>',
+      )
+      .default('LeadPilot <no-reply@leadpilot.local>'),
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV === 'production' && env.JWT_ACCESS_SECRET === undefined) {

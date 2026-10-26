@@ -39,9 +39,10 @@ import { SessionService } from './session.service';
 @ApiTags('auth')
 @Controller('auth')
 @UseGuards(ThrottlerGuard)
-// Two budgets: `default` for password guessing (signup, login, accept invite)
-// and a higher `refresh` one, since every page load refreshes.
-@SkipThrottle({ refresh: true })
+// `default` is the password-guessing budget (signup, login); `refresh` is a
+// higher one, since every page load refreshes; `invites*` belong to the
+// invite routes, which are limited per workspace.
+@SkipThrottle({ refresh: true, invites: true, invitesDay: true })
 export class AuthController {
   private readonly secureCookie: boolean;
 

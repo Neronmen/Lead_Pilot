@@ -17,6 +17,10 @@ describe('validateEnv', () => {
       JWT_ACCESS_SECRET,
       AUTH_RATE_LIMIT_PER_MINUTE: 10,
       AUTH_REFRESH_RATE_LIMIT_PER_MINUTE: 60,
+      INVITE_RATE_LIMIT_PER_MINUTE: 5,
+      INVITE_RATE_LIMIT_PER_DAY: 30,
+      SMTP_PORT: 1025,
+      EMAIL_FROM: 'LeadPilot <no-reply@leadpilot.local>',
     });
   });
 
@@ -90,6 +94,26 @@ describe('validateEnv', () => {
     expect(() => validateEnv({ ...base, JWT_ACCESS_SECRET: 'too-short' })).toThrow(
       /JWT_ACCESS_SECRET/,
     );
+  });
+
+  it('checks EMAIL_FROM at boot instead of at the first send', () => {
+    for (const ok of ['a@b.co', 'LeadPilot <no-reply@leadpilot.local>']) {
+      expect(validateEnv({ ...base, EMAIL_FROM: ok }).EMAIL_FROM).toBe(ok);
+    }
+    const crlf = String.fromCharCode(13, 10);
+    for (const bad of [
+      'nonsense',
+      'Name <not-an-address>',
+      `a@b.co${crlf}Bcc: x@y.z`,
+      '<a@b.co>',
+    ]) {
+      expect(() => validateEnv({ ...base, EMAIL_FROM: bad })).toThrow(/EMAIL_FROM/);
+    }
+  });
+
+  it('treats an empty SMTP_HOST as unset (demo mode)', () => {
+    expect(validateEnv({ ...base, SMTP_HOST: '' }).SMTP_HOST).toBeUndefined();
+    expect(validateEnv({ ...base, SMTP_HOST: 'localhost' }).SMTP_HOST).toBe('localhost');
   });
 
   it('refuses the dev-only secret in production', () => {
