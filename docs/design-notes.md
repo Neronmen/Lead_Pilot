@@ -106,6 +106,13 @@ An "Emails" row at the bottom of the canvas: the invite email in English and Vie
 - **Plain text:** every email has a plain-text part with the same words and link.
 - The rendered boards were checked in a browser against the canvas runtime (EN, VI and dark). Not checked: real mail clients and their forced dark modes.
 
+## Brand
+
+- The product logo is `design/brand/leadpilot.svg`: a dark rounded square holding a cyan and white arrow. It is used exactly as drawn, never recoloured or redrawn, and works on both themes. It replaces the placeholder mark the early boards used (an accent-coloured square with a paper-plane glyph).
+- It appears in the app sidebar, the auth pages, the favicon and app icons, and the invite email (`/email/logo.png`, a 240 px PNG shown at 28 px).
+- `neronmen.svg` / `neronmen.png` are the developer's personal brand. They are kept in `design/brand/` but are never part of the product UI.
+- The PNGs and icons are renders of the SVG (`pnpm --filter web icons`); see `design/brand/README.md`.
+
 ## Self-check (Playwright)
 
 All 67 boards were rendered at their real size, served locally with the canvas runtime, in dark, light and Vietnamese where those exist. Each render was checked automatically (placeholder or `[object Object]` text, horizontal overflow, clipped or wrapped labels, empty space below content, content taller than the frame, technical words on daily-work screens, light-on-dark buttons, WCAG AA contrast of every text node), and every screenshot was reviewed by eye. Known exceptions: Foundations shows disabled-state and "subtle" swatches below AA on purpose, and the Landing "Under the hood" cards wrap their descriptions by design.
