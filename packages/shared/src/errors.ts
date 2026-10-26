@@ -13,7 +13,7 @@ export const ErrorCode = {
   // Auth (M1). Wrong email and wrong password share one code, so the answer
   // never tells whether an account exists.
   AUTH_INVALID_CREDENTIALS: 'AUTH_INVALID_CREDENTIALS',
-  /** Missing, expired or revoked session: sign in again. */
+  /** No usable session (no token, or expired or revoked): refresh, else sign in again. */
   AUTH_SESSION_EXPIRED: 'AUTH_SESSION_EXPIRED',
   /** A rotated refresh token came back: every session of that login is revoked. */
   AUTH_REFRESH_REUSED: 'AUTH_REFRESH_REUSED',

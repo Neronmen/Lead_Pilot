@@ -34,6 +34,10 @@ export function buildLoggerParams(config: ConfigService<Env, true>): Params {
   const isDev = config.get('NODE_ENV', { infer: true }) === 'development';
 
   return {
+    // Fields set with PinoLogger.assign (workspaceId, userId from the auth
+    // guard) also go on the "request completed" line, which for most requests
+    // is the only one.
+    assignResponse: true,
     pinoHttp: {
       level: config.get('LOG_LEVEL', { infer: true }),
       genReqId: resolveRequestId,

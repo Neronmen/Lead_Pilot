@@ -12,6 +12,10 @@ export function applyTestEnv(): void {
   // Quiet by default; set LOG_LEVEL in the shell to debug a test. Must come
   // before the .env load, which would otherwise set the dev level.
   process.env.LOG_LEVEL ??= 'silent';
+  // e2e files sign up and log in many times from one IP; the rate-limit test
+  // sets its own low limit.
+  process.env.AUTH_RATE_LIMIT_PER_MINUTE ??= '1000';
+  process.env.AUTH_REFRESH_RATE_LIMIT_PER_MINUTE ??= '1000';
 
   const rootEnv = resolve(__dirname, '../../../.env');
   // loadEnvFile never overrides variables that are already set (e.g. in CI).

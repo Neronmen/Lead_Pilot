@@ -5,7 +5,7 @@ Items raised in reviews that belong to a later milestone. Each milestone plan st
 ## M1 – Auth & tenancy (do first)
 
 - Web API client: `credentials: 'include'` for the refresh-token cookie.
-- Add `workspaceId` to the log context (pino `assign`) once requests are authenticated.
+- Web auth client (step 8): refresh under a cross-tab lock (`navigator.locks.request('lp-refresh', ...)`). Reuse detection revokes the whole sign-in when two tabs refresh with the same token at once, so per-tab single-flight is not enough. A 429 on refresh means "retry later", not "signed out".
 - Logger tests: header and query-string stripping, `/health` excluded from access logs (more valuable once auth headers exist).
 - `DomainError` with a 5xx status passes its message to the client. Fine for deliberate messages, but document it in the error-handling guide so no one puts internals there.
 
@@ -23,6 +23,8 @@ Items raised in reviews that belong to a later milestone. Each milestone plan st
 
 - The auth rate limiter (`@nestjs/throttler`) keeps its counters in memory, so each API instance counts on its own. Move its storage to Redis when the Redis-backed queues arrive.
 
+- Delete spent refresh tokens: a daily job removing rows revoked or expired more than a day ago.
+
 ## M4 – Routing & actions
 
 - Removing a member leaves their leads unassigned (M1). The Team design says those leads "go back through your routing rules": reroute them through the rules engine once it exists.
@@ -30,7 +32,8 @@ Items raised in reviews that belong to a later milestone. Each milestone plan st
 ## M6 – Polish & deploy
 
 - "Explore the demo workspace" login on the Login design.
-- Refresh cookie and cross-site deploys: the cookie is `SameSite=Lax`, `Path=/auth`, which works while web and API share a site (localhost, or `app.example.com` + `api.example.com`). If they end up on different sites, either put the API behind the web domain (preferred: the cookie stays first-party) or switch to `SameSite=None; Secure`. Record the choice in the README.
+- Set Express `trust proxy` to the exact number of proxy hops of the host. Without it, behind a proxy every user shares one rate-limit bucket (one attacker locks out login for all); with `true`, `X-Forwarded-For` can be spoofed.
+- Refresh cookie and cross-site deploys: the cookie is `SameSite=Lax`, `Path=/auth`, which works while web and API share a site (localhost, or `app.example.com` + `api.example.com`). If they end up on different sites, either put the API behind the web domain (preferred: the cookie stays first-party) or switch to `SameSite=None; Secure`. Record the choice in the README. Caveat: the cookie has `Path=/auth`, so serving the API under a prefix (`/api/auth/...`) needs the path changed too, or the browser never sends it.
 - Decide whether `/docs` (Swagger) stays public in the deployed demo, or sits behind `NODE_ENV !== 'production'` or a flag.
 - Pin GitHub Actions to commit SHAs (at least the third-party `pnpm/action-setup`).
 - Consider pinning `runs-on: ubuntu-24.04`: `ubuntu-latest` is moving to Ubuntu 26.
@@ -40,4 +43,6 @@ Items raised in reviews that belong to a later milestone. Each milestone plan st
 
 - Ownership transfer: Owner hands the workspace to an Admin. Until then, nobody can grant, change or remove the OWNER role.
 - Password reset by email ("Forgot password?" on the Login design). Works in dev through Mailpit; production needs a free-tier email provider.
+- Rate limit login per email as well as per IP (an attack spread over many IPs against one account), and consider an absolute session lifetime: each refresh renews the 14-day expiry, so an active session never ends on its own.
+- Bind access tokens to their sign-in (`sid` = familyId, checked in the guard) if 15 minutes of access after logout or reuse detection ever matters.
 - Account deletion: deleting a User cascades to their memberships, and `Lead.owner` (NoAction) blocks that while they own leads. Unassign their leads in every workspace first, and block it for workspace owners until ownership transfer exists.
