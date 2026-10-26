@@ -144,14 +144,17 @@ From M1 on, milestones are **vertical slices**: each ships its API and the web p
   - Steps (each: code → tester → code-reviewer → commit, merge to main, push):
     1. Migration: same-workspace foreign keys, M1 schema fields. *(done)*
     2. Tenant scope (Prisma extension), ESLint guard, Prisma error mapping. *(done)*
-    3. Shared zod schemas and error codes, validation pipe, Swagger from zod.
-    4. Auth API: signup, login, refresh (rotation, reuse detection), logout, me (+ locale), guards, rate limits, `workspaceId` in logs.
-    5. Email provider (SMTP to Mailpit, mock) and the invite API.
+    3. Shared zod schemas and error codes, validation pipe, Swagger from zod. *(done)*
+    4. Auth API: signup, login, refresh (rotation, reuse detection), logout, me (+ locale), guards, rate limits, `workspaceId` in logs. *(done)*
+    5. Email provider (SMTP to Mailpit, mock) and the invite API. *(done)*
     6. Members API, team audit log, isolation matrix for every endpoint.
-    7. API wrap-up: logger tests, error-handling guide, README and CLAUDE.md commands.
+    7. API wrap-up and email:
+       - Email validation: the TLD must be a real one (IANA list from an offline package, no network), in the shared schema so API and web agree. No MX/DNS checks.
+       - Email templates, design first: an "Emails" row on the design canvas (invite email in EN and VI, light and dark-mode, plus a sketch of the future "New Hot lead" alert). After the developer approves it, build the templates with React Email inside the API, each with a plain-text version, and test the rendered HTML (link, language).
+       - Logger tests, error-handling guide, README and CLAUDE.md commands.
     8. Web foundations: design tokens, themes, i18n, shadcn/ui, TanStack Query, auth client, protected routes.
-    9. Web: Login, Signup, Accept invite.
-    10. Web: app shell and Settings > Team.
+    9. Web: Login, Signup, Accept invite (email fields suggest a fix for common domain typos: "Did you mean gmail.com?").
+    10. Web: app shell and Settings > Team (the invite field has the same typo suggestion).
 - **M2 – Ingestion**: sources, API keys, HMAC, idempotency, normalization, dedup, timeline events, rate limit.
   - Web: Leads list (filters, search, saved views), Settings > Lead sources, Settings > Advanced / Developer (API keys).
 - **M3 – Pipeline**: BullMQ queues, enrichment, LLM scoring with mock + real adapters, prompt versions, cost tracking, review queue.

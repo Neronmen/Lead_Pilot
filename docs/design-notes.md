@@ -93,6 +93,19 @@ Designed for a non-technical Owner/Admin (see Audience rule).
 - **Change history:** plain sentences ("Daniel Park turned off the rule “Partner leads”."), grouped by day, filterable by area, person and time range, with an optional before/after view.
 - **States:** integrations loading, team with only you, change history load error, and the no-access page a Member sees on any Settings URL.
 
+## Emails (awaiting approval)
+
+An "Emails" row at the bottom of the canvas: the invite email in English and Vietnamese, each in a light inbox and in dark mode; a sketch of the future "New Hot lead" alert (M4); and the plain-text versions. The API builds them with React Email once approved (M1 step 7).
+
+- **One card, one action.** White card on the page colour, the LeadPilot mark and name, a plain-language headline, one cyan button, the link repeated as text under it, and a footer that says why the person got the email and what to do if they did not expect it.
+- **Email-safe type:** system fonts only (Geist is not reliable in inboxes, and system fonts cover Vietnamese).
+- **Buttons:** light `#0A7D8C` with white text (4.9:1), dark `#22E1F0` with `#031417` (11.7:1). Cyan stays the accent and the Hot tier, as in the app.
+- **Dark mode:** both palettes ship (`color-scheme: light dark` and `prefers-color-scheme`). For clients that force-invert, no pure white or black, no text inside images, and the logo is a transparent PNG that sits on the card. The logo PNG is served by the web app, with alt text.
+- **Language:** the workspace default (SPEC §4.9). Role words follow the glossary.
+- **Hot lead alert** reuses "Why it's Hot" and the three plain-language reasons from Lead detail, so emails and the app say the same thing.
+- **Plain text:** every email has a plain-text part with the same words and link.
+- The rendered boards were checked in a browser against the canvas runtime (EN, VI and dark). Not checked: real mail clients and their forced dark modes.
+
 ## Self-check (Playwright)
 
 All 67 boards were rendered at their real size, served locally with the canvas runtime, in dark, light and Vietnamese where those exist. Each render was checked automatically (placeholder or `[object Object]` text, horizontal overflow, clipped or wrapped labels, empty space below content, content taller than the frame, technical words on daily-work screens, light-on-dark buttons, WCAG AA contrast of every text node), and every screenshot was reviewed by eye. Known exceptions: Foundations shows disabled-state and "subtle" swatches below AA on purpose, and the Landing "Under the hood" cards wrap their descriptions by design.
