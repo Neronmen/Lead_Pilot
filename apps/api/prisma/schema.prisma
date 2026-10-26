@@ -5,8 +5,19 @@
 //   by creation time.
 // - Every tenant table carries `workspaceId`, including child tables, so any
 //   query can be scoped to a workspace without a join (see CLAUDE.md, Tenancy).
-// - Global tables (no workspaceId): User, RefreshToken, PromptVersion,
-//   Enrichment (public website data cached per domain).
+// - Global tables (no workspaceId): User, PromptVersion, Enrichment (public
+//   website data cached per domain).
+// - Same-workspace references: a child points at its parent with a composite
+//   foreign key (parentId, workspaceId) -> parent (id, workspaceId), so
+//   Postgres itself rejects a row in workspace A pointing at workspace B.
+//   Optional composite relations use onDelete NoAction: SetNull would also
+//   null workspaceId, so the service deleting the parent clears the reference
+//   with the scalar (`ownerId: null`), never `disconnect`, which would try to
+//   null workspaceId too. Composite relations use onUpdate Restrict: a row
+//   never moves between workspaces.
+// - Actor columns (Feedback.userId, LeadEvent.actorUserId,
+//   AuditLog.actorUserId) have no foreign key on purpose: history must survive
+//   member removal. Set them only from the session, never from request input.
 
 generator client {
   provider     = "prisma-client"
@@ -16,6 +27,28 @@ generator client {
 
 datasource db {
   provider = "postgresql" // URL comes from prisma.config.ts
+}
+
+/// UI language. Values are the i18n locale codes the web app uses.
+enum Locale {
+  en
+  vi
+}
+
+/// ISO 4217. VND has no minor units.
+enum Currency {
+  USD
+  VND
+}
+
+/// Change history filter (Settings > Change history).
+enum AuditArea {
+  rules
+  sources
+  ideal_customer
+  integrations
+  team
+  general
 }
 
 enum Role {
@@ -74,15 +107,23 @@ enum ActionStatus {
 // ─── Tenancy & identity ─────────────────────────────────────────────────────
 
 model Workspace {
-  id              String   @id @default(uuid(7)) @db.Uuid
-  name            String
-  slug            String   @unique
+  id                String   @id @default(uuid(7)) @db.Uuid
+  name              String
+  slug              String   @unique
   /// ISO-3166 alpha-2, used as the default region for E.164 phone parsing.
-  defaultCountry  String?  @db.Char(2)
+  defaultCountry    String?  @db.Char(2)
   /// Scores below this confidence go to the review queue.
-  reviewThreshold Float    @default(0.6)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  reviewThreshold   Float    @default(0.6)
+  /// Used when a member has no saved `User.locale`, and for outgoing email.
+  defaultLocale     Locale   @default(en)
+  /// Currency of deal values and revenue. AI cost is always USD.
+  currency          Currency @default(USD)
+  /// IANA name, e.g. "Asia/Ho_Chi_Minh"; daily totals and history times use it.
+  timezone          String   @default("UTC")
+  /// Monthly AI cost limit; null means no limit. Enforced from M3.
+  aiMonthlyLimitUsd Decimal? @db.Decimal(10, 2)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   memberships  Membership[]
   teams        Team[]
@@ -97,30 +138,38 @@ model Workspace {
 
 model User {
   id           String   @id @default(uuid(7)) @db.Uuid
-  /// Stored lowercased.
+  /// Stored lowercased (CHECK constraint in the migrations).
   email        String   @unique
   passwordHash String
   name         String?
+  /// Saved language choice; null means use the workspace default.
+  locale       Locale?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   memberships   Membership[]
   refreshTokens RefreshToken[]
-  ownedLeads    Lead[]         @relation("LeadOwner")
+  invitesSent   Invite[]       @relation("InviteInvitedBy")
 }
 
 model Membership {
-  id          String   @id @default(uuid(7)) @db.Uuid
-  workspaceId String   @db.Uuid
-  userId      String   @db.Uuid
-  role        Role     @default(MEMBER)
-  createdAt   DateTime @default(now())
+  id           String    @id @default(uuid(7)) @db.Uuid
+  workspaceId  String    @db.Uuid
+  userId       String    @db.Uuid
+  /// One OWNER per workspace (partial unique index in the migrations).
+  role         Role      @default(MEMBER)
+  /// "Last active" on the Team page; bumped at most once a minute.
+  lastActiveAt DateTime?
+  createdAt    DateTime  @default(now())
 
-  workspace Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  teams     TeamMember[]
+  workspace     Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  teams         TeamMember[]
+  ownedLeads    Lead[]         @relation("LeadOwner")
+  refreshTokens RefreshToken[]
 
   @@unique([workspaceId, userId])
+  @@unique([id, workspaceId])
   @@index([userId])
 }
 
@@ -134,6 +183,7 @@ model Team {
   members   TeamMember[]
 
   @@unique([workspaceId, name])
+  @@unique([id, workspaceId])
 }
 
 /// Not in SPEC §6: needed for round-robin assignment within a team.
@@ -144,31 +194,41 @@ model TeamMember {
   /// Round-robin cursor (M4): the member assigned longest ago goes next.
   lastAssignedAt DateTime?
 
-  team       Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  team       Team       @relation(fields: [teamId, workspaceId], references: [id, workspaceId], onDelete: Cascade, onUpdate: Restrict)
+  membership Membership @relation(fields: [membershipId, workspaceId], references: [id, workspaceId], onDelete: Cascade, onUpdate: Restrict)
 
   @@id([teamId, membershipId])
   @@index([workspaceId])
+  @@index([membershipId])
 }
 
 model Invite {
   id          String    @id @default(uuid(7)) @db.Uuid
   workspaceId String    @db.Uuid
+  /// Stored lowercased (CHECK constraint). One pending invite per address and
+  /// workspace (partial unique index); resending rotates the token in place.
   email       String
   role        Role      @default(MEMBER)
+  /// SHA-256 of the random token in the link (high entropy, so no slow hash).
   tokenHash   String    @unique
-  invitedById String    @db.Uuid
+  /// Null once the inviting user's account is deleted.
+  invitedById String?   @db.Uuid
   expiresAt   DateTime
   acceptedAt  DateTime?
   createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  invitedBy User?     @relation("InviteInvitedBy", fields: [invitedById], references: [id], onDelete: SetNull)
 
   @@index([workspaceId, email])
+  @@index([invitedById])
 }
 
+/// A session belongs to one workspace: removing the membership deletes it.
 model RefreshToken {
   id           String    @id @default(uuid(7)) @db.Uuid
+  workspaceId  String    @db.Uuid
   userId       String    @db.Uuid
   tokenHash    String    @unique
   /// All tokens from one login share a family; reuse of a rotated token revokes the family.
@@ -178,9 +238,11 @@ model RefreshToken {
   replacedById String?   @db.Uuid
   createdAt    DateTime  @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  membership Membership @relation(fields: [workspaceId, userId], references: [workspaceId, userId], onDelete: Cascade, onUpdate: Restrict)
 
   @@index([userId])
+  @@index([workspaceId, userId])
   @@index([familyId])
 }
 
@@ -205,6 +267,7 @@ model Source {
   leads           Lead[]
   idempotencyKeys IdempotencyKey[]
 
+  @@unique([id, workspaceId])
   @@index([workspaceId])
 }
 
@@ -221,7 +284,7 @@ model IdempotencyKey {
   /// createdAt + 24h.
   expiresAt      DateTime
 
-  source Source @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  source Source @relation(fields: [sourceId, workspaceId], references: [id, workspaceId], onDelete: Cascade, onUpdate: Restrict)
 
   @@unique([sourceId, key])
   @@index([expiresAt])
@@ -256,6 +319,8 @@ model Lead {
   score        Int?
   confidence   Float?
   isFreeMail   Boolean     @default(false)
+  /// The owner's userId; must be a member of this workspace (composite FK to
+  /// Membership). Removing the member clears it in the service.
   ownerId      String?     @db.Uuid
   /// e.g. { "hubspot": "123" }
   externalIds  Json        @default("{}")
@@ -263,8 +328,8 @@ model Lead {
   updatedAt    DateTime    @updatedAt
 
   workspace  Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  source     Source      @relation(fields: [sourceId], references: [id], onDelete: Restrict)
-  owner      User?       @relation("LeadOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  source     Source      @relation(fields: [sourceId, workspaceId], references: [id, workspaceId], onDelete: Restrict, onUpdate: Restrict)
+  owner      Membership? @relation("LeadOwner", fields: [workspaceId, ownerId], references: [workspaceId, userId], onDelete: NoAction, onUpdate: Restrict)
   events     LeadEvent[]
   scores     Score[]
   actionRuns ActionRun[]
@@ -273,6 +338,7 @@ model Lead {
   /// DB-level dedup guard: two concurrent ingests cannot create the same email twice.
   /// Postgres allows many NULLs, so leads without email are unaffected.
   @@unique([workspaceId, email])
+  @@unique([id, workspaceId])
   @@index([workspaceId, phone])
   @@index([workspaceId, domain])
   /// Overview charts (leads per day, junk rate) and the unfiltered leads list.
@@ -294,10 +360,11 @@ model LeadEvent {
   type        String
   data        Json     @default("{}")
   /// Null means the system did it.
+  /// Actor id with no FK, so history survives member removal (see header).
   actorUserId String?  @db.Uuid
   createdAt   DateTime @default(now())
 
-  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  lead Lead @relation(fields: [leadId, workspaceId], references: [id, workspaceId], onDelete: Cascade, onUpdate: Restrict)
 
   @@index([workspaceId, leadId, createdAt])
 }
@@ -353,10 +420,12 @@ model Score {
   latencyMs       Int
   createdAt       DateTime @default(now())
 
-  lead          Lead          @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  lead          Lead          @relation(fields: [leadId, workspaceId], references: [id, workspaceId], onDelete: Cascade, onUpdate: Restrict)
   promptVersion PromptVersion @relation(fields: [promptVersionId], references: [id], onDelete: Restrict)
   feedback      Feedback[]
 
+  @@unique([id, workspaceId])
+  @@unique([id, leadId, workspaceId])
   @@index([workspaceId, leadId, createdAt])
   @@index([workspaceId, createdAt])
 }
@@ -382,6 +451,7 @@ model Feedback {
   workspaceId   String    @db.Uuid
   leadId        String    @db.Uuid
   scoreId       String?   @db.Uuid
+  /// Actor id with no FK, so history survives member removal (see header).
   userId        String    @db.Uuid
   previousTier  LeadTier?
   previousScore Int?
@@ -390,10 +460,13 @@ model Feedback {
   note          String?
   createdAt     DateTime  @default(now())
 
-  lead  Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  score Score? @relation(fields: [scoreId], references: [id], onDelete: SetNull)
+  lead  Lead   @relation(fields: [leadId, workspaceId], references: [id, workspaceId], onDelete: Cascade, onUpdate: Restrict)
+  /// The score being corrected: same lead, same workspace.
+  score Score? @relation(fields: [scoreId, leadId, workspaceId], references: [id, leadId, workspaceId], onDelete: NoAction, onUpdate: Restrict)
 
   @@index([workspaceId, createdAt])
+  @@index([workspaceId, leadId])
+  @@index([workspaceId, scoreId])
 }
 
 // ─── Routing & actions ──────────────────────────────────────────────────────
@@ -415,6 +488,7 @@ model RoutingRule {
   workspace  Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   actionRuns ActionRun[]
 
+  @@unique([id, workspaceId])
   @@index([workspaceId, order])
 }
 
@@ -432,6 +506,7 @@ model Integration {
   workspace  Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   actionRuns ActionRun[]
 
+  @@unique([id, workspaceId])
   @@index([workspaceId, type])
 }
 
@@ -454,20 +529,24 @@ model ActionRun {
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
-  lead        Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  rule        RoutingRule? @relation(fields: [ruleId], references: [id], onDelete: SetNull)
-  integration Integration? @relation(fields: [integrationId], references: [id], onDelete: SetNull)
+  lead        Lead         @relation(fields: [leadId, workspaceId], references: [id, workspaceId], onDelete: Cascade, onUpdate: Restrict)
+  rule        RoutingRule? @relation(fields: [ruleId, workspaceId], references: [id, workspaceId], onDelete: NoAction, onUpdate: Restrict)
+  integration Integration? @relation(fields: [integrationId, workspaceId], references: [id, workspaceId], onDelete: NoAction, onUpdate: Restrict)
 
   @@index([workspaceId, leadId])
   @@index([workspaceId, status])
+  @@index([workspaceId, ruleId])
+  @@index([workspaceId, integrationId])
 }
 
 // ─── Audit ──────────────────────────────────────────────────────────────────
 
 model AuditLog {
-  id          String   @id @default(uuid(7)) @db.Uuid
-  workspaceId String   @db.Uuid
-  actorUserId String?  @db.Uuid
+  id          String    @id @default(uuid(7)) @db.Uuid
+  workspaceId String    @db.Uuid
+  /// Actor id with no FK, so history survives member removal (see header).
+  actorUserId String?   @db.Uuid
+  area        AuditArea
   /// e.g. "routing_rule.updated"
   action      String
   entityType  String
@@ -475,10 +554,11 @@ model AuditLog {
   before      Json?
   /// Secrets are redacted before writing.
   after       Json?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@index([workspaceId, createdAt])
+  @@index([workspaceId, area, createdAt])
   @@index([workspaceId, entityType, entityId])
 }

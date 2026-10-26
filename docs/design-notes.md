@@ -144,6 +144,8 @@ One term per concept, on every board. Product names (LeadPilot, Slack, HubSpot, 
 
 ## Schema gaps (proposed; applied per milestone)
 
+**Status by milestone.** Applied in M1 (migration `m1_auth_tenancy`): 1, 7 (as `Workspace.aiMonthlyLimitUsd`), 9, 10, 18, 21, plus three found while planning M1: `Membership.lastActiveAt` (Team "Last active"), `RefreshToken.workspaceId` (one session per workspace) and a real `Invite.invitedBy` relation. Already in the M0 schema: 14. Deferred: 6, 13 (jobTitle), 15, 17 → M2; 4, 5, 11, 12 (`kind` only: `note` already exists), 13 (company size), 16, 19 → M3; 8, 20 → M4; 2, 3 → M5.
+
 From the backlog:
 1. `Workspace.currency` (`USD` | `VND`). `Lead.dealValue` is "in the workspace's currency", but nothing stores which currency that is.
 2. A saved-views model, e.g. `SavedView(workspaceId, userId?, name, filters Json, sort Json, isShared)`.
@@ -154,7 +156,7 @@ From the backlog:
 Found in batch 1:
 
 6. A junk/filtered lead status. `LeadStatus` has no value for leads the pipeline filtered out (shown as "Filtered").
-7. `Workspace.llmMonthlyCapUsd`, for the LLM spend meter and cap in the sidebar.
+7. `Workspace.llmMonthlyCapUsd` (applied in M1 as `aiMonthlyLimitUsd`), for the AI cost meter and limit in the sidebar.
 8. `Lead.firstActionAt`, so "median time to first action" doesn't need a scan over `ActionRun`.
 
 Found in the i18n work:
