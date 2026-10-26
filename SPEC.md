@@ -124,7 +124,7 @@ Every step is a background job (BullMQ + Redis) with retries, exponential backof
 
 ## 6. Data model (starting point)
 
-`Workspace, User, Membership(role), Team, Source(apiKeyHash, hmacSecretEnc), Lead(workspaceId, sourceId, email, phone, firstName, lastName, company, domain, country, customFields JSON, rawPayload JSON, status, tier, score, ownerId, externalIds JSON), LeadEvent(type, data JSON, createdAt), Enrichment(domain, data, expiresAt), Score(leadId, promptVersionId, model, output JSON, tokens, costUsd, latencyMs), PromptVersion, IcpRubric, RoutingRule(order, conditions JSON, actions JSON, enabled), Integration(type, configEnc), ActionRun(leadId, type, status, attempts, lastError), Feedback, AuditLog, IdempotencyKey, RefreshToken, Invite`
+`Workspace, User, Membership(role), Team, Source(apiKeyHash, hmacSecretEnc), Lead(workspaceId, sourceId, email, phone, firstName, lastName, company, domain, country, customFields JSON, rawPayload JSON, status, tier, score, ownerId, externalIds JSON), LeadEvent(type, payload JSON, createdAt), Enrichment(domain, data, expiresAt), Score(leadId, promptVersionId, model, output JSON, tokens, costUsd, latencyMs), PromptVersion, IcpRubric, RoutingRule(order, conditions JSON, actions JSON, enabled), Integration(type, configEnc), ActionRun(leadId, type, status, attempts, lastError), Feedback, AuditLog, IdempotencyKey, RefreshToken, Invite`
 
 ## 7. Milestones (each ends with passing tests + a commit)
 

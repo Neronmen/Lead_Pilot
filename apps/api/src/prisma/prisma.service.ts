@@ -6,7 +6,8 @@ import { PrismaClient } from '../generated/prisma/client';
 
 /**
  * The raw Prisma client. Tenant tables must not be queried through it
- * directly: from M1 on, use the workspace-scoped helper (see CLAUDE.md).
+ * directly: use `TenantPrisma.for(workspaceId)` (see workspace-scope.ts). An
+ * ESLint rule limits who may import this class.
  *
  * Prisma 7 talks to Postgres through a driver adapter (node-postgres here),
  * which owns the connection pool. Connections open lazily on first query.

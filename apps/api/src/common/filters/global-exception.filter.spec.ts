@@ -12,6 +12,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ErrorCode } from '@leadpilot/shared';
+import { Prisma } from '../../generated/prisma/client';
 import { DomainError } from '../errors/domain-error';
 import { GlobalExceptionFilter, toErrorResponse } from './global-exception.filter';
 
@@ -86,6 +87,38 @@ describe('toErrorResponse', () => {
     expect(toErrorResponse(new ServiceUnavailableException('redis at 10.0.0.7 is down'))).toEqual({
       status: 503,
       body: { error: { code: 'SERVICE_UNAVAILABLE', message: 'Internal server error' } },
+    });
+  });
+});
+
+describe('toErrorResponse for Prisma errors', () => {
+  const prismaError = (code: string) =>
+    new Prisma.PrismaClientKnownRequestError(
+      'Unique constraint failed on the fields: (`workspaceId`,`email`) in table "Lead"',
+      { code, clientVersion: 'test', meta: { modelName: 'Lead' } },
+    );
+
+  it.each([
+    ['P2002', 409, ErrorCode.CONFLICT],
+    ['P2003', 409, ErrorCode.CONFLICT],
+    ['P2025', 404, ErrorCode.NOT_FOUND],
+  ])('maps %s to %i %s', (code, status, errorCode) => {
+    expect(toErrorResponse(prismaError(code))).toMatchObject({
+      status,
+      body: { error: { code: errorCode } },
+    });
+  });
+
+  it('never passes Prisma text (table and column names) to the client', () => {
+    const { body } = toErrorResponse(prismaError('P2002'));
+    expect(JSON.stringify(body)).not.toMatch(/Lead|workspaceId|email|constraint/);
+    expect(body.error).not.toHaveProperty('details');
+  });
+
+  it('keeps other Prisma errors a 500', () => {
+    expect(toErrorResponse(prismaError('P2034'))).toEqual({
+      status: 500,
+      body: { error: { code: ErrorCode.INTERNAL, message: 'Internal server error' } },
     });
   });
 });

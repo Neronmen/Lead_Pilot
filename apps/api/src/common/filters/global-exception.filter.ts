@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { ErrorCode, type ErrorBody } from '@leadpilot/shared';
 import type { Response } from 'express';
+import { Prisma } from '../../generated/prisma/client';
 import { DomainError } from '../errors/domain-error';
 
 export interface ErrorResponse {
@@ -20,6 +21,34 @@ const CODE_BY_STATUS: Partial<Record<number, string>> = {
   [HttpStatus.BAD_REQUEST]: ErrorCode.VALIDATION_FAILED,
   [HttpStatus.TOO_MANY_REQUESTS]: ErrorCode.RATE_LIMITED,
   [HttpStatus.INTERNAL_SERVER_ERROR]: ErrorCode.INTERNAL,
+};
+
+/**
+ * Prisma errors a request can cause by itself (a duplicate, a row that is not
+ * there or not in the caller's workspace, a reference that does not exist).
+ * The message is generic on purpose: Prisma's own text names tables and
+ * columns. Any other Prisma error is a bug and stays a 500.
+ *
+ * P2003 is meant for "still in use" (a delete blocked by a foreign key).
+ * Services check ids taken from a request through the scoped client first and
+ * throw a domain NOT_FOUND or VALIDATION error, so a missing or foreign
+ * reference never reaches the database as P2003.
+ */
+const PRISMA_ERRORS: Partial<Record<string, ErrorResponse>> = {
+  P2002: {
+    status: HttpStatus.CONFLICT,
+    body: { error: { code: ErrorCode.CONFLICT, message: 'Resource already exists' } },
+  },
+  P2003: {
+    status: HttpStatus.CONFLICT,
+    body: {
+      error: { code: ErrorCode.CONFLICT, message: 'Referenced resource is missing or in use' },
+    },
+  },
+  P2025: {
+    status: HttpStatus.NOT_FOUND,
+    body: { error: { code: ErrorCode.NOT_FOUND, message: 'Resource not found' } },
+  },
 };
 
 const INTERNAL_ERROR: ErrorResponse = {
@@ -48,6 +77,10 @@ export function toErrorResponse(exception: unknown): ErrorResponse {
       status: exception.status,
       body: envelope(exception.code, exception.message, exception.details),
     };
+  }
+
+  if (exception instanceof Prisma.PrismaClientKnownRequestError) {
+    return PRISMA_ERRORS[exception.code] ?? INTERNAL_ERROR;
   }
 
   if (exception instanceof HttpException) {

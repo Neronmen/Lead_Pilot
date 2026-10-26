@@ -33,7 +33,7 @@ Read `SPEC.md` for the product. This file is how we build it.
 - TypeScript strict. No `any` unless commented.
 - NestJS: one module per domain (`auth`, `workspaces`, `sources`, `ingest`, `leads`, `pipeline`, `scoring`, `routing`, `integrations`, `dashboard`, `audit`).
 - Business logic lives in services; controllers stay thin. External systems behind interfaces (`LlmProvider`, `EnrichmentProvider`, `EmailProvider`, `CrmProvider`) with a mock implementation for tests and demo mode.
-- **Tenancy**: every query on tenant data must be scoped by `workspaceId`. Use the shared scoping helper; never hand-write unscoped queries on tenant tables. Every new endpoint needs a cross-workspace access test.
+- **Tenancy**: every query on tenant data must be scoped by `workspaceId`. Use `TenantPrisma.for(workspaceId)` (`apps/api/src/prisma/workspace-scope.ts`); never hand-write unscoped queries on tenant tables. The raw `PrismaService` and raw SQL are lint errors outside the allowlist in `eslint.config.mjs`: adding a file there needs a stated reason. Every new endpoint needs a cross-workspace access test.
 - Errors: throw domain errors, map them in one global filter to `{ error: { code, message, details? } }`.
 - Logging: pino, include `requestId` and `workspaceId`. Never log secrets, tokens, or full lead PII at info level.
 - Secrets in DB encrypted with the crypto helper (AES-256-GCM). API keys stored hashed, shown once.

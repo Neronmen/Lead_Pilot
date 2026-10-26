@@ -4,7 +4,6 @@ Items raised in reviews that belong to a later milestone. Each milestone plan st
 
 ## M1 – Auth & tenancy (do first)
 
-- Map Prisma errors in the global filter: `P2002` → `CONFLICT`, `P2025` → `NOT_FOUND`.
 - Web API client: `credentials: 'include'` for the refresh-token cookie.
 - Add `workspaceId` to the log context (pino `assign`) once requests are authenticated.
 - Logger tests: header and query-string stripping, `/health` excluded from access logs (more valuable once auth headers exist).

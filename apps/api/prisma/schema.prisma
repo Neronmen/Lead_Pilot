@@ -358,7 +358,9 @@ model LeadEvent {
   workspaceId String   @db.Uuid
   leadId      String   @db.Uuid
   type        String
-  data        Json     @default("{}")
+  /// Event details. Not named `data`: that is a Prisma argument keyword, and
+  /// the workspace scope walks keywords (see workspace-scope.ts).
+  payload     Json     @default("{}")
   /// Null means the system did it.
   /// Actor id with no FK, so history survives member removal (see header).
   actorUserId String?  @db.Uuid
