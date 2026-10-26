@@ -29,6 +29,13 @@
     "test": {
       "dependsOn": ["^build", "db:generate"]
     },
+    // Browser render checks of the web app (Playwright, mocked API): `pnpm test:render`.
+    "test:render": {
+      "dependsOn": ["^build"],
+      // Playwright reads CI (workers, retries) from the environment.
+      "passThroughEnv": ["CI"],
+      "cache": false
+    },
     "test:e2e": {
       "dependsOn": ["^build", "db:generate"],
       // Turbo hides env vars from tasks unless listed. These reach the e2e run

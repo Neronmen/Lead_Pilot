@@ -6,3 +6,7 @@ pnpm-lock.yaml
 **/generated/**
 **/migrations/**
 *.md
+.next-e2e
+apps/web/e2e/screenshots
+apps/web/e2e/results.md
+apps/web/e2e/test-results

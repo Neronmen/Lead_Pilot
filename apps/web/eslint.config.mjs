@@ -7,7 +7,7 @@ const config = [
   ...base,
   ...nextVitals,
   ...nextTs,
-  { ignores: ['.next/**', 'next-env.d.ts'] },
+  { ignores: ['.next/**', '.next-e2e/**', 'next-env.d.ts'] },
   // No hard-coded user-facing text (SPEC 4.9): words go through next-intl.
   // Internal pages, shadcn primitives and tests are exempt (CLAUDE.md).
   {

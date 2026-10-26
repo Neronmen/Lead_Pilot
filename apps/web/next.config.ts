@@ -11,6 +11,9 @@ if (existsSync(rootEnv)) process.loadEnvFile(rootEnv);
 const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
 
 const nextConfig: NextConfig = {
+  // The render checks (`pnpm test:render`) build into their own folder, so they
+  // never touch the `.next` that a running `pnpm dev` uses.
+  distDir: process.env.NEXT_DIST_DIR ?? '.next',
   reactStrictMode: true,
   poweredByHeader: false,
 };

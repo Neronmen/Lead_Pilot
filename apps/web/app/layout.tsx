@@ -12,6 +12,12 @@ import './globals.css';
 const geist = Geist({ subsets: ['latin', 'vietnamese'], variable: '--font-geist-sans' });
 const geistMono = Geist_Mono({ subsets: ['latin', 'vietnamese'], variable: '--font-geist-mono' });
 
+// Runs in <head>, before the body is parsed and before anything is painted: a
+// person who chose light gets light from the first frame. next-themes has its
+// own script (in the body) for everything else; this one only covers the
+// moment before it. Keep the storage key in sync with ThemeProvider below.
+const EARLY_THEME_SCRIPT = `try{if(localStorage.getItem('lp-theme')==='light'){var h=document.documentElement;h.classList.remove('dark');h.style.colorScheme='light'}}catch(e){}`;
+
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('meta');
   return { title: 'LeadPilot', description: t('description') };
@@ -28,6 +34,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       className={cn('dark font-sans', geist.variable, geistMono.variable)}
       suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: EARLY_THEME_SCRIPT }} />
+      </head>
       <body>
         <NextIntlClientProvider>
           <ThemeProvider

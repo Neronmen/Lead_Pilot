@@ -17,7 +17,7 @@ jobs:
   checks:
     name: Lint, typecheck, test, build
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
 
     # Same images as docker-compose.yml. e2e tests run against these.
     services:
@@ -74,3 +74,18 @@ jobs:
       - run: pnpm test
       - run: pnpm test:e2e
       - run: pnpm build
+
+      # Real-browser render checks of the web app (mocked API; no database needed).
+      - name: Install Chromium for the render checks
+        run: pnpm --filter web exec playwright install --with-deps chromium
+      - run: pnpm test:render
+      - name: Keep the screenshots and the pass/fail table
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-render-checks
+          path: |
+            apps/web/e2e/screenshots
+            apps/web/e2e/results.md
+            apps/web/e2e/test-results
+          if-no-files-found: ignore

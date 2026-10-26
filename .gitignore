@@ -31,3 +31,8 @@ Thumbs.db
 
 # Next.js (regenerated on every dev/build)
 next-env.d.ts
+
+# web render checks (Playwright)
+.next-e2e/
+apps/web/e2e/screenshots/
+apps/web/e2e/results.md

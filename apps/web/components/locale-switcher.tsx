@@ -42,7 +42,8 @@ export function LocaleSwitcher({
           key={locale}
           type="button"
           lang={locale}
-          aria-label={t(locale)}
+          // Starts with the visible text ("EN"): screen-reader users who say what they see are understood.
+          aria-label={`${locale.toUpperCase()} ${t(locale)}`}
           aria-pressed={locale === current}
           onClick={() => choose(locale)}
           className={cn(
