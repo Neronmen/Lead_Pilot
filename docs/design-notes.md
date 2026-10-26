@@ -2,7 +2,7 @@
 
 **Design canvas:** https://claude.ai/artifact/VjAxmCrJVRUxSPxGzwAT5f (private until shared from the page's Share menu)
 
-**Status:** milestone D in progress. Batch 1 (foundations, landing, auth, overview, leads list): direction approved, and the six feedback fixes are applied on the canvas. Batch 2 (lead detail, review queue): approved, with the audience rule and chart fix applied. Batch 3 (setup checklist, lead sources, ideal customer, routing rules, Advanced / Developer) is on the canvas and awaits feedback. Batch 4 (integrations, team, change history) waits for that feedback. Per-screen field, filter and metric lists are added here as each batch is approved; M5 implements the screens to match.
+**Status:** milestone D in progress. Batch 1 (foundations, landing, auth, overview, leads list): direction approved, and the six feedback fixes are applied on the canvas. Batch 2 (lead detail, review queue): approved, with the audience rule and chart fix applied. Batches 3 and 4 (setup checklist, general, lead sources, ideal customer, routing rules, integrations, team, change history, Advanced / Developer) are on the canvas and await feedback. Every board was rendered with Playwright and checked; see Self-check below. Per-screen field, filter and metric lists are added here as each batch is approved; M5 implements the screens to match.
 
 ## Visual direction: refined cyber
 
@@ -21,7 +21,7 @@
   - API keys, HMAC secrets, raw webhooks, endpoints and prompt versions live in a separate **Advanced / Developer** tab in Settings. Nothing else in Settings shows them.
   - New workspaces get a short **setup checklist**: connect a source → describe your ideal customer → connect Slack or email → invite your team.
 - Example: a failed action reads "Couldn't send to n8n after 5 tries. Paused." with a Retry button. `502 Bad Gateway`, the attempt count and the job id are in the disclosure.
-- Still to align with this rule: the Overview "LLM cost this month" KPI and the sidebar spend meter become Admin/Owner only.
+- "AI cost" (never "LLM spend") is Admin/Owner only: the Overview KPI and the sidebar meter are hidden for Members.
 - **Glow only on accent elements:** focused controls, the primary button, Hot badges. Never on body text or numbers.
 - **Texture:** a subtle grid with fine noise, limited to the app background and the landing hero.
 - **Type:** Geist for UI and Geist Mono for numbers, IDs and eyebrow labels. Both ship a Vietnamese subset.
@@ -38,7 +38,7 @@
 | border | `#24263A` | `#E2E3EC` |
 | foreground | `#ECEDF5` (16.1:1 on card) | `#0D0E1A` (19.2:1) |
 | muted text | `#9A9DB8` (7.1:1 on card) | `#565A73` (6.3:1 on bg) |
-| accent (cyan, approved) | `#22E1F0`; text on it `#031417` (11.7:1) | `#0A7D8C`; white text 4.9:1 |
+| accent (cyan, approved) | `#22E1F0`; text on it `#031417` (11.7:1) | `#0A7D8C`; white text 4.9:1; accent text on tints `#076A77` |
 | tier Hot | the accent | the accent |
 | tier Warm | `#D8B26A` (9.4:1) | `#8A5A0B` (5.9:1) |
 | tier Cold | `#B4A6E0` (8.5:1) | `#5B4BA8` (7.0:1) |
@@ -53,8 +53,8 @@ Chart series by source contain no cyan or teal. They were run through the datavi
 |---|---|---|
 | 1 · Website form (blue) | `#3987E5` | `#2A78D6` |
 | 2 · LinkedIn Ads (magenta) | `#D55181` | `#B8407F` |
-| 3 · Partner webhook (violet) | `#9085E9` | `#6250D6` |
-| 4 · CSV import (orange) | `#D95926` | `#EB6834` |
+| 3 · Partners (violet) | `#9085E9` | `#6250D6` |
+| 4 · Spreadsheet uploads (orange) | `#D95926` | `#EB6834` |
 | Other (folded, neutral) | `#6F7290` | `#8A8DA3` |
 
 Blue and violet are never neighbours in the stack order, and magenta never sits next to the grey Other: either pair fails colorblind separation side by side.
@@ -84,6 +84,49 @@ Designed for a non-technical Owner/Admin (see Audience rule).
 - **Advanced / Developer:** API keys (a new key shown once), endpoints per source, HMAC signature and secret rotation, embed and curl snippets, outgoing webhook signing, and prompt versions with evaluation accuracy and cost per lead.
 - **Members:** the sidebar hides Routing rules and Settings for Members.
 - **States:** no rules yet, first-run sources, revoke-key confirmation in the page (never a browser dialog), and an Ideal customer field error.
+
+## Batch 4 (awaiting feedback)
+
+- **General:** workspace name, language, currency, time zone, and the monthly AI cost limit. The page says in plain words what happens at the limit: leads keep arriving and are saved, they're rated by simple rules and marked "Rated without AI", the AI resumes on the 1st or when the limit is raised, and those leads can be looked at again later. Owner and admins get an email at 80% and 100%. In demo mode the built-in sample AI is free.
+- **Integrations:** Slack, Email, HubSpot, "Send to another tool" (webhook) and Telegram, each in a connected, not connected or needs-attention state. Connected tools have "Send test message", with the result shown under the card. Errors say what happened and what to do ("HubSpot stopped accepting new contacts because the connection expired… Reconnect"). Webhook addresses and secrets stay in Advanced / Developer.
+- **Team:** invite by email as Member or Admin; Owner, Admin and Member explained in one line each; people with role, open leads and last active; Remove asks for confirmation in the row and says what happens to that person's leads; pending invites with Resend and Cancel.
+- **Change history:** plain sentences ("Daniel Park turned off the rule “Partner leads”."), grouped by day, filterable by area, person and time range, with an optional before/after view.
+- **States:** integrations loading, team with only you, change history load error, and the no-access page a Member sees on any Settings URL.
+
+## Self-check (Playwright)
+
+All 67 boards were rendered at their real size, served locally with the canvas runtime, in dark, light and Vietnamese where those exist. Each render was checked automatically (placeholder or `[object Object]` text, horizontal overflow, clipped or wrapped labels, empty space below content, content taller than the frame, technical words on daily-work screens, light-on-dark buttons, WCAG AA contrast of every text node), and every screenshot was reviewed by eye. Known exceptions: Foundations shows disabled-state and "subtle" swatches below AA on purpose, and the Landing "Under the hood" cards wrap their descriptions by design.
+
+Not covered: real devices and browsers other than Chrome, screen readers, keyboard-only walkthroughs, the WebGL heroes in motion (checked as a still frame), and how hover and focus states look.
+
+## Vietnamese glossary
+
+One term per concept, on every board. Product names (LeadPilot, Slack, HubSpot, Zapier, n8n) and "lead" stay in English.
+
+| English | Tiếng Việt | Notes |
+|---|---|---|
+| lead | lead | Common in Vietnamese sales teams; not translated. |
+| Hot / Warm / Cold / Junk | Nóng / Ấm / Lạnh / Rác | Tier names. |
+| tier | hạng | "Xếp hạng" is the verb: the AI rates a lead. |
+| score | điểm | "Chấm điểm" is the verb: the AI scores a lead. |
+| owner (of a lead) | người phụ trách | Never shortened to "phụ trách". |
+| owner (of a workspace) | chủ sở hữu | |
+| admin / member | quản trị viên / thành viên | |
+| workspace | không gian làm việc | |
+| source | nguồn | "Nguồn lead" in Settings. |
+| routing, routing rule | phân bổ, quy tắc phân bổ | |
+| review queue | hàng chờ duyệt | |
+| enrichment, company info | thông tin công ty | Not "làm giàu dữ liệu". |
+| pipeline (the lead flow) | luồng lead | Not left in English. |
+| ideal customer | khách hàng lý tưởng | Not "tiêu chí ICP". |
+| deal-breaker | điều loại trừ | |
+| integration | tích hợp | |
+| team | đội ngũ | |
+| change history | lịch sử thay đổi | |
+| AI cost, monthly limit | chi phí AI, hạn mức | |
+| technical details | chi tiết kỹ thuật | |
+| sales rep / account executive | nhân viên sale / nhân viên kinh doanh | |
+| spreadsheet | bảng tính | |
 
 ## Motion
 
@@ -131,3 +174,10 @@ Found in batch 3:
 15. An `ApiKey` model (`sourceId`, `name`, `prefix`, `hash`, `createdAt`, `lastUsedAt`, `revokedAt`) in place of the single `Source.apiKeyHash`, so a source can rotate keys without downtime.
 16. Tier bands (`hotMin`, `warmMin`) on `IcpRubric` or `Workspace`. Today the 80 and 55 cut-offs exist only in the UI.
 17. `Source.lastLeadAt`, or an index that makes it cheap, for the "silent for 14 days" flag.
+
+Found in batch 4:
+
+18. `Workspace.timezone` (IANA name), for daily totals and Change history times.
+19. A "rated without AI" marker on `Score` (for example `Score.method`: `ai` | `rules`), so leads rated after the AI cost limit was reached can be found and looked at again.
+20. `Integration.status` (`connected` | `needs_attention` | `paused`), `lastError` and `lastTestedAt`, for the Integrations states and "Send test message".
+21. `AuditLog.area` (`rules` | `sources` | `ideal_customer` | `integrations` | `team` | `general`), for the Change history filters. The before/after values SPEC §4.8 already asks for drive the "See before and after" view.
