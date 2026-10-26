@@ -84,4 +84,60 @@ describe('Invite email through Mailpit (e2e)', () => {
       .expect(200);
     expect(preview.body).toMatchObject({ email: address, role: 'MEMBER' });
   });
+
+  it('sends both a text and an HTML part, in Vietnamese, with names that need escaping', async () => {
+    const inviterName = 'Nguyễn Văn <Ánh> & "B"';
+    const workspaceName = 'Cửa hàng Ánh & Co';
+    const owner = await signUp(app, {
+      email: inviteeAddress('mailpit-vi-owner'),
+      name: inviterName,
+      workspaceName,
+      locale: 'vi',
+    });
+    const address = inviteeAddress('mailpit-vi-invitee');
+    await request(app.getHttpServer())
+      .post('/invites')
+      .set('authorization', `Bearer ${owner.accessToken}`)
+      .send({ emails: [address], role: 'ADMIN' })
+      .expect(201);
+
+    const found = (await fetch(
+      `${mailpit}/api/v1/search?query=${encodeURIComponent(`to:${address}`)}`,
+    ).then((r) => r.json())) as { messages: Array<{ ID: string }> };
+    expect(found.messages).toHaveLength(1);
+    const message = (await fetch(`${mailpit}/api/v1/message/${found.messages[0]?.ID}`).then((r) =>
+      r.json(),
+    )) as {
+      Subject: string;
+      Text: string;
+      HTML: string;
+      Attachments: unknown[];
+      Inline: unknown[];
+    };
+
+    // Subject survives the header encoding with diacritics, on one line.
+    expect(message.Subject).toBe(
+      `${inviterName} đã mời bạn tham gia ${workspaceName} trên LeadPilot`,
+    );
+    // Both parts arrive, in the workspace language.
+    expect(message.Text).toContain('Chấp nhận lời mời:');
+    expect(message.Text).toContain('quản trị viên');
+    expect(message.HTML).toContain('lang="vi"');
+    expect(message.HTML).toContain('Chấp nhận lời mời');
+    // Text is as typed; HTML is escaped once.
+    expect(message.Text).toContain(inviterName);
+    expect(message.Text).not.toMatch(/&(amp|lt|gt|quot|#\d+);/);
+    expect(message.HTML).toContain('Nguyễn Văn &lt;Ánh&gt; &amp; &quot;B&quot;');
+    expect(message.HTML).not.toContain('&amp;amp;');
+    // The token survives both transports (quoted-printable can mangle "=" and long lines).
+    const textToken = /#t=([A-Za-z0-9_-]{43})/.exec(message.Text)?.[1];
+    const htmlTokens = [...message.HTML.matchAll(/#t=([A-Za-z0-9_-]{43})/g)].map((m) => m[1]);
+    expect(textToken).toBeDefined();
+    expect(htmlTokens).toHaveLength(3);
+    expect(new Set(htmlTokens)).toEqual(new Set([textToken]));
+    // Nothing attached or inlined: the logo is a remote image, not a tracking asset.
+    expect(message.Attachments ?? []).toHaveLength(0);
+    expect(message.Inline ?? []).toHaveLength(0);
+    expect([...message.HTML.matchAll(/<img\b/g)]).toHaveLength(1);
+  });
 });

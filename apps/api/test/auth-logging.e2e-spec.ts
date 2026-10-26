@@ -79,7 +79,7 @@ describe('Auth logging context (e2e)', () => {
   async function signedIn(): Promise<{ token: string; userId: string; workspaceId: string }> {
     counter += 1;
     const { accessToken } = await signUp(app, {
-      email: `${PREFIX}${Date.now()}-${counter}@example.test`,
+      email: `${PREFIX}${Date.now()}-${counter}@example.com`,
     });
     const me = await request(app.getHttpServer())
       .get('/auth/me')
@@ -121,5 +121,73 @@ describe('Auth logging context (e2e)', () => {
     const { token } = await signedIn();
     const mine = await logsOf('/auth/me', token);
     expect(JSON.stringify(mine)).not.toContain(token);
+  });
+
+  describe('what the real pipeline leaves out of a log line', () => {
+    const SECRET_COOKIE = 'lp_refresh=cookie-secret-value-123';
+    const SECRET_QUERY = 'leak-me@example.com';
+
+    it('drops every header and the query string from the request line', async () => {
+      const { token } = await signedIn();
+      lines.length = 0;
+      const requestId = `log-hdr-${Date.now()}`;
+      await request(app.getHttpServer())
+        .get(`/auth/me?email=${SECRET_QUERY}&token=query-secret-456`)
+        .set('authorization', `Bearer ${token}`)
+        .set('cookie', SECRET_COOKIE)
+        .set('x-api-key', 'api-key-secret-789')
+        .set('x-request-id', requestId)
+        .expect(200);
+      const mine = lines.filter((line) => line.req?.id === requestId);
+      expect(mine.length).toBeGreaterThan(0);
+      const raw = JSON.stringify(mine);
+      for (const secret of [
+        token,
+        'cookie-secret-value-123',
+        SECRET_QUERY,
+        'query-secret-456',
+        'api-key-secret-789',
+        '?',
+      ]) {
+        expect(raw).not.toContain(secret);
+      }
+      expect(mine.find((line) => line.msg === 'request completed')?.req).toEqual({
+        id: requestId,
+        method: 'GET',
+        url: '/auth/me',
+      });
+      for (const line of mine) {
+        expect(line).not.toHaveProperty('req.headers');
+        expect(line).not.toHaveProperty('res.headers');
+      }
+    });
+
+    it('never logs the password or token of a failed login, nor the Set-Cookie of a good one', async () => {
+      const user = await signUp(app, { email: `${PREFIX}${Date.now()}-login@example.com` });
+      lines.length = 0;
+      await request(app.getHttpServer())
+        .post('/auth/login')
+        .set('x-request-id', 'log-login-bad')
+        .send({ email: user.body.email, password: 'wrong-password-secret-1' })
+        .expect(401);
+      const ok = await request(app.getHttpServer())
+        .post('/auth/login')
+        .set('x-request-id', 'log-login-ok')
+        .send({ email: user.body.email, password: user.body.password })
+        .expect(200);
+      const raw = JSON.stringify(lines);
+      expect(raw).not.toContain('wrong-password-secret-1');
+      expect(raw).not.toContain(user.body.password);
+      expect(raw).not.toContain(ok.body.accessToken);
+      expect(raw).not.toContain('lp_refresh');
+    });
+
+    it('skips health probes (with or without a query) but logs routes that merely start with /health', async () => {
+      lines.length = 0;
+      await request(app.getHttpServer()).get('/health?probe=1').set('x-request-id', 'hp-1');
+      await request(app.getHttpServer()).get('/healthy-x').set('x-request-id', 'hp-2').expect(404);
+      expect(lines.filter((line) => line.req?.id === 'hp-1')).toHaveLength(0);
+      expect(lines.filter((line) => line.req?.id === 'hp-2').length).toBeGreaterThan(0);
+    });
   });
 });

@@ -19,7 +19,7 @@ let counter = 0;
 /** A unique address, so parallel files and reruns never collide. */
 export function inviteeAddress(label: string): string {
   counter += 1;
-  return `${INVITES_EMAIL_PREFIX}${Date.now()}-${counter}-${label}@example.test`;
+  return `${INVITES_EMAIL_PREFIX}${Date.now()}-${counter}-${label}@example.com`;
 }
 
 export function mailbox(app: NestExpressApplication): MockEmailProvider {

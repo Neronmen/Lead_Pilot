@@ -282,14 +282,16 @@ export class InvitesService {
     token: string,
   ): Promise<InviteResultStatus> {
     if (context.mailDown) return 'email_failed';
-    const message = buildInviteEmail({
+    const webOrigin = this.config.get('WEB_ORIGIN', { infer: true });
+    const message = await buildInviteEmail({
       to: address,
       locale: context.workspaceLocale,
       inviterName: context.inviterName,
       workspaceName: context.workspaceName,
       role: role === 'ADMIN' ? 'ADMIN' : 'MEMBER',
-      link: inviteLink(this.config.get('WEB_ORIGIN', { infer: true }), token),
+      link: inviteLink(webOrigin, token),
       expiresInDays: INVITE_TTL_DAYS,
+      webOrigin,
     });
     try {
       await this.email.send(message);

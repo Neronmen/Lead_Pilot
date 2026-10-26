@@ -47,7 +47,7 @@ export const validationIssueSchema = z.object({
   maximum: z.number().optional(),
   /** For invalid_type: the expected type ("string", "object"...), so "required" can be told apart. */
   expected: z.string().optional(),
-  /** e.g. "email" for an invalid_format issue. */
+  /** e.g. "email" for an invalid_format issue, or the name of a custom check ("unknown_tld"). */
   format: z.string().optional(),
   /** Allowed values of an enum, or the unrecognized keys. */
   values: z.array(z.string()).optional(),
@@ -77,6 +77,10 @@ export function toValidationIssues(issues: readonly z.core.$ZodIssue[]): Validat
         break;
       case 'invalid_format':
         result.format = issue.format;
+        break;
+      case 'custom':
+        // A named check of ours (e.g. "unknown_tld"), so the web app can word it.
+        if (typeof issue.params?.reason === 'string') result.format = issue.params.reason;
         break;
       case 'invalid_value':
         result.values = issue.values.map(String);

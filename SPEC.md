@@ -147,8 +147,8 @@ From M1 on, milestones are **vertical slices**: each ships its API and the web p
     3. Shared zod schemas and error codes, validation pipe, Swagger from zod. *(done)*
     4. Auth API: signup, login, refresh (rotation, reuse detection), logout, me (+ locale), guards, rate limits, `workspaceId` in logs. *(done)*
     5. Email provider (SMTP to Mailpit, mock) and the invite API. *(done)*
-    6. Members API, team audit log, isolation matrix for every endpoint.
-    7. API wrap-up and email:
+    6. Members API, team audit log, isolation matrix for every endpoint. *(done)*
+    7. API wrap-up and email: *(done)*
        - Email validation: the TLD must be a real one (IANA list from an offline package, no network), in the shared schema so API and web agree. No MX/DNS checks.
        - Email templates, design first: an "Emails" row on the design canvas (invite email in EN and VI, light and dark-mode, plus a sketch of the future "New Hot lead" alert). After the developer approves it, build the templates with React Email inside the API, each with a plain-text version, and test the rendered HTML (link, language).
        - Logger tests, error-handling guide, README and CLAUDE.md commands.

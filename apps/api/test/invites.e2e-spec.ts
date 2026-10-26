@@ -74,7 +74,9 @@ describe('Invites (e2e)', () => {
       const mail = mailbox(app).lastTo(a);
       expect(mail?.subject).toBe('Chloe Martin invited you to Harbour & Pine on LeadPilot');
       expect(mail?.text).toContain(`/invite#t=${token}`);
-      expect(mail?.text).toContain('as a member');
+      expect(mail?.text).toContain('You’ll join as a Member.');
+      // The HTML part carries the same link (the approved Emails design).
+      expect(mail?.html).toContain(`href="${mail?.text.match(/https?:\/\/\S+/)?.[0]}"`);
     });
 
     it('invites an address typed twice (in any case) only once', async () => {

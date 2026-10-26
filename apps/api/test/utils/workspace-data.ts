@@ -36,7 +36,7 @@ export async function makeLead(
     data: {
       workspaceId,
       sourceId: source.id,
-      email: `lead-${suffix}@example.test`,
+      email: `lead-${suffix}@example.com`,
       rawPayload: {},
       ownerId: options.ownerId,
       outcome: options.outcome ?? 'NONE',

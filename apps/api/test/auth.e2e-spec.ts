@@ -83,6 +83,17 @@ describe('Auth (e2e)', () => {
       expect(errorCode(res)).toBe('EMAIL_TAKEN');
     });
 
+    it('refuses an email whose ending is not a real top-level domain', async () => {
+      for (const email of ['chloe@gmail.cmo', 'chloe@harbour.test']) {
+        const res = await http().post('/auth/signup').send(signupBody({ email })).expect(400);
+        expect(errorCode(res)).toBe('VALIDATION_FAILED');
+        expect(res.body.error.details).toEqual([
+          { path: 'email', code: 'custom', format: 'unknown_tld' },
+        ]);
+        expect(await prisma.user.count({ where: { email } })).toBe(0);
+      }
+    });
+
     it('answers VALIDATION_FAILED for a weak password or an extra field', async () => {
       const res = await http()
         .post('/auth/signup')
@@ -111,7 +122,7 @@ describe('Auth (e2e)', () => {
         .expect(401);
       const unknown = await http()
         .post('/auth/login')
-        .send({ email: `${E2E_EMAIL_PREFIX}nobody@example.test`, password: 'whatever-123' })
+        .send({ email: `${E2E_EMAIL_PREFIX}nobody@example.com`, password: 'whatever-123' })
         .expect(401);
       expect(wrong.body).toEqual(unknown.body);
       expect(errorCode(wrong)).toBe('AUTH_INVALID_CREDENTIALS');
@@ -604,8 +615,8 @@ describe('Auth (e2e)', () => {
 
       const attempts: unknown[] = [
         {},
-        { email: 'mallory@example.test' },
-        { locale: 'vi', email: 'mallory@example.test' },
+        { email: 'mallory@example.com' },
+        { locale: 'vi', email: 'mallory@example.com' },
         { locale: 'vi', role: 'OWNER' },
         { locale: 'vi', passwordHash: 'x' },
         { locale: 'vi', password: 'new-password-2026!' },
@@ -689,7 +700,7 @@ describe('Auth (e2e)', () => {
         await http().post('/auth/login').send({ email, password: 'not-the-password' }).expect(401);
         return performance.now() - start;
       };
-      const unknownEmail = () => `${E2E_EMAIL_PREFIX}nobody-${crypto.randomUUID()}@example.test`;
+      const unknownEmail = () => `${E2E_EMAIL_PREFIX}nobody-${crypto.randomUUID()}@example.com`;
       // Warm up: the first unknown-email login also builds the dummy hash.
       await timed(unknownEmail());
       await timed(body.email);

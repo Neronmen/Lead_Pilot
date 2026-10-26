@@ -13,7 +13,7 @@ export function signupBody(overrides: Partial<SignupRequest> = {}): SignupReques
   return {
     name: 'Chloe Martin',
     workspaceName: 'Harbour & Pine',
-    email: `${E2E_EMAIL_PREFIX}${Date.now()}-${counter}@example.test`,
+    email: `${E2E_EMAIL_PREFIX}${Date.now()}-${counter}@example.com`,
     password: 'harbour-pine-2026!',
     locale: 'en',
     currency: 'USD',

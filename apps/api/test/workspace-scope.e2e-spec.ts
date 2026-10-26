@@ -35,7 +35,7 @@ describe('Workspace scope (e2e)', () => {
       data: {
         workspaceId: workspace.id,
         sourceId: source.id,
-        email: `lead-${suffix}@example.test`,
+        email: `lead-${suffix}@example.com`,
         rawPayload: {},
       },
     });
@@ -97,14 +97,14 @@ describe('Workspace scope (e2e)', () => {
 
   it('upserts through a compound unique key inside the workspace', async () => {
     const where = {
-      workspaceId_email: { workspaceId: a.workspaceId, email: 'upsert@example.test' },
+      workspaceId_email: { workspaceId: a.workspaceId, email: 'upsert@example.com' },
     };
     const created = await scopedA().lead.upsert({
       where,
       create: {
         workspaceId: a.workspaceId,
         sourceId: a.source.id,
-        email: 'upsert@example.test',
+        email: 'upsert@example.com',
         rawPayload: {},
       },
       update: { firstName: 'First' },
@@ -114,7 +114,7 @@ describe('Workspace scope (e2e)', () => {
       create: {
         workspaceId: a.workspaceId,
         sourceId: a.source.id,
-        email: 'upsert@example.test',
+        email: 'upsert@example.com',
         rawPayload: {},
       },
       update: { firstName: 'Second' },
@@ -128,7 +128,7 @@ describe('Workspace scope (e2e)', () => {
 
   it('keeps the scope inside an interactive transaction', async () => {
     const ids = await scopedA().$transaction(async (tx) => {
-      const leads = await tx.lead.findMany({ where: { email: { endsWith: '@example.test' } } });
+      const leads = await tx.lead.findMany({ where: { email: { endsWith: '@example.com' } } });
       return leads.map((lead) => lead.workspaceId);
     });
     expect(ids.length).toBeGreaterThan(0);

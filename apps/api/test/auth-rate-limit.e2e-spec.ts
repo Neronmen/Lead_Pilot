@@ -26,7 +26,7 @@ describe('Auth rate limit (e2e)', () => {
     const attempt = () =>
       request(app.getHttpServer())
         .post('/auth/login')
-        .send({ email: 'e2e-auth-ratelimit@example.test', password: 'wrong-password' });
+        .send({ email: 'e2e-auth-ratelimit@example.com', password: 'wrong-password' });
 
     for (let i = 0; i < LIMIT; i += 1) await attempt().expect(401);
     const res = await attempt().expect(429);
@@ -79,7 +79,7 @@ describe('Auth rate limit keying (e2e)', () => {
 
   /** POST /auth/login from a given client address; resolves to the status code. */
   function loginFrom(localAddress: string, headers: Record<string, string> = {}): Promise<number> {
-    const body = JSON.stringify({ email: 'e2e-auth-ratelimit@example.test', password: 'wrong-pw' });
+    const body = JSON.stringify({ email: 'e2e-auth-ratelimit@example.com', password: 'wrong-pw' });
     return new Promise((resolve, reject) => {
       const req = httpRequest(
         {

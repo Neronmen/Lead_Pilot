@@ -20,12 +20,13 @@ Read `SPEC.md` for the product. This file is how we build it.
 
 ## Commands (keep this section up to date as scripts are added)
 - Requirements: Node 24 (`.nvmrc`), pnpm 12 (`packageManager` in package.json), Docker Desktop running.
-- Setup: `cp .env.example .env`, `docker compose up -d`, `pnpm install`, `pnpm --filter api db:migrate`
+- Setup: `cp .env.example .env`, `docker compose up -d`, `pnpm install`, `pnpm --filter api db:migrate`. Docker runs postgres, redis and mailpit; invites go to Mailpit (http://localhost:8025).
 - Dev all: `pnpm dev` (api :3001, web :3000, Swagger :3001/docs, status page :3000/status). If the developer already runs it, reuse it; never start a second copy.
-- Test: `pnpm test` (all unit) · api unit `pnpm --filter api test` · api e2e `pnpm --filter api test:e2e` (uses `leadpilot_test`, needs docker up) · shared `pnpm --filter @leadpilot/shared test`. The `--filter api` commands skip Turbo, so they test the last built `packages/shared/dist`: after changing a shared schema, run `pnpm --filter @leadpilot/shared build` first (root `pnpm test` / `pnpm test:e2e` rebuild it).
+- Test: `pnpm test` (all unit) · api unit `pnpm --filter api test` · api e2e `pnpm --filter api test:e2e` (uses `leadpilot_test`, needs docker up: postgres, redis and mailpit) · shared `pnpm --filter @leadpilot/shared test`. The `--filter api` commands skip Turbo, so they test the last built `packages/shared/dist`: after changing a shared schema, run `pnpm --filter @leadpilot/shared build` first (root `pnpm test` / `pnpm test:e2e` rebuild it).
 - Lint + typecheck + format: `pnpm lint && pnpm typecheck && pnpm format:check` (fix formatting: `pnpm format`)
 - Build: `pnpm build` (`nest build` wipes `apps/api/dist`, which a running `pnpm dev` uses)
 - DB: new migration `pnpm --filter api db:migrate --name <name>` · apply `pnpm --filter api db:deploy` · regenerate client `pnpm --filter api db:generate` (Turbo also runs it before build/lint/typecheck/test)
+- Email list: `pnpm --filter @leadpilot/shared tlds` regenerates `packages/shared/src/tlds.ts` (real top-level domains) from the `tlds` package; a test fails if they disagree.
 - Seed: `pnpm --filter api seed` (not yet: arrives in M6)
 - CI: `.github/workflows/ci.yml` runs format, lint, typecheck, unit, e2e, build on push to main and on PRs.
 
@@ -34,7 +35,8 @@ Read `SPEC.md` for the product. This file is how we build it.
 - NestJS: one module per domain (`auth`, `workspaces`, `sources`, `ingest`, `leads`, `pipeline`, `scoring`, `routing`, `integrations`, `dashboard`, `audit`).
 - Business logic lives in services; controllers stay thin. External systems behind interfaces (`LlmProvider`, `EnrichmentProvider`, `EmailProvider`, `CrmProvider`) with a mock implementation for tests and demo mode.
 - **Tenancy**: every query on tenant data must be scoped by `workspaceId`. Use `TenantPrisma.for(workspaceId)` (`apps/api/src/prisma/workspace-scope.ts`); never hand-write unscoped queries on tenant tables. The raw `PrismaService` and raw SQL are lint errors outside the allowlist in `eslint.config.mjs`: adding a file there needs a stated reason. Every new endpoint needs a cross-workspace access test.
-- Errors: throw domain errors, map them in one global filter to `{ error: { code, message, details? } }`.
+- Errors: throw domain errors, map them in one global filter to `{ error: { code, message, details? } }`. The guide is `docs/error-handling.md` (never put internals in the message of a 5xx `DomainError`).
+- Email: build every email with a React Email template under `apps/api/src/email/templates` and a plain-text part with the same words; write the copy once in a `*-copy.ts` and render both from it. Follow the approved design (docs/design-notes.md, Emails).
 - Logging: pino, include `requestId` and `workspaceId`. Never log secrets, tokens, or full lead PII at info level.
 - Secrets in DB encrypted with the crypto helper (AES-256-GCM). API keys stored hashed, shown once.
 - Jobs must be idempotent and safe to retry. Use job ids derived from lead id + step.

@@ -423,7 +423,7 @@ describe('Members: races, sessions, history and scale (e2e)', () => {
       const stamp = `${INVITES_EMAIL_PREFIX}scale-${Date.now()}`;
       await prisma.user.createMany({
         data: Array.from({ length: 199 }, (_, i) => ({
-          email: `${stamp}-${i}@example.test`,
+          email: `${stamp}-${i}@example.com`,
           passwordHash: 'x',
           name: `Person ${i}`,
         })),
@@ -449,7 +449,7 @@ describe('Members: races, sessions, history and scale (e2e)', () => {
           [0, 1, 2].map((n) => ({
             workspaceId: bigId,
             sourceId: source.id,
-            email: `lead-${i}-${n}-${stamp}@example.test`,
+            email: `lead-${i}-${n}-${stamp}@example.com`,
             rawPayload: {},
             ownerId: u.id,
             outcome: n === 2 ? ('WON' as const) : ('NONE' as const),

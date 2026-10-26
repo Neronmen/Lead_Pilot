@@ -4,12 +4,12 @@
 module.exports = {
   rootDir: '.',
   roots: ['<rootDir>/src'],
-  testRegex: '.*\\.spec\\.ts$',
-  moduleFileExtensions: ['ts', 'js', 'json'],
+  testRegex: '.*\\.spec\\.tsx?$',
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'json'],
   // The generated Prisma client imports './x.js' (ESM style); map it to the .ts source.
   moduleNameMapper: { '^(\\.{1,2}/.*)\\.js$': '$1' },
-  transform: { '^.+\\.ts$': ['ts-jest', { tsconfig: 'tsconfig.json' }] },
+  transform: { '^.+\\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.json' }] },
   testEnvironment: 'node',
-  collectCoverageFrom: ['src/**/*.ts', '!src/main.ts'],
+  collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/main.ts'],
   coverageDirectory: './coverage',
 };

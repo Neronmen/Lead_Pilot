@@ -407,11 +407,11 @@ describe('Invites edge cases (e2e)', () => {
 
   describe('odd input', () => {
     it.each([
-      'x@example.test\r\nBcc: evil@example.test',
-      'x@example.test,evil@example.test',
-      'x@example.test\nBcc:evil@example.test',
-      '"x y"@example.test',
-      'Eve <x@example.test>',
+      'x@example.com\r\nBcc: evil@example.com',
+      'x@example.com,evil@example.com',
+      'x@example.com\nBcc:evil@example.com',
+      '"x y"@example.com',
+      'Eve <x@example.com>',
     ])('refuses the address %j before anything is stored or sent', async (bad) => {
       const owner = await ownerOf(app);
       const before = mailbox(app).outbox.length;
@@ -425,7 +425,7 @@ describe('Invites edge cases (e2e)', () => {
 
     it('cannot get a line break into the subject through a name or workspace name', async () => {
       for (const body of [
-        { name: 'Eve\r\nBcc: evil@example.test' },
+        { name: 'Eve\r\nBcc: evil@example.com' },
         { workspaceName: 'Evil Co' },
         { name: 'Eve\u0085Bcc' },
       ]) {

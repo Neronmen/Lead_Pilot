@@ -2,7 +2,7 @@
 
 AI lead qualification and routing for B2B teams. Leads arrive from forms, webhooks and CSV files; LeadPilot deduplicates them, enriches the company, scores them against your ideal customer profile with an LLM, and routes them to the right rep, with Slack, email, HubSpot or n8n actions. Multi-tenant from day one.
 
-> **Status:** milestone M0 (foundation) is done: monorepo, local infrastructure, API and web skeletons, database schema v1, health checks and CI. Product features arrive from M1 on. See [SPEC.md](SPEC.md) for the full roadmap.
+> **Status:** M0 (foundation) is done. M1 (auth and tenancy) has its API done: sign-up, sign-in with rotating refresh tokens, workspaces and roles, email invites, team management, and isolation tests for every endpoint. Its web pages are next. See [SPEC.md](SPEC.md) for the roadmap.
 
 [![CI](https://github.com/Neronmen/Lead_Pilot/actions/workflows/ci.yml/badge.svg)](https://github.com/Neronmen/Lead_Pilot/actions/workflows/ci.yml)
 
@@ -41,6 +41,22 @@ Optional: `docker compose --profile n8n up -d` also starts n8n on http://localho
 
 No API keys are needed: without them the app runs in demo mode with mock providers (required by the spec from M3 on).
 
+Invite emails go to Mailpit (http://localhost:8025) because `.env.example` sets `SMTP_HOST=localhost`. With `SMTP_HOST` empty the app keeps them in memory only (demo mode), so you could not open the invite link: keep it set while developing.
+
+### Environment
+
+`.env.example` documents every variable. The ones you may want to change:
+
+| Variable | Default | Notes |
+|---|---|---|
+| `JWT_ACCESS_SECRET` | dev value | Required in production (32+ characters). The dev value is refused when `NODE_ENV=production`. |
+| `AUTH_RATE_LIMIT_PER_MINUTE` | 10 | Sign-up, sign-in and accept-invite requests per IP |
+| `AUTH_REFRESH_RATE_LIMIT_PER_MINUTE` | 60 | Token refresh runs on every page load, so it has its own budget |
+| `INVITE_RATE_LIMIT_PER_MINUTE` / `_PER_DAY` | 5 / 30 | Invite and resend requests per workspace (each sends email) |
+| `SMTP_HOST`, `SMTP_PORT`, `EMAIL_FROM` | Mailpit | The SMTP provider has no authentication or TLS yet: Mailpit only |
+
+The rate limiter counts in memory, per API instance; it moves to Redis in M3.
+
 ## Commands
 
 | Command | What it does |
@@ -50,7 +66,8 @@ No API keys are needed: without them the app runs in demo mode with mock provide
 | `pnpm lint` / `pnpm typecheck` | ESLint / TypeScript across the repo |
 | `pnpm format` / `pnpm format:check` | Prettier write / check |
 | `pnpm test` | All unit tests |
-| `pnpm test:e2e` | API e2e tests against the `leadpilot_test` database (Docker must be up) |
+| `pnpm test:e2e` | API e2e tests against the `leadpilot_test` database (Docker must be up: they also use Redis and Mailpit) |
+| `pnpm --filter @leadpilot/shared tlds` | Regenerate the list of real top-level domains used to check email addresses (after upgrading the `tlds` package) |
 | `pnpm --filter api db:migrate --name <name>` | Create and apply a migration after editing `schema.prisma` |
 | `pnpm --filter api db:deploy` | Apply pending migrations (CI, production) |
 | `pnpm --filter api db:generate` | Regenerate the Prisma client (Turbo runs it automatically) |
@@ -62,10 +79,15 @@ apps/
   api/                 NestJS API
     prisma/            schema.prisma + migrations
     src/
-      common/          error filter, DomainError, logging config
+      common/          error filter, DomainError, logging config, zod validation pipe
       config/          zod-validated environment
       health/          /health/live and /health/ready
-      prisma/          PrismaService (driver adapter)
+      auth/            sign-up, sign-in, refresh tokens, guards (JWT, roles), rate limits
+      invites/         invite people by email, accept an invite
+      members/         the team: list, change role, remove
+      audit/           change history (who changed what, before and after)
+      email/           EmailProvider (SMTP, mock) and the React Email templates
+      prisma/          PrismaService (driver adapter) and the workspace-scoped client
       redis/           shared Redis client
     test/              e2e tests (Jest + Supertest)
   web/                 Next.js app
@@ -73,10 +95,14 @@ apps/
     components/ui/     shadcn/ui components
     lib/api.ts         typed API client
 packages/
-  shared/              zod schemas: error envelope, health response
+  shared/              zod schemas and error codes shared by api and web (auth, team, errors)
 infra/postgres/init/   creates leadpilot_test on first start
 docker-compose.yml     local infrastructure
+docs/                  design notes, backlog, error-handling guide
 ```
+
+- How errors look and how to add one: [docs/error-handling.md](docs/error-handling.md).
+- Multi-tenancy: every tenant query goes through `TenantPrisma.for(workspaceId)`, composite foreign keys keep related rows in one workspace, and `apps/api/test/isolation.e2e-spec.ts` fails if an endpoint is not classified and tested across workspaces.
 
 ## Conventions worth knowing
 

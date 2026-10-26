@@ -93,9 +93,9 @@ Designed for a non-technical Owner/Admin (see Audience rule).
 - **Change history:** plain sentences ("Daniel Park turned off the rule “Partner leads”."), grouped by day, filterable by area, person and time range, with an optional before/after view.
 - **States:** integrations loading, team with only you, change history load error, and the no-access page a Member sees on any Settings URL.
 
-## Emails (awaiting approval)
+## Emails (approved)
 
-An "Emails" row at the bottom of the canvas: the invite email in English and Vietnamese, each in a light inbox and in dark mode; a sketch of the future "New Hot lead" alert (M4); and the plain-text versions. The API builds them with React Email once approved (M1 step 7).
+An "Emails" row at the bottom of the canvas: the invite email in English and Vietnamese, each in a light inbox and in dark mode; a sketch of the future "New Hot lead" alert (M4); and the plain-text versions. Approved on 2026-10-27. The invite email is built with React Email in the API (`apps/api/src/email`), with a plain-text part; the Hot lead alert is built in M4.
 
 - **One card, one action.** White card on the page colour, the LeadPilot mark and name, a plain-language headline, one cyan button, the link repeated as text under it, and a footer that says why the person got the email and what to do if they did not expect it.
 - **Email-safe type:** system fonts only (Geist is not reliable in inboxes, and system fonts cover Vietnamese).

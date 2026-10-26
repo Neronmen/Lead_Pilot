@@ -1,3 +1,4 @@
+import { TLDS } from './tlds.ts';
 import { z } from 'zod';
 
 /** UI languages (SPEC §4.9). Matches the `Locale` enum in the database. */
@@ -9,8 +10,38 @@ export const roleSchema = z.enum(['OWNER', 'ADMIN', 'MEMBER']);
 /** Roles an invite or a role change may grant: never OWNER. */
 export const assignableRoleSchema = z.enum(['ADMIN', 'MEMBER']);
 
-/** Trimmed and lowercased before it is checked, as the database stores it. */
-export const emailSchema = z.string().trim().toLowerCase().max(254).pipe(z.email());
+/**
+ * Every top-level domain that exists: the IANA root zone list, generated into
+ * `tlds.ts` from the `tlds` package (`pnpm --filter @leadpilot/shared tlds`).
+ * No network call, and the same list in the API and the web app. Only
+ * plain-letter endings are kept: addresses here are ASCII, and the email
+ * syntax check already refuses internationalised endings.
+ */
+const REAL_TLDS: ReadonlySet<string> = new Set(TLDS);
+
+/** True when the part after the last dot is a delegated top-level domain. */
+export function hasRealTld(email: string): boolean {
+  return REAL_TLDS.has(email.slice(email.lastIndexOf('.') + 1).toLowerCase());
+}
+
+/**
+ * Trimmed and lowercased before it is checked, as the database stores it. The
+ * ending must be a real top-level domain (`.cmo` and `.test` are refused); no
+ * DNS or MX lookup is done. A refused ending is reported as `format:
+ * "unknown_tld"`, so the form can say so in its own words.
+ */
+export const emailSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .max(254)
+  .pipe(
+    z
+      // abort: a malformed address reports the syntax problem only, not also
+      // an unknown ending.
+      .email({ abort: true })
+      .refine(hasRealTld, { error: 'Unknown domain ending', params: { reason: 'unknown_tld' } }),
+  );
 
 /**
  * At least 12 characters (the Signup design). The upper bound keeps a huge

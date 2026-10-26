@@ -139,7 +139,7 @@ describe('Prisma schema v1 (e2e)', () => {
       const one = await prisma.workspace.create({ data: { name: 'One', slug: `${slug}-j` } });
       const two = await prisma.workspace.create({ data: { name: 'Two', slug: `${slug}-k` } });
       const user = await prisma.user.create({
-        data: { email: `${slug}-user@example.test`, passwordHash: 'argon2-placeholder' },
+        data: { email: `${slug}-user@example.com`, passwordHash: 'argon2-placeholder' },
       });
 
       await prisma.membership.create({ data: { workspaceId: one.id, userId: user.id } });

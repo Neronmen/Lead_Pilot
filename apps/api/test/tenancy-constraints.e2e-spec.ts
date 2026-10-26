@@ -36,7 +36,7 @@ describe('Tenancy constraints (e2e)', () => {
     });
     const workspaceId = workspace.id;
     const user = await prisma.user.create({
-      data: { email: `${run}-${suffix}@example.test`, passwordHash: 'argon2-placeholder' },
+      data: { email: `${run}-${suffix}@example.com`, passwordHash: 'argon2-placeholder' },
     });
     const membership = await prisma.membership.create({
       data: { workspaceId, userId: user.id, role: 'OWNER' },
@@ -409,7 +409,7 @@ describe('Tenancy constraints (e2e)', () => {
     const t = await createTenant('move-parent');
     // A non-owner, so the move cannot trip B's one-owner index first.
     const rep = await prisma.user.create({
-      data: { email: `${run}-move-parent-rep@example.test`, passwordHash: 'argon2-placeholder' },
+      data: { email: `${run}-move-parent-rep@example.com`, passwordHash: 'argon2-placeholder' },
     });
     const repMembership = await prisma.membership.create({
       data: { workspaceId: t.workspaceId, userId: rep.id },
@@ -457,12 +457,12 @@ describe('Tenancy constraints (e2e)', () => {
   it('deleting the inviting user keeps the invite and clears invitedById', async () => {
     const t = await createTenant('inviter-setnull');
     const inviter = await prisma.user.create({
-      data: { email: `${run}-inviter@example.test`, passwordHash: 'argon2-placeholder' },
+      data: { email: `${run}-inviter@example.com`, passwordHash: 'argon2-placeholder' },
     });
     const invite = await prisma.invite.create({
       data: {
         workspaceId: t.workspaceId,
-        email: `${run}-invitee-setnull@example.test`,
+        email: `${run}-invitee-setnull@example.com`,
         tokenHash: `${run}-invite-setnull`,
         invitedById: inviter.id,
         expiresAt: farFuture,
@@ -479,7 +479,7 @@ describe('Tenancy constraints (e2e)', () => {
     it('ownership transfer must demote the old owner before promoting the new one', async () => {
       const t = await createTenant('transfer');
       const next = await prisma.user.create({
-        data: { email: `${run}-next-owner@example.test`, passwordHash: 'argon2-placeholder' },
+        data: { email: `${run}-next-owner@example.com`, passwordHash: 'argon2-placeholder' },
       });
       const nextMembership = await prisma.membership.create({
         data: { workspaceId: t.workspaceId, userId: next.id, role: 'ADMIN' },
@@ -503,7 +503,7 @@ describe('Tenancy constraints (e2e)', () => {
     it('allows only one OWNER per workspace', async () => {
       const t = await createTenant('one-owner');
       const second = await prisma.user.create({
-        data: { email: `${run}-second-owner@example.test`, passwordHash: 'argon2-placeholder' },
+        data: { email: `${run}-second-owner@example.com`, passwordHash: 'argon2-placeholder' },
       });
       await expect(
         prisma.membership.create({
@@ -522,7 +522,7 @@ describe('Tenancy constraints (e2e)', () => {
         prisma.invite.create({
           data: {
             workspaceId: a.workspaceId,
-            email: `${run}-invitee@example.test`,
+            email: `${run}-invitee@example.com`,
             tokenHash: `${run}-invite-${n}`,
             invitedById: a.user.id,
             expiresAt: farFuture,
@@ -538,7 +538,7 @@ describe('Tenancy constraints (e2e)', () => {
         prisma.invite.create({
           data: {
             workspaceId: b.workspaceId,
-            email: `${run}-invitee@example.test`,
+            email: `${run}-invitee@example.com`,
             tokenHash: `${run}-invite-b`,
             expiresAt: farFuture,
           },

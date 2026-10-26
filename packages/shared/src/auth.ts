@@ -28,9 +28,23 @@ export const signupRequestSchema = z.strictObject({
   defaultCountry: countrySchema.nullish(),
 });
 
-/** `POST /auth/login`. */
+/**
+ * `POST /auth/login`. The address is only trimmed and lowercased: the account
+ * lookup decides, not the syntax or ending check. An account created before an
+ * ending was refused (or after one was removed from the list) must still be
+ * able to sign in, and a bad address just fails as "invalid credentials", the
+ * same answer as an unknown one.
+ */
 export const loginRequestSchema = z.strictObject({
-  email: emailSchema,
+  // No control characters: Postgres text cannot hold a NUL byte, and a
+  // malformed value is a 400, not an unknown account.
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .min(1)
+    .max(254)
+    .regex(/^[^\p{Cc}]*$/u),
   password: passwordSchema,
 });
 

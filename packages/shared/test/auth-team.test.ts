@@ -122,3 +122,60 @@ test('toValidationIssues caps echoed unknown keys', () => {
 test('signupRequestSchema accepts null or no defaultCountry', () => {
   assert.equal(signupRequestSchema.parse({ ...signup, defaultCountry: null }).defaultCountry, null);
 });
+
+test('emailSchema accepts only real top-level domains, from an offline list', () => {
+  for (const ok of [
+    'a@gmail.com',
+    'a@b.co',
+    'a@x.museum',
+    'a@x.technology',
+    'a@x.vn',
+    'a@x.com.vn',
+  ]) {
+    assert.ok(emailSchema.safeParse(ok).success, ok);
+  }
+  // Typos of real endings and names reserved for tests are refused.
+  for (const bad of [
+    'a@gmail.cmo',
+    'a@gmail.con',
+    'a@b.test',
+    'a@b.local',
+    'a@b.invalid',
+    'a@b.example',
+    'a@b.localhost',
+  ]) {
+    const result = emailSchema.safeParse(bad);
+    assert.equal(result.success, false, bad);
+    assert.deepEqual(toValidationIssues(result.error.issues), [
+      { path: '', code: 'custom', format: 'unknown_tld' },
+    ]);
+  }
+  // A malformed address is still reported as a malformed address.
+  assert.deepEqual(toValidationIssues(emailSchema.safeParse('nope').error?.issues ?? []), [
+    { path: '', code: 'invalid_format', format: 'email' },
+  ]);
+});
+
+test('sign-up and invites apply the ending check; login does not, so legacy accounts can sign in', () => {
+  const login = loginRequestSchema.safeParse({ email: ' A@B.cmo ', password: 'x' });
+  assert.ok(login.success);
+  assert.equal(login.data.email, 'a@b.cmo'); // normalised only
+  const invite = createInvitesRequestSchema.safeParse({
+    emails: ['a@b.co', 'c@d.cmo'],
+    role: 'MEMBER',
+  });
+  assert.equal(invite.success, false);
+  assert.deepEqual(toValidationIssues(invite.error.issues), [
+    { path: 'emails.1', code: 'custom', format: 'unknown_tld' },
+  ]);
+});
+
+test('the generated TLD list matches the installed tlds package', async () => {
+  const { createRequire } = await import('node:module');
+  const { TLDS } = await import('../src/tlds.ts');
+  const installed = (createRequire(`${process.cwd()}/package.json`)('tlds') as string[])
+    .filter((tld) => /^[a-z]+$/.test(tld))
+    .sort();
+  // Fails after upgrading `tlds` until `pnpm --filter @leadpilot/shared tlds` is run.
+  assert.deepEqual([...TLDS], installed);
+});

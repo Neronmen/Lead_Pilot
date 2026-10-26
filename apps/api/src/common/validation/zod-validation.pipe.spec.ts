@@ -15,7 +15,7 @@ describe('ZodValidationPipe', () => {
   it('throws VALIDATION_FAILED with one issue per problem and no English text', () => {
     let thrown: unknown;
     try {
-      pipe.transform({ email: 'nope', password: '', admin: true });
+      pipe.transform({ email: '', password: '', admin: true });
     } catch (error) {
       thrown = error;
     }
@@ -24,7 +24,7 @@ describe('ZodValidationPipe', () => {
       code: ErrorCode.VALIDATION_FAILED,
       status: 400,
       details: [
-        { path: 'email', code: 'invalid_format', format: 'email' },
+        { path: 'email', code: 'too_small', origin: 'string', minimum: 1 },
         { path: 'password', code: 'too_small', origin: 'string', minimum: 1 },
         { path: '', code: 'unrecognized_keys', values: ['admin'] },
       ],

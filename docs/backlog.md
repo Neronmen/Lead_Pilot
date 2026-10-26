@@ -6,8 +6,7 @@ Items raised in reviews that belong to a later milestone. Each milestone plan st
 
 - Web API client: `credentials: 'include'` for the refresh-token cookie.
 - Web auth client (step 8): refresh under a cross-tab lock (`navigator.locks.request('lp-refresh', ...)`). Reuse detection revokes the whole sign-in when two tabs refresh with the same token at once, so per-tab single-flight is not enough. A 429 on refresh means "retry later", not "signed out".
-- Logger tests: header and query-string stripping, `/health` excluded from access logs (more valuable once auth headers exist).
-- `DomainError` with a 5xx status passes its message to the client. Fine for deliberate messages, but document it in the error-handling guide so no one puts internals there.
+- Web foundations (step 8): serve the email logo, a 56×56 PNG of the LeadPilot mark (cyan rounded square, paper-plane glyph, transparent background), at `apps/web/public/email/logo.png`. The invite email links to `${WEB_ORIGIN}/email/logo.png`; until the file exists the logo shows its alt text.
 
 ## M2 – Ingestion
 
@@ -25,6 +24,8 @@ Items raised in reviews that belong to a later milestone. Each milestone plan st
 
 - Real SMTP: `SmtpEmailProvider` has no authentication or TLS (Mailpit only). Add `SMTP_USER`/`SMTP_PASS` and required TLS (or a free-tier provider such as Resend behind the same `EmailProvider` interface) before sending real mail. Invites are sent inside the request until the M3 job queue exists; move them to a BullMQ job then.
 - Demo mode with no `SMTP_HOST` keeps invite emails only in memory (last 100), so the invite flow cannot be completed there. Either default `SMTP_HOST` to Mailpit in the demo setup (docker compose runs it) or show the invite link in the Team page when no mail server is configured (M6 seed and demo).
+- The top-level domain list (`packages/shared/src/tlds.ts`) is a snapshot: a brand-new ending would be refused on sign-up and invites until `tlds` is bumped and the list regenerated. Bump it with the other dependencies (Renovate or a periodic task) and run `pnpm --filter @leadpilot/shared tlds`.
+- A domain label longer than 63 characters passes the email check (it cannot be delivered). Add a length rule to `emailSchema` if it ever matters.
 - Delete spent refresh tokens: a daily job removing rows revoked or expired more than a day ago.
 
 ## M2 – Ingestion (timeline)
@@ -32,6 +33,8 @@ Items raised in reviews that belong to a later milestone. Each milestone plan st
 - Removing a member unassigns every lead they own, closed (won, lost) ones too: the owner reference has no ON DELETE action. Closed leads lose their owner attribution, which reporting may want. Keep it when the lead timeline exists (a LeadEvent per lead on removal, or a `closedBy` field).
 
 ## M4 – Routing & actions
+
+- Build the "New Hot lead" alert email from the approved design (docs/design-notes.md, Emails; the plain-text version is on the canvas). The invite email's `EmailLayout` and copy pattern in `apps/api/src/email` are the model.
 
 - Assignment vs removal: `remove` unassigns a person's leads and then deletes the membership at READ COMMITTED. A routing job assigning a lead to that person in between would make the delete fail with an FK error (409). Assignment must take the membership row lock, or removal must retry.
 - Change history page: entries written in one request can share a `createdAt`, and Prisma generates UUIDv7 ids client-side without a monotonic guarantee within a millisecond, so `id` is not a reliable tie-break. Add a `seq` column (or set `createdAt` once per request) when this page needs a stable order.

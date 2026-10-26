@@ -68,7 +68,7 @@ describe('Workspace scope edge cases (e2e)', () => {
       data: {
         workspaceId,
         sourceId: source.id,
-        email: `lead-${suffix}@example.test`,
+        email: `lead-${suffix}@example.com`,
         status: 'NEW',
         rawPayload: {},
       },
@@ -97,7 +97,7 @@ describe('Workspace scope edge cases (e2e)', () => {
     const invite = await prisma.invite.create({
       data: {
         workspaceId,
-        email: `invitee-${suffix}@example.test`,
+        email: `invitee-${suffix}@example.com`,
         tokenHash: `${run}-${suffix}-invite`,
         invitedById: sharedUserId,
         expiresAt: farFuture,
@@ -128,7 +128,7 @@ describe('Workspace scope edge cases (e2e)', () => {
     });
     promptVersionId = prompt.id;
     const shared = await prisma.user.create({
-      data: { email: `${run}-shared@example.test`, passwordHash: 'argon2-placeholder' },
+      data: { email: `${run}-shared@example.com`, passwordHash: 'argon2-placeholder' },
     });
     sharedUserId = shared.id;
     a = await createTenant('a');
@@ -366,7 +366,7 @@ describe('Workspace scope edge cases (e2e)', () => {
         include: { user: { select: { email: true } } },
       });
       expect(rows.map((row) => row.workspaceId)).toEqual([a.workspaceId]);
-      expect(rows[0]?.user.email).toBe(`${run}-shared@example.test`);
+      expect(rows[0]?.user.email).toBe(`${run}-shared@example.com`);
     });
   });
 
@@ -494,7 +494,7 @@ describe('Workspace scope edge cases (e2e)', () => {
       const bInvite = await prisma.invite.create({
         data: {
           workspaceId: b.workspaceId,
-          email: 'victim@example.test',
+          email: 'victim@example.com',
           tokenHash: `${run}-victim-invite`,
           expiresAt: farFuture,
         },

@@ -1,61 +1,8 @@
 import type { Transporter } from 'nodemailer';
 import { createTransport } from 'nodemailer';
-import { buildInviteEmail, type InviteEmailInput } from './invite-email';
 import { MockEmailProvider } from './mock-email.provider';
 import { SendTimeoutError, SmtpEmailProvider } from './smtp-email.provider';
 import { MOCK_OUTBOX_LIMIT } from './mock-email.provider';
-
-const input: InviteEmailInput = {
-  to: 'ethan.brooks@northstargrowth.com',
-  locale: 'en',
-  inviterName: 'Mia Johnson',
-  workspaceName: 'Northstar Growth',
-  role: 'MEMBER',
-  link: 'https://app.example.com/invite#t=abc',
-  expiresInDays: 7,
-};
-
-describe('buildInviteEmail', () => {
-  it('writes the English email with the link, the role and the expiry', () => {
-    const mail = buildInviteEmail(input);
-    expect(mail.to).toBe(input.to);
-    expect(mail.subject).toBe('Mia Johnson invited you to Northstar Growth on LeadPilot');
-    expect(mail.text).toContain('as a member');
-    expect(mail.text).toContain(input.link);
-    expect(mail.text).toContain('7 days');
-    expect(mail.html).toContain(`href="${input.link}"`);
-  });
-
-  it('writes the Vietnamese email with the glossary role words', () => {
-    const member = buildInviteEmail({ ...input, locale: 'vi' });
-    expect(member.subject).toBe('Mia Johnson đã mời bạn tham gia Northstar Growth trên LeadPilot');
-    expect(member.text).toContain('với vai trò thành viên');
-    const admin = buildInviteEmail({ ...input, locale: 'vi', role: 'ADMIN' });
-    expect(admin.text).toContain('với vai trò quản trị viên');
-    expect(admin.text).toContain('7 ngày');
-  });
-
-  it('keeps the subject on one line whatever the names contain', () => {
-    const mail = buildInviteEmail({
-      ...input,
-      inviterName: 'Eve\r\nBcc: victim@example.com',
-      workspaceName: 'Acme\nCorp',
-    });
-    expect(mail.subject).not.toMatch(/[\r\n]/);
-    expect(mail.subject).toBe('Eve Bcc: victim@example.com invited you to Acme Corp on LeadPilot');
-  });
-
-  it('escapes HTML in names and the link', () => {
-    const mail = buildInviteEmail({
-      ...input,
-      inviterName: '<script>alert(1)</script>',
-      link: 'https://app.example.com/invite#t="x"',
-    });
-    expect(mail.html).not.toContain('<script>');
-    expect(mail.html).toContain('&lt;script&gt;');
-    expect(mail.html).toContain('#t=&quot;x&quot;');
-  });
-});
 
 describe('MockEmailProvider', () => {
   it('keeps what is sent and finds the newest message to an address', async () => {

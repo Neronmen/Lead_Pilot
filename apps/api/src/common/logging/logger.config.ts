@@ -30,6 +30,15 @@ const SECRET_KEYS = [
   'cookie',
 ];
 
+/** `/health` and `/health/...`, not other routes that merely start with the same letters. */
+function isHealthProbe(url: string | undefined): boolean {
+  return (
+    url === '/health' ||
+    (url?.startsWith('/health/') ?? false) ||
+    (url?.startsWith('/health?') ?? false)
+  );
+}
+
 export function buildLoggerParams(config: ConfigService<Env, true>): Params {
   const isDev = config.get('NODE_ENV', { infer: true }) === 'development';
 
@@ -58,7 +67,7 @@ export function buildLoggerParams(config: ConfigService<Env, true>): Params {
         censor: '[redacted]',
       },
       // Probes hit these every few seconds; they would drown real traffic.
-      autoLogging: { ignore: (req) => req.url?.startsWith('/health') ?? false },
+      autoLogging: { ignore: (req) => isHealthProbe(req.url) },
       transport: isDev ? { target: 'pino-pretty', options: { singleLine: true } } : undefined,
     },
   };

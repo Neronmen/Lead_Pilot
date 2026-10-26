@@ -4,10 +4,10 @@ module.exports = {
   rootDir: '.',
   roots: ['<rootDir>/test'],
   testRegex: '.*\\.e2e-spec\\.ts$',
-  moduleFileExtensions: ['ts', 'js', 'json'],
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'json'],
   // The generated Prisma client imports './x.js' (ESM style); map it to the .ts source.
   moduleNameMapper: { '^(\\.{1,2}/.*)\\.js$': '$1' },
-  transform: { '^.+\\.ts$': ['ts-jest', { tsconfig: 'tsconfig.json' }] },
+  transform: { '^.+\\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.json' }] },
   testEnvironment: 'node',
   globalSetup: '<rootDir>/test/global-setup.ts',
   setupFiles: ['<rootDir>/test/setup-env.ts'],

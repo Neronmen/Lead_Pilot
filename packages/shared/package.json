@@ -19,12 +19,14 @@
     "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
-    "test": "node --test \"test/**/*.test.ts\""
+    "test": "node --test \"test/**/*.test.ts\"",
+    "tlds": "node scripts/generate-tlds.mjs"
   },
   "dependencies": {
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@types/node": "^24.0.0"
+    "@types/node": "^24.0.0",
+    "tlds": "^1.261.0"
   }
 }
