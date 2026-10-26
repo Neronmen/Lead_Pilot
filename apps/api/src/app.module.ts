@@ -3,9 +3,11 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER } from '@nestjs/core';
 import { LoggerModule } from 'nestjs-pino';
+import { AuditModule } from './audit/audit.module';
 import { AuthModule } from './auth/auth.module';
 import { EmailModule } from './email/email.module';
 import { InvitesModule } from './invites/invites.module';
+import { MembersModule } from './members/members.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { buildLoggerParams } from './common/logging/logger.config';
 import { validateEnv } from './config/env.schema';
@@ -29,9 +31,11 @@ const ROOT_ENV_FILE = resolve(__dirname, '../../../.env');
     PrismaModule,
     RedisModule,
     HealthModule,
+    AuditModule,
     EmailModule,
     AuthModule,
     InvitesModule,
+    MembersModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: GlobalExceptionFilter }],
 })

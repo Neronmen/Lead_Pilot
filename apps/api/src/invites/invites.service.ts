@@ -9,6 +9,7 @@ import {
   type PendingInvite,
   type ResendInviteResponse,
 } from '@leadpilot/shared';
+import { AuditAction, type AuditDb, AuditService } from '../audit/audit.service';
 import { DomainError } from '../common/errors/domain-error';
 import type { Env } from '../config/env.schema';
 import { buildInviteEmail } from '../email/invite-email';
@@ -59,6 +60,7 @@ export class InvitesService {
     private readonly tenant: TenantPrisma,
     @Inject(EMAIL_PROVIDER) private readonly email: EmailProvider,
     private readonly config: ConfigService<Env, true>,
+    private readonly audit: AuditService,
   ) {}
 
   /** Invites several people at once; the result has one entry per distinct address. */
@@ -112,15 +114,21 @@ export class InvitesService {
   async resend(inviter: Inviter, inviteId: string): Promise<ResendInviteResponse> {
     const db = this.tenant.for(inviter.workspaceId);
     const fresh = newInviteToken();
-    const invite = await db.invite
-      .update({
-        where: { id: inviteId, acceptedAt: null },
-        data: {
-          tokenHash: fresh.tokenHash,
-          expiresAt: fresh.expiresAt,
-          failedAttempts: 0,
-          invitedById: inviter.userId,
-        },
+    const invite = await db
+      .$transaction(async (tx) => {
+        const row = await tx.invite.update({
+          where: { id: inviteId, acceptedAt: null },
+          data: {
+            tokenHash: fresh.tokenHash,
+            expiresAt: fresh.expiresAt,
+            failedAttempts: 0,
+            invitedById: inviter.userId,
+          },
+        });
+        await this.record(tx, inviter, AuditAction.InviteResent, row.id, {
+          after: { email: row.email, role: row.role },
+        });
+        return row;
       })
       .catch((error: unknown) => {
         // P2025: no such invite in this workspace, or it was already accepted.
@@ -138,10 +146,20 @@ export class InvitesService {
     return { status };
   }
 
-  async cancel(workspaceId: string, inviteId: string): Promise<void> {
+  async cancel(inviter: Inviter, inviteId: string): Promise<void> {
     await this.tenant
-      .for(workspaceId)
-      .invite.delete({ where: { id: inviteId, acceptedAt: null } })
+      .for(inviter.workspaceId)
+      .$transaction(async (tx) => {
+        const row = await tx.invite.delete({ where: { id: inviteId, acceptedAt: null } });
+        await this.audit.record(tx, inviter.workspaceId, {
+          actorUserId: inviter.userId,
+          area: 'team',
+          action: AuditAction.InviteCancelled,
+          entityType: 'invite',
+          entityId: row.id,
+          before: { email: row.email, role: row.role },
+        });
+      })
       .catch((error: unknown) => {
         if (isRecordNotFound(error)) throw inviteNotFound();
         throw error;
@@ -165,7 +183,7 @@ export class InvitesService {
     const fresh = newInviteToken();
     const pending = await db.invite.findFirst({
       where: { email: address, acceptedAt: null },
-      select: { id: true, expiresAt: true },
+      select: { id: true, expiresAt: true, role: true },
     });
     if (pending) {
       // A live invite is left alone (Resend replaces its link). An expired one
@@ -173,28 +191,42 @@ export class InvitesService {
       if (pending.expiresAt > new Date()) return 'already_invited';
       // Conditional, so of two admins reissuing at once only one wins (and
       // sends an email); the other finds a live invite and reports that.
-      const { count } = await db.invite.updateMany({
-        where: { id: pending.id, acceptedAt: null, expiresAt: { lte: new Date() } },
-        data: {
-          role,
-          tokenHash: fresh.tokenHash,
-          expiresAt: fresh.expiresAt,
-          failedAttempts: 0,
-          invitedById: inviter.userId,
-        },
-      });
-      if (count !== 1) return 'already_invited';
-    } else {
-      try {
-        await db.invite.create({
+      const reissued = await db.$transaction(async (tx) => {
+        const { count } = await tx.invite.updateMany({
+          where: { id: pending.id, acceptedAt: null, expiresAt: { lte: new Date() } },
           data: {
-            workspaceId: inviter.workspaceId,
-            email: address,
             role,
             tokenHash: fresh.tokenHash,
             expiresAt: fresh.expiresAt,
+            failedAttempts: 0,
             invitedById: inviter.userId,
           },
+        });
+        if (count === 1) {
+          await this.record(tx, inviter, AuditAction.InviteReissued, pending.id, {
+            before: { email: address, role: pending.role },
+            after: { email: address, role },
+          });
+        }
+        return count === 1;
+      });
+      if (!reissued) return 'already_invited';
+    } else {
+      try {
+        await db.$transaction(async (tx) => {
+          const row = await tx.invite.create({
+            data: {
+              workspaceId: inviter.workspaceId,
+              email: address,
+              role,
+              tokenHash: fresh.tokenHash,
+              expiresAt: fresh.expiresAt,
+              invitedById: inviter.userId,
+            },
+          });
+          await this.record(tx, inviter, AuditAction.InviteCreated, row.id, {
+            after: { email: address, role },
+          });
         });
       } catch (error) {
         // A parallel request invited the same address first.
@@ -203,6 +235,26 @@ export class InvitesService {
       }
     }
     return this.sendInvite(context, inviter.workspaceId, address, role, fresh.token);
+  }
+
+  private record(
+    db: AuditDb,
+    inviter: Inviter,
+    action: string,
+    inviteId: string,
+    values: {
+      before?: { email: string; role: string };
+      after?: { email: string; role: string };
+    },
+  ): Promise<void> {
+    return this.audit.record(db, inviter.workspaceId, {
+      actorUserId: inviter.userId,
+      area: 'team',
+      action,
+      entityType: 'invite',
+      entityId: inviteId,
+      ...values,
+    });
   }
 
   private async senderContext(inviter: Inviter): Promise<SenderContext> {

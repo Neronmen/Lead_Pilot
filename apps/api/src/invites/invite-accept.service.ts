@@ -7,6 +7,7 @@ import {
   newAccountSchema,
   toValidationIssues,
 } from '@leadpilot/shared';
+import { AuditAction, AuditService } from '../audit/audit.service';
 import { emailTaken, invalidCredentials } from '../auth/auth.errors';
 import { PasswordService } from '../auth/password.service';
 import { hashToken, type IssuedSession, SessionService } from '../auth/session.service';
@@ -38,6 +39,7 @@ export class InviteAcceptService {
     private readonly prisma: PrismaService,
     private readonly passwords: PasswordService,
     private readonly sessions: SessionService,
+    private readonly audit: AuditService,
   ) {}
 
   /** What the Accept invite page shows before the person types anything. */
@@ -122,13 +124,23 @@ export class InviteAcceptService {
                   select: { id: true },
                 })
               ).id;
-        await tx.membership.create({
+        const membership = await tx.membership.create({
           data: {
             workspaceId: invite.workspaceId,
             userId,
             role: invite.role,
             lastActiveAt: new Date(),
           },
+        });
+        // The new member's own action: they appear in the change history as
+        // the one who joined. Raw client, so the workspace is set by hand.
+        await this.audit.record(tx, invite.workspaceId, {
+          actorUserId: userId,
+          area: 'team',
+          action: AuditAction.MemberJoined,
+          entityType: 'membership',
+          entityId: membership.id,
+          after: { email: invite.email, role: invite.role },
         });
         return this.sessions.issue(tx, userId, invite.workspaceId);
       });

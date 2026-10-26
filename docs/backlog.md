@@ -27,8 +27,14 @@ Items raised in reviews that belong to a later milestone. Each milestone plan st
 - Demo mode with no `SMTP_HOST` keeps invite emails only in memory (last 100), so the invite flow cannot be completed there. Either default `SMTP_HOST` to Mailpit in the demo setup (docker compose runs it) or show the invite link in the Team page when no mail server is configured (M6 seed and demo).
 - Delete spent refresh tokens: a daily job removing rows revoked or expired more than a day ago.
 
+## M2 – Ingestion (timeline)
+
+- Removing a member unassigns every lead they own, closed (won, lost) ones too: the owner reference has no ON DELETE action. Closed leads lose their owner attribution, which reporting may want. Keep it when the lead timeline exists (a LeadEvent per lead on removal, or a `closedBy` field).
+
 ## M4 – Routing & actions
 
+- Assignment vs removal: `remove` unassigns a person's leads and then deletes the membership at READ COMMITTED. A routing job assigning a lead to that person in between would make the delete fail with an FK error (409). Assignment must take the membership row lock, or removal must retry.
+- Change history page: entries written in one request can share a `createdAt`, and Prisma generates UUIDv7 ids client-side without a monotonic guarantee within a millisecond, so `id` is not a reliable tie-break. Add a `seq` column (or set `createdAt` once per request) when this page needs a stable order.
 - Removing a member leaves their leads unassigned (M1). The Team design says those leads "go back through your routing rules": reroute them through the rules engine once it exists.
 
 ## M6 – Polish & deploy
@@ -48,4 +54,5 @@ Items raised in reviews that belong to a later milestone. Each milestone plan st
 - Rate limit login per email as well as per IP (an attack spread over many IPs against one account), and consider an absolute session lifetime: each refresh renews the 14-day expiry, so an active session never ends on its own.
 - Refresh-token reuse detection is strict (decided in M1). If users report random sign-outs (two tabs refreshing together, or a refresh response lost on reload), add a short reuse interval: a replaced token presented again within ~10 s gets a sibling token in the same family instead of revoking the family. Trade-off: a thief using a copied token inside that window is not detected.
 - Bind access tokens to their sign-in (`sid` = familyId, checked in the guard) if 15 minutes of access after logout or reuse detection ever matters.
+- The change history (AuditLog) keeps `before`/`after` values, which include email addresses, for ever, also after a person is removed or their account deleted. Reasonable for an audit log; decide on redaction together with account deletion.
 - Account deletion: deleting a User cascades to their memberships, and `Lead.owner` (NoAction) blocks that while they own leads. Unassign their leads in every workspace first, and block it for workspace owners until ownership transfer exists.

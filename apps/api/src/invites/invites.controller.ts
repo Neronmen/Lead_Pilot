@@ -82,6 +82,6 @@ export class InvitesController {
   @ApiOperation({ summary: 'Cancel a pending invite' })
   @ApiNoContentResponse({ description: 'Cancelled' })
   cancel(@CurrentAuth() auth: AuthContext, @Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    return this.invites.cancel(auth.workspaceId, id);
+    return this.invites.cancel(auth, id);
   }
 }
