@@ -2,7 +2,7 @@
 
 **Design canvas:** https://claude.ai/artifact/VjAxmCrJVRUxSPxGzwAT5f (private until shared from the page's Share menu)
 
-**Status:** milestone D done: all four batches approved and the milestone closed on 2026-10-26. Batch 1 covers foundations, landing, auth, overview and the leads list; batch 2 lead detail and the review queue; batches 3 and 4 the setup checklist, general, lead sources, ideal customer, routing rules, integrations, team, change history and Advanced / Developer. Every board was rendered with Playwright and checked; see Self-check below. M5 implements the screens to match. Schema gaps are applied in the milestone that first needs each one (see the end of this file).
+**Status:** milestone D done: all four batches approved and the milestone closed on 2026-10-26. Batch 1 covers foundations, landing, auth, overview and the leads list; batch 2 lead detail and the review queue; batches 3 and 4 the setup checklist, general, lead sources, ideal customer, routing rules, integrations, team, change history and Advanced / Developer. Every board was rendered with Playwright and checked; see Self-check below. Each milestone builds its own screens to match (vertical slices, SPEC §7). Schema gaps are applied in the milestone that first needs each one (see the end of this file).
 
 ## Visual direction: refined cyber
 
@@ -144,7 +144,7 @@ One term per concept, on every board. Product names (LeadPilot, Slack, HubSpot, 
 
 ## Schema gaps (proposed; applied per milestone)
 
-**Status by milestone.** Applied in M1 (migration `m1_auth_tenancy`): 1, 7 (as `Workspace.aiMonthlyLimitUsd`), 9, 10, 18, 21, plus three found while planning M1: `Membership.lastActiveAt` (Team "Last active"), `RefreshToken.workspaceId` (one session per workspace) and a real `Invite.invitedBy` relation. Already in the M0 schema: 14. Deferred: 6, 13 (jobTitle), 15, 17 → M2; 4, 5, 11, 12 (`kind` only: `note` already exists), 13 (company size), 16, 19 → M3; 8, 20 → M4; 2, 3 → M5.
+**Status by milestone.** Applied in M1 (migration `m1_auth_tenancy`): 1, 7 (as `Workspace.aiMonthlyLimitUsd`), 9, 10, 18, 21, plus three found while planning M1: `Membership.lastActiveAt` (Team "Last active"), `RefreshToken.workspaceId` (one session per workspace) and a real `Invite.invitedBy` relation. Already in the M0 schema: 14. Deferred: 6, 13 (jobTitle), 15, 17 → M2; 4, 5, 11, 12 (`kind` only: `note` already exists), 13 (company size), 16, 19 → M3; 8, 20 → M4; 2, 3 → M2 (the Leads list ships there).
 
 From the backlog:
 1. `Workspace.currency` (`USD` | `VND`). `Lead.dealValue` is "in the workspace's currency", but nothing stores which currency that is.

@@ -22,7 +22,7 @@ Read `SPEC.md` for the product. This file is how we build it.
 - Requirements: Node 24 (`.nvmrc`), pnpm 12 (`packageManager` in package.json), Docker Desktop running.
 - Setup: `cp .env.example .env`, `docker compose up -d`, `pnpm install`, `pnpm --filter api db:migrate`
 - Dev all: `pnpm dev` (api :3001, web :3000, Swagger :3001/docs, status page :3000/status). If the developer already runs it, reuse it; never start a second copy.
-- Test: `pnpm test` (all unit) · api unit `pnpm --filter api test` · api e2e `pnpm --filter api test:e2e` (uses `leadpilot_test`, needs docker up) · shared `pnpm --filter @leadpilot/shared test`
+- Test: `pnpm test` (all unit) · api unit `pnpm --filter api test` · api e2e `pnpm --filter api test:e2e` (uses `leadpilot_test`, needs docker up) · shared `pnpm --filter @leadpilot/shared test`. The `--filter api` commands skip Turbo, so they test the last built `packages/shared/dist`: after changing a shared schema, run `pnpm --filter @leadpilot/shared build` first (root `pnpm test` / `pnpm test:e2e` rebuild it).
 - Lint + typecheck + format: `pnpm lint && pnpm typecheck && pnpm format:check` (fix formatting: `pnpm format`)
 - Build: `pnpm build` (`nest build` wipes `apps/api/dist`, which a running `pnpm dev` uses)
 - DB: new migration `pnpm --filter api db:migrate --name <name>` · apply `pnpm --filter api db:deploy` · regenerate client `pnpm --filter api db:generate` (Turbo also runs it before build/lint/typecheck/test)
@@ -39,7 +39,7 @@ Read `SPEC.md` for the product. This file is how we build it.
 - Secrets in DB encrypted with the crypto helper (AES-256-GCM). API keys stored hashed, shown once.
 - Jobs must be idempotent and safe to retry. Use job ids derived from lead id + step.
 - Web: server components by default, client components only when needed. Data fetching via TanStack Query on the client. UI from shadcn/ui. Every page has loading, empty, and error states.
-- No web page is implemented without an approved design. The design link and notes live in `docs/design-notes.md`; implement M5 to match them. Internal dev/diagnostic pages (like /status) are exempt; every user-facing page needs an approved design.
+- No web page is implemented without an approved design. The design link and notes live in `docs/design-notes.md`. Milestones are vertical slices (SPEC §7): each one builds its own pages to match the design, using the frontend-design skill, with i18n, both themes and every state from the start. Internal dev/diagnostic pages (like /status) are exempt; every user-facing page needs an approved design.
 - No hard-coded user-facing strings; every string goes through i18n (EN + VI message files, see SPEC §4.9). The API returns error codes, never translated text.
 
 ## Git

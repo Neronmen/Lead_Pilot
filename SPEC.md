@@ -136,11 +136,29 @@ Every step is a background job (BullMQ + Redis) with retries, exponential backof
   - Output: the design, plus `docs/design-notes.md` listing every field, filter and metric the screens need, and any gap versus the Prisma schema (propose schema changes, don't apply them).
   - Done when the developer approves the design.
   - **Status: done.** Approved and closed on 2026-10-26.
+
+From M1 on, milestones are **vertical slices**: each ships its API and the web pages that use it. Pages match the approved design (`docs/design-notes.md` + canvas) and are built with i18n (EN + VI), dark and light themes, and loading, empty and error states from the start.
+
 - **M1 – Auth & tenancy**: signup/login/refresh, workspaces, roles, invites, workspace isolation tests.
+  - Web: Login, Signup, Accept invite, Settings > Team, the app shell (sidebar, theme and language switch), protected routes with the no-access page, auth client (access token in memory only, refresh on load, single-flight refresh across tabs).
+  - Steps (each: code → tester → code-reviewer → commit, merge to main, push):
+    1. Migration: same-workspace foreign keys, M1 schema fields. *(done)*
+    2. Tenant scope (Prisma extension), ESLint guard, Prisma error mapping. *(done)*
+    3. Shared zod schemas and error codes, validation pipe, Swagger from zod.
+    4. Auth API: signup, login, refresh (rotation, reuse detection), logout, me (+ locale), guards, rate limits, `workspaceId` in logs.
+    5. Email provider (SMTP to Mailpit, mock) and the invite API.
+    6. Members API, team audit log, isolation matrix for every endpoint.
+    7. API wrap-up: logger tests, error-handling guide, README and CLAUDE.md commands.
+    8. Web foundations: design tokens, themes, i18n, shadcn/ui, TanStack Query, auth client, protected routes.
+    9. Web: Login, Signup, Accept invite.
+    10. Web: app shell and Settings > Team.
 - **M2 – Ingestion**: sources, API keys, HMAC, idempotency, normalization, dedup, timeline events, rate limit.
+  - Web: Leads list (filters, search, saved views), Settings > Lead sources, Settings > Advanced / Developer (API keys).
 - **M3 – Pipeline**: BullMQ queues, enrichment, LLM scoring with mock + real adapters, prompt versions, cost tracking, review queue.
+  - Web: Lead detail, Review queue, Settings > Ideal customer, Settings > General (language, currency, time zone, AI cost limit).
 - **M4 – Routing & actions**: rules engine + tester, email/Slack/Telegram/webhook/HubSpot actions, retries, DLQ, retry-from-UI.
-- **M5 – Dashboard**: overview charts, leads list, lead detail timeline, review queue UI, settings pages.
+  - Web: Routing rules, Settings > Integrations, Overview dashboard, Change history, Get started checklist.
+- **M5 – Landing & polish**: landing page (WebGL hero + GSAP), mobile layouts, motion polish.
 - **M6 – Polish & proof**: seed data, eval script, embed form, CSV import, Playwright smoke, README with architecture diagram + GIFs, deploy.
 
 **Must-have for portfolio demo**: M0–M5 + seed data + README. CSV import, HubSpot, and eval script are high-value stretch items (do them — clients love them).

@@ -12,11 +12,12 @@ Items raised in reviews that belong to a later milestone. Each milestone plan st
 ## M2 – Ingestion
 
 - The embeddable form posts from customer origins, so the ingest route needs its own CORS policy. Do not widen the global single-origin `credentials: true` CORS.
+- `countrySchema` accepts any two letters (`ZZ` passes). Check it against libphonenumber-js `getCountries()` when that dependency arrives.
 - Normalise lead emails to lowercase before insert. The database rejects mixed-case emails (`Lead_email_lowercase_check`).
 
 ## D – UI design
 
-- Moved to the "Schema gaps" section of [design-notes.md](design-notes.md), which now holds all schema proposals from the design work. Apply them in the milestone that first needs each one (M1: locale fields, M2: email/status, M5: saved views, search indexes).
+- Moved to the "Schema gaps" section of [design-notes.md](design-notes.md), which now holds all schema proposals from the design work. Apply them in the milestone that first needs each one (M1: locale fields, M2: email/status, saved views, search indexes).
 
 ## M3 – Pipeline
 
