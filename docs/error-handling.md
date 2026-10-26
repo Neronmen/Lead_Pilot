@@ -76,6 +76,10 @@ Modules add their own (`INVITE_INVALID`, `OWNER_IMMUTABLE`, ...): all are listed
 
 Addresses are trimmed and lowercased, must be well formed, and must end in a **real top-level domain** (`.cmo` and `.test` are refused with `format: "unknown_tld"`). The list is a snapshot of the IANA root zone from the `tlds` package, kept in `packages/shared/src/tlds.ts`; refresh it when bumping `tlds` (`pnpm --filter @leadpilot/shared tlds`). Internationalised (`xn--`) endings and non-ASCII addresses are refused. No DNS or MX lookup is done. **Sign-in does not apply this check**: it only normalises the address, so an account created before a rule changed can still sign in.
 
+## Control characters
+
+Every free-text field in `packages/shared` refuses control characters (`displayTextSchema` for names, the email check, the login address): Postgres text cannot hold a NUL byte, and a line break in a name could inject an email header. **Passwords are the one deliberate exception**: they may contain any character, because they are only hashed with argon2 and never stored as text. They are capped at 128 characters (512 bytes at most) so a huge password cannot be used to make argon2 burn memory and time. Any new free-text field must use `displayTextSchema` or an equivalent.
+
 ## Auth errors, at a glance
 
 | Code | Status | Meaning for the client |

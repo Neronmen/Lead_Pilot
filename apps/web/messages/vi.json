@@ -1,0 +1,102 @@
+{
+  "meta": {
+    "description": "Lọc và phân bổ lead bằng AI"
+  },
+  "language": {
+    "label": "Ngôn ngữ",
+    "en": "English",
+    "vi": "Tiếng Việt"
+  },
+  "theme": {
+    "toLight": "Chuyển sang giao diện sáng",
+    "toDark": "Chuyển sang giao diện tối"
+  },
+  "common": {
+    "tryAgain": "Thử lại",
+    "cancel": "Hủy",
+    "loading": "Đang tải",
+    "skipToContent": "Bỏ qua tới nội dung"
+  },
+  "session": {
+    "loading": "Đang tải không gian làm việc của bạn",
+    "unavailableTitle": "Hiện chưa kết nối được LeadPilot",
+    "unavailableBody": "Bạn vẫn đang đăng nhập. Hãy kiểm tra kết nối mạng rồi thử lại."
+  },
+  "shell": {
+    "navLabel": "Điều hướng chính",
+    "workspaceMembers": "{count, plural, other {# thành viên}}",
+    "nav": {
+      "overview": "Tổng quan",
+      "leads": "Lead",
+      "review": "Hàng chờ duyệt",
+      "rules": "Quy tắc phân bổ",
+      "settings": "Cài đặt"
+    },
+    "account": "Menu tài khoản",
+    "signOut": "Đăng xuất",
+    "roles": {
+      "OWNER": "Chủ sở hữu",
+      "ADMIN": "Quản trị viên",
+      "MEMBER": "Thành viên"
+    }
+  },
+  "settings": {
+    "title": "Cài đặt",
+    "navLabel": "Các mục cài đặt",
+    "nav": {
+      "team": "Đội ngũ"
+    }
+  },
+  "noAccess": {
+    "title": "Chỉ quản trị viên mới thay đổi được cài đặt",
+    "body": "Hãy nhờ chủ sở hữu hoặc một quản trị viên của không gian làm việc nếu cần thay đổi. Lead của bạn và hàng chờ duyệt vẫn hoạt động bình thường.",
+    "back": "Về lead của tôi"
+  },
+  "emailHint": {
+    "didYouMean": "Có phải bạn muốn gõ {suggestion}?",
+    "apply": "Dùng {suggestion}"
+  },
+  "errors": {
+    "VALIDATION_FAILED": "Một số thông tin cần sửa. Hãy kiểm tra các ô được đánh dấu.",
+    "UNAUTHORIZED": "Phiên đăng nhập đã hết. Hãy đăng nhập lại.",
+    "FORBIDDEN": "Vai trò của bạn không làm được việc này.",
+    "NOT_FOUND": "Không tìm thấy mục này. Có thể nó đã bị gỡ.",
+    "CONFLICT": "Việc này xung đột với một thay đổi vừa rồi. Hãy tải lại và thử lại.",
+    "RATE_LIMITED": "Bạn thử quá nhiều lần. Hãy đợi một phút rồi thử lại.",
+    "INTERNAL": "Có lỗi ở phía chúng tôi. Không có gì bị mất. Hãy thử lại sau giây lát.",
+    "AUTH_INVALID_CREDENTIALS": "Email và mật khẩu không khớp.",
+    "AUTH_SESSION_EXPIRED": "Phiên đăng nhập đã hết. Hãy đăng nhập lại.",
+    "AUTH_REFRESH_REUSED": "Vì lý do an toàn, bạn đã bị đăng xuất khỏi mọi nơi. Hãy đăng nhập lại.",
+    "AUTH_NO_WORKSPACE": "Tài khoản này không còn thuộc không gian làm việc nào. Hãy nhờ quản trị viên mời lại.",
+    "EMAIL_TAKEN": "Đã có tài khoản dùng email này. Hãy đăng nhập.",
+    "INVITE_INVALID": "Đường dẫn mời này không còn dùng được. Hãy nhờ người mời gửi lại.",
+    "OWNER_IMMUTABLE": "Không thể thay đổi hoặc gỡ chủ sở hữu.",
+    "CANNOT_MODIFY_SELF": "Bạn không thể đổi vai trò hoặc gỡ chính mình.",
+    "UNKNOWN": "Có lỗi không mong muốn. Hãy thử lại.",
+    "NETWORK": "Không kết nối được LeadPilot. Hãy kiểm tra mạng và thử lại."
+  },
+  "validation": {
+    "invalid_type": "Ô này là bắt buộc.",
+    "too_small": {
+      "string": "Dùng ít nhất {minimum} ký tự.",
+      "array": "Thêm ít nhất {minimum}.",
+      "number": "Nhập số từ {minimum} trở lên."
+    },
+    "too_big": {
+      "string": "Dùng tối đa {maximum} ký tự.",
+      "array": "Quá nhiều. Mỗi lần bạn chỉ thêm được tối đa {maximum}.",
+      "number": "Nhập số không quá {maximum}."
+    },
+    "invalid_format": {
+      "email": "Nhập email hợp lệ, ví dụ ten@congty.com.",
+      "other": "Giá trị này chưa đúng."
+    },
+    "custom": {
+      "unknown_tld": "Phần đuôi email này không phải tên miền có thật. Hãy kiểm tra lỗi gõ.",
+      "other": "Giá trị này chưa đúng."
+    },
+    "invalid_value": "Hãy chọn một trong các lựa chọn.",
+    "unrecognized_keys": "Có dữ liệu ngoài dự kiến được gửi đi. Hãy tải lại trang và thử lại.",
+    "fallback": "Giá trị này chưa đúng."
+  }
+}

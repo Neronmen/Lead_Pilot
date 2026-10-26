@@ -1,0 +1,102 @@
+{
+  "meta": {
+    "description": "AI lead qualification and routing"
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "vi": "Vietnamese"
+  },
+  "theme": {
+    "toLight": "Switch to light theme",
+    "toDark": "Switch to dark theme"
+  },
+  "common": {
+    "tryAgain": "Try again",
+    "cancel": "Cancel",
+    "loading": "Loading",
+    "skipToContent": "Skip to content"
+  },
+  "session": {
+    "loading": "Loading your workspace",
+    "unavailableTitle": "Can’t reach LeadPilot right now",
+    "unavailableBody": "You’re still signed in. Check your connection, then try again."
+  },
+  "shell": {
+    "navLabel": "Main",
+    "workspaceMembers": "{count, plural, one {# member} other {# members}}",
+    "nav": {
+      "overview": "Overview",
+      "leads": "Leads",
+      "review": "Review queue",
+      "rules": "Routing rules",
+      "settings": "Settings"
+    },
+    "account": "Account menu",
+    "signOut": "Sign out",
+    "roles": {
+      "OWNER": "Owner",
+      "ADMIN": "Admin",
+      "MEMBER": "Member"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "navLabel": "Settings sections",
+    "nav": {
+      "team": "Team"
+    }
+  },
+  "noAccess": {
+    "title": "Only admins can change settings",
+    "body": "Ask your workspace owner or an admin if something needs changing. Your leads and the review queue work as usual.",
+    "back": "Back to my leads"
+  },
+  "emailHint": {
+    "didYouMean": "Did you mean {suggestion}?",
+    "apply": "Use {suggestion}"
+  },
+  "errors": {
+    "VALIDATION_FAILED": "Some details need fixing. Check the highlighted fields.",
+    "UNAUTHORIZED": "Your session ended. Sign in again.",
+    "FORBIDDEN": "Your role can’t do this.",
+    "NOT_FOUND": "We couldn’t find that. It may have been removed.",
+    "CONFLICT": "That clashes with a recent change. Reload and try again.",
+    "RATE_LIMITED": "Too many attempts. Wait a minute and try again.",
+    "INTERNAL": "Something went wrong on our side. Nothing was lost. Try again in a moment.",
+    "AUTH_INVALID_CREDENTIALS": "That email and password don’t match.",
+    "AUTH_SESSION_EXPIRED": "Your session ended. Sign in again.",
+    "AUTH_REFRESH_REUSED": "For your security, you were signed out everywhere. Sign in again.",
+    "AUTH_NO_WORKSPACE": "This account isn’t part of any workspace anymore. Ask an admin to invite you again.",
+    "EMAIL_TAKEN": "An account with this email already exists. Sign in instead.",
+    "INVITE_INVALID": "This invite link no longer works. Ask the person who invited you to send a new one.",
+    "OWNER_IMMUTABLE": "The owner can’t be changed or removed.",
+    "CANNOT_MODIFY_SELF": "You can’t change your own role or remove yourself.",
+    "UNKNOWN": "Something unexpected happened. Try again.",
+    "NETWORK": "Can’t reach LeadPilot. Check your connection and try again."
+  },
+  "validation": {
+    "invalid_type": "This field is required.",
+    "too_small": {
+      "string": "Use at least {minimum} characters.",
+      "array": "Add at least {minimum}.",
+      "number": "Use a number of at least {minimum}."
+    },
+    "too_big": {
+      "string": "Use at most {maximum} characters.",
+      "array": "That’s too many. You can add up to {maximum} at once.",
+      "number": "Use a number of at most {maximum}."
+    },
+    "invalid_format": {
+      "email": "Enter a valid email, like name@company.com.",
+      "other": "This doesn’t look right."
+    },
+    "custom": {
+      "unknown_tld": "The ending of this email isn’t a real domain. Check for a typo.",
+      "other": "This doesn’t look right."
+    },
+    "invalid_value": "Choose one of the options.",
+    "unrecognized_keys": "Something unexpected was sent. Reload the page and try again.",
+    "fallback": "This doesn’t look right."
+  }
+}
