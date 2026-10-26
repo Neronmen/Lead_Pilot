@@ -15,7 +15,9 @@
     "tryAgain": "Try again",
     "cancel": "Cancel",
     "loading": "Loading",
-    "skipToContent": "Skip to content"
+    "skipToContent": "Skip to content",
+    "errorTitle": "Couldn't load this page",
+    "errorBody": "The server didn't respond. Nothing has been lost. Try again in a moment."
   },
   "session": {
     "loading": "Loading your workspace",
@@ -38,7 +40,12 @@
       "OWNER": "Owner",
       "ADMIN": "Admin",
       "MEMBER": "Member"
-    }
+    },
+    "brand": "LeadPilot",
+    "menu": "Open menu",
+    "closeMenu": "Close menu",
+    "signOutFailed": "Couldn't sign out. Check your connection and try again.",
+    "menuTitle": "Menu"
   },
   "settings": {
     "title": "Settings",
@@ -49,7 +56,7 @@
   },
   "noAccess": {
     "title": "Only admins can change settings",
-    "body": "Ask your workspace owner or an admin if something needs changing. Your leads and the review queue work as usual.",
+    "body": "Ask your workspace owner or an admin if something needs changing. You can keep working on your leads as usual.",
     "back": "Back to my leads"
   },
   "emailHint": {
@@ -98,5 +105,14 @@
     "invalid_value": "Choose one of the options.",
     "unrecognized_keys": "Something unexpected was sent. Reload the page and try again.",
     "fallback": "This doesn’t look right."
+  },
+  "leads": {
+    "title": "Leads",
+    "emptyTitle": "No leads yet",
+    "emptyBody": "Leads will show up here as soon as they arrive."
+  },
+  "settingsTeam": {
+    "title": "Team",
+    "sub": "Who can use this workspace, and what each person can do."
   }
 }

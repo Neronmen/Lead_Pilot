@@ -15,7 +15,9 @@
     "tryAgain": "Thử lại",
     "cancel": "Hủy",
     "loading": "Đang tải",
-    "skipToContent": "Bỏ qua tới nội dung"
+    "skipToContent": "Bỏ qua tới nội dung",
+    "errorTitle": "Không tải được trang này",
+    "errorBody": "Máy chủ chưa phản hồi. Không có gì bị mất. Hãy thử lại sau giây lát."
   },
   "session": {
     "loading": "Đang tải không gian làm việc của bạn",
@@ -38,7 +40,12 @@
       "OWNER": "Chủ sở hữu",
       "ADMIN": "Quản trị viên",
       "MEMBER": "Thành viên"
-    }
+    },
+    "brand": "LeadPilot",
+    "menu": "Mở menu",
+    "closeMenu": "Đóng menu",
+    "signOutFailed": "Chưa đăng xuất được. Hãy kiểm tra kết nối mạng rồi thử lại.",
+    "menuTitle": "Menu"
   },
   "settings": {
     "title": "Cài đặt",
@@ -49,7 +56,7 @@
   },
   "noAccess": {
     "title": "Chỉ quản trị viên mới thay đổi được cài đặt",
-    "body": "Hãy nhờ chủ sở hữu hoặc một quản trị viên của không gian làm việc nếu cần thay đổi. Lead của bạn và hàng chờ duyệt vẫn hoạt động bình thường.",
+    "body": "Hãy nhờ chủ sở hữu hoặc một quản trị viên của không gian làm việc nếu cần thay đổi. Bạn vẫn xử lý lead như bình thường.",
     "back": "Về lead của tôi"
   },
   "emailHint": {
@@ -98,5 +105,14 @@
     "invalid_value": "Hãy chọn một trong các lựa chọn.",
     "unrecognized_keys": "Có dữ liệu ngoài dự kiến được gửi đi. Hãy tải lại trang và thử lại.",
     "fallback": "Giá trị này chưa đúng."
+  },
+  "leads": {
+    "title": "Lead",
+    "emptyTitle": "Chưa có lead nào",
+    "emptyBody": "Lead sẽ hiện ở đây ngay khi có lead gửi về."
+  },
+  "settingsTeam": {
+    "title": "Đội ngũ",
+    "sub": "Ai được dùng không gian làm việc này, và mỗi người được làm gì."
   }
 }
