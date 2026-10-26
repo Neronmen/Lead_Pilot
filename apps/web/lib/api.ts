@@ -34,7 +34,7 @@ async function request(path: string, init?: RequestInit): Promise<Response> {
   }
 }
 
-async function toApiError(res: Response): Promise<ApiError> {
+export async function toApiError(res: Response): Promise<ApiError> {
   const parsed = errorBodySchema.safeParse(await res.json().catch(() => null));
   return parsed.success
     ? new ApiError(

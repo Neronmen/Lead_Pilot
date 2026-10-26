@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { useState, type ReactNode } from 'react';
 import { ApiError } from '@/lib/api';
+import { AuthProvider } from '@/lib/auth/auth-provider';
 
 function makeQueryClient(): QueryClient {
   return new QueryClient({
@@ -23,7 +24,7 @@ export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(makeQueryClient);
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
+      <AuthProvider>{children}</AuthProvider>
       {/* Rendered only in development builds. */}
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
