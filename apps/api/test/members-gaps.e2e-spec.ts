@@ -89,11 +89,11 @@ describe('Members: races, sessions, history and scale (e2e)', () => {
       expect(removed[0]?.after).toEqual({ unassignedLeads: 1 });
     });
 
-    it('two admins making the same member an admin at once: one wins, the other 200 or 409, one history row', async () => {
+    it('the owner making the same member an admin twice at once: one wins, the other 200 or 409, one history row', async () => {
       const t = await team();
       const results = await Promise.all([
-        patch(t.admin, t.memberM.id, { role: 'ADMIN' }),
-        patch(t.admin2, t.memberM.id, { role: 'ADMIN' }),
+        patch(t.owner, t.memberM.id, { role: 'ADMIN' }),
+        patch(t.owner, t.memberM.id, { role: 'ADMIN' }),
       ]);
       // One request wins. The other either arrived after it committed (the role
       // is already ADMIN: an idempotent 200) or collided with it (409). Never a 500.
@@ -113,7 +113,7 @@ describe('Members: races, sessions, history and scale (e2e)', () => {
       for (let i = 0; i < 4; i += 1) {
         const t = await team();
         const [changed, removed] = await Promise.all([
-          patch(t.admin, t.memberM.id, { role: 'ADMIN' }),
+          patch(t.owner, t.memberM.id, { role: 'ADMIN' }),
           remove(t.admin2, t.memberM.id),
         ]);
         expect(removed.status).toBe(204);
@@ -293,8 +293,8 @@ describe('Members: races, sessions, history and scale (e2e)', () => {
         .send({ token, name: 'Later Lee', password: 'a-long-enough-password-1' })
         .expect(200);
       const later = await membershipOf(prisma, email, t.workspaceId);
-      await patch(t.admin, later.id, { role: 'ADMIN' }).expect(200);
-      await remove(t.admin2, later.id).expect(204);
+      await patch(t.owner, later.id, { role: 'ADMIN' }).expect(200);
+      await remove(t.owner, later.id).expect(204);
 
       const rows = await auditRows(prisma, t.workspaceId);
       expect(rows.length).toBeGreaterThan(6);

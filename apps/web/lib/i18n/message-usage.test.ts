@@ -52,6 +52,10 @@ const DYNAMIC: Record<string, string[]> = {
   'auth.signup.languages.${code}': ['en', 'vi'].map((code) => `auth.signup.languages.${code}`),
   'auth.signup.currencies.${code}': ['USD', 'VND'].map((code) => `auth.signup.currencies.${code}`),
   'auth.invite.roleHelp.${role}': ['MEMBER', 'ADMIN'].map((role) => `auth.invite.roleHelp.${role}`),
+  'team.results.${status}': ['invited', 'already_member', 'already_invited', 'email_failed'].map(
+    (status) => `team.results.${status}`,
+  ),
+  'team.roleHelp.${value}': ['OWNER', 'ADMIN', 'MEMBER'].map((value) => `team.roleHelp.${value}`),
   'auth.aside.chips.${chip}': ['web', 'zapier', 'csv', 'linkedin'].map(
     (chip) => `auth.aside.chips.${chip}`,
   ),
@@ -90,6 +94,7 @@ const scanned = [
   'components/brand',
   'app/(app)',
   'components/auth',
+  'components/team',
   'app/login',
   'app/signup',
   'app/invite',

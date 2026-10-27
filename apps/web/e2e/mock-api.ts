@@ -12,6 +12,8 @@ export interface MockOptions {
   refresh?: 'ok' | 'expired' | 'down';
   /** How long a refresh takes, so two tabs can overlap. */
   refreshDelayMs?: number;
+  /** The viewer is the only person in the workspace. */
+  alone?: boolean;
 }
 
 /** A fake API for one browser context (all its tabs share it, like the real one). */
@@ -27,6 +29,26 @@ export class MockApi {
   requests: { method: string; path: string; body: unknown }[] = [];
   /** Per-test answers by "METHOD /path"; returning null falls back to the default. */
   answers = new Map<string, (body: unknown) => { status: number; body?: unknown } | null>();
+  /** Wait this long (ms) before answering "METHOD /path": for loading states. */
+  delays = new Map<string, number>();
+  /** The workspace's people and pending invites, changed by the Team calls. */
+  team: {
+    id: string;
+    userId: string;
+    name: string | null;
+    email: string;
+    role: Role;
+    lastActiveAt: string | null;
+    joinedAt: string;
+  }[] = [];
+  pending: {
+    id: string;
+    email: string;
+    role: 'ADMIN' | 'MEMBER';
+    invitedBy: { id: string; name: string | null } | null;
+    expiresAt: string;
+    createdAt: string;
+  }[] = [];
   private running = 0;
   private readonly name: string | null;
   private readonly delay: number;
@@ -40,6 +62,68 @@ export class MockApi {
     this.name = options.name === undefined ? 'Daniel Park' : options.name;
     this.refresh = options.refresh ?? 'ok';
     this.delay = options.refreshDelayMs ?? 0;
+    this.resetTeam(options.alone === true);
+  }
+
+  /** Four people (or one) and two pending invites, from the viewer's side. */
+  private resetTeam(alone: boolean) {
+    const hours = (h: number) => new Date(Date.now() - h * 3600_000).toISOString();
+    const person = (
+      n: number,
+      name: string | null,
+      email: string,
+      role: Role,
+      active: string | null,
+    ) => ({
+      id: `aaaaaaaa-0000-4000-8000-00000000000${n}`,
+      userId: `bbbbbbbb-0000-4000-8000-00000000000${n}`,
+      name,
+      email,
+      role,
+      lastActiveAt: active,
+      joinedAt: hours(500),
+      openLeads: 0,
+    });
+    const viewer = {
+      ...person(1, this.name, 'daniel@northstargrowth.com', this.role, new Date().toISOString()),
+      userId: '11111111-1111-4111-8111-111111111111',
+    };
+    const others =
+      this.role === 'OWNER'
+        ? []
+        : [person(2, 'Mia Johnson', 'mia@northstargrowth.com', 'OWNER', hours(3))];
+    this.team = alone
+      ? [viewer]
+      : [
+          ...others.slice(0, 1),
+          viewer,
+          ...(this.role === 'ADMIN'
+            ? []
+            : [person(3, 'Linh Tran', 'linh@northstargrowth.com', 'ADMIN', hours(30))]),
+          person(4, 'Ethan Brooks', 'ethan.brooks@northstargrowth.com', 'MEMBER', hours(2)),
+          person(5, null, 'noah@northstargrowth.com', 'MEMBER', null),
+        ];
+    const inviter = { id: 'bbbbbbbb-0000-4000-8000-000000000002', name: 'Mia Johnson' };
+    this.pending = alone
+      ? []
+      : [
+          {
+            id: 'cccccccc-0000-4000-8000-000000000001',
+            email: 'olivia@northstargrowth.com',
+            role: 'MEMBER',
+            invitedBy: inviter,
+            expiresAt: new Date(Date.now() + 6 * 86400_000).toISOString(),
+            createdAt: hours(24),
+          },
+          {
+            id: 'cccccccc-0000-4000-8000-000000000002',
+            email: 'sam@northstargrowth.com',
+            role: 'ADMIN',
+            invitedBy: inviter,
+            expiresAt: new Date(Date.now() + 2 * 86400_000).toISOString(),
+            createdAt: hours(120),
+          },
+        ];
   }
 
   private me() {
@@ -85,11 +169,48 @@ export class MockApi {
       sent = undefined;
     }
     this.requests.push({ method: request.method(), path, body: sent });
+    const wait = this.delays.get(`${request.method()} ${path}`);
+    if (wait) await new Promise((resolve) => setTimeout(resolve, wait));
     const answer = this.answers.get(`${request.method()} ${path}`)?.(sent);
     if (answer) {
       return answer.status === 204
         ? route.fulfill({ status: 204, headers: cors })
         : json(answer.status, answer.body);
+    }
+
+    const method = request.method();
+    if (path === '/members' && method === 'GET') return json(200, this.team);
+    const member = /^\/members\/([0-9a-f-]{36})$/.exec(path);
+    if (member && method === 'PATCH') {
+      const row = this.team.find((m) => m.id === member[1]);
+      if (!row) return json(404, { error: { code: 'NOT_FOUND', message: 'x' } });
+      row.role = (sent as { role: Role }).role;
+      return json(200, row);
+    }
+    if (member && method === 'DELETE') {
+      this.team = this.team.filter((m) => m.id !== member[1]);
+      return route.fulfill({ status: 204, headers: cors });
+    }
+    if (path === '/invites' && method === 'GET') return json(200, this.pending);
+    if (path === '/invites' && method === 'POST') {
+      const { emails, role } = sent as { emails: string[]; role: 'ADMIN' | 'MEMBER' };
+      for (const email of emails) {
+        this.pending.unshift({
+          id: crypto.randomUUID(),
+          email,
+          role,
+          invitedBy: { id: '11111111-1111-4111-8111-111111111111', name: this.name },
+          expiresAt: new Date(Date.now() + 7 * 86400_000).toISOString(),
+          createdAt: new Date().toISOString(),
+        });
+      }
+      return json(201, { results: emails.map((email) => ({ email, status: 'invited' })) });
+    }
+    const invite = /^\/invites\/([0-9a-f-]{36})(\/resend)?$/.exec(path);
+    if (invite && method === 'POST') return json(200, { status: 'invited' });
+    if (invite && method === 'DELETE') {
+      this.pending = this.pending.filter((i) => i.id !== invite[1]);
+      return route.fulfill({ status: 204, headers: cors });
     }
 
     const session = (status = 200) => {

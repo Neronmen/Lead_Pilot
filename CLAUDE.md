@@ -8,10 +8,17 @@ Read `SPEC.md` for the product. This file is how we build it.
 ## Working style
 - Always plan before coding a milestone or any change touching more than 3 files. Show the plan, wait for approval. Every milestone plan first pulls its items from `docs/backlog.md`.
 - Work in small steps: one feature → tests → review → commit. Never leave the repo in a broken state.
-- After finishing a feature, delegate to the `tester` subagent, then the `code-reviewer` subagent. Fix what they report before committing.
+- Review depth depends on the work: see "Working efficiency" below. Whatever review runs, fix what it reports before committing.
 - If something in SPEC.md is ambiguous, ask instead of guessing. If you deviate from SPEC.md, say so and why.
 - Prefer boring, well-known solutions. No new dependency without stating why.
 - The developer is learning: when you introduce a non-obvious pattern (queues, idempotency, HMAC, RBAC guards), add a 2–3 line explanation in the PR/commit summary.
+
+## Working efficiency
+- **Security-critical work gets the full treatment**: auth, sessions and tokens, tenancy and every permission rule, secrets and crypto, input that reaches a database or another system. Tests, then the `tester` subagent, then the `code-reviewer` subagent, then commit.
+- **Ordinary UI and docs get lint + typecheck + unit tests only**, with one combined `code-reviewer` pass over the whole milestone diff at its end (fix the blockers, then tag).
+- **Run only the Playwright specs you changed** while working (`pnpm exec playwright test <file>` in `apps/web`); CI runs the full suite.
+- **One screenshot per screen** (per state that matters) when showing the user your work, not a full matrix.
+- **Plans are 20 lines at most.** Say the endpoints or files, the gaps, and the states; skip the rest.
 
 ## Stack & layout
 - pnpm workspaces + Turborepo. `apps/api` (NestJS), `apps/web` (Next.js App Router), `packages/shared` (zod schemas/types).

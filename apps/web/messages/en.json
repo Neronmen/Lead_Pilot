@@ -242,5 +242,76 @@
   "settingsTeam": {
     "title": "Team",
     "sub": "Who can use this workspace, and what each person can do."
+  },
+  "team": {
+    "invite": {
+      "title": "Invite people",
+      "emails": "Work emails, separated by commas",
+      "placeholder": "name@yourcompany.com, …",
+      "as": "Invite as",
+      "send": "Send invites",
+      "sending": "Sending invites",
+      "none": "Add at least one email address.",
+      "tooMany": "Invite up to {max} people at a time.",
+      "invalid": "Check these addresses: {list}.",
+      "roles": {
+        "MEMBER": "Member",
+        "ADMIN": "Admin"
+      }
+    },
+    "roleHelp": {
+      "OWNER": "Everything an admin can do, plus deleting the workspace. There’s one owner.",
+      "ADMIN": "Changes settings, lead sources and routing rules, and invites and manages Members.",
+      "MEMBER": "Works the leads assigned to them and the review queue. Doesn’t see Settings."
+    },
+    "people": {
+      "title": "{count, plural, one {# person} other {# people}}",
+      "colPerson": "Person",
+      "colRole": "Role",
+      "colActive": "Last active",
+      "colActions": "Actions",
+      "roleOf": "Role for {name}",
+      "remove": "Remove",
+      "you": "That’s you",
+      "activeNow": "Active now",
+      "never": "Not yet"
+    },
+    "confirm": {
+      "title": "Remove {name} from {workspace}?",
+      "body": "{name} won’t be able to sign in to this workspace. Their leads become unassigned until they get a new owner. Nothing is deleted, and their account stays.",
+      "confirm": "Remove {name}",
+      "cancel": "Cancel",
+      "removing": "Removing"
+    },
+    "empty": {
+      "title": "It’s just you for now",
+      "body": "Invite your sales reps so LeadPilot can assign leads to them. They join as Members and only see leads.",
+      "cta": "Invite people"
+    },
+    "pending": {
+      "title": "Pending invites ({count})",
+      "meta": "Invited as {role} by {by} {ago} · expires {expires}",
+      "metaNoInviter": "Invited as {role} {ago} · expires {expires}",
+      "metaExpired": "Invited as {role} {ago} · expired {expires}",
+      "resend": "Resend",
+      "cancelInvite": "Cancel invite",
+      "ownerOnly": "Only the owner can manage admin invites."
+    },
+    "results": {
+      "invited": "Invite sent to {email}.",
+      "already_member": "{email} is already on the team.",
+      "already_invited": "{email} already has a pending invite.",
+      "email_failed": "The invite for {email} is saved, but the email could not be sent. Use Resend under Pending invites.",
+      "resent": "Invite sent again to {email}."
+    },
+    "problem": {
+      "changed": "This changed while you were looking. Reload to see the latest.",
+      "reload": "Reload",
+      "loadTitle": "Couldn’t load the team",
+      "loadBody": "The server didn’t respond. Nothing has been lost. Try again in a moment.",
+      "pendingFailed": "Couldn’t load the pending invites.",
+      "dismiss": "Dismiss",
+      "retry": "Try again"
+    }
   }
 }

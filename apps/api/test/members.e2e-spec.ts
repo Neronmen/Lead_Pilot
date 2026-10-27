@@ -157,12 +157,12 @@ describe('Members (e2e)', () => {
       });
     });
 
-    it('lets an admin manage members and other admins', async () => {
+    it('lets the owner manage members and admins (an admin only members: see team-owner-admins)', async () => {
       const t = await team();
       const second = await joinAs(app, t.owner, 'ADMIN', 'admin2');
       const secondM = await membershipOf(prisma, second.email, t.workspaceId);
-      await patch(t.admin, t.memberM.id, { role: 'ADMIN' }).expect(200);
-      await patch(t.admin, secondM.id, { role: 'MEMBER' }).expect(200);
+      await patch(t.owner, t.memberM.id, { role: 'ADMIN' }).expect(200);
+      await patch(t.owner, secondM.id, { role: 'MEMBER' }).expect(200);
       expect((await membershipOf(prisma, second.email, t.workspaceId)).role).toBe('MEMBER');
     });
 
@@ -279,12 +279,13 @@ describe('Members (e2e)', () => {
       });
     });
 
-    it('lets an admin remove members and other admins, never the owner or themselves', async () => {
+    it('lets an admin remove members, the owner remove admins, and nobody the owner or themselves', async () => {
       const t = await team();
       const second = await joinAs(app, t.owner, 'ADMIN', 'admin2');
       const secondM = await membershipOf(prisma, second.email, t.workspaceId);
       await remove(t.admin, t.memberM.id).expect(204);
-      await remove(t.admin, secondM.id).expect(204);
+      await remove(t.admin, secondM.id).expect(403); // an admin cannot remove an admin
+      await remove(t.owner, secondM.id).expect(204);
 
       const owner = await remove(t.admin, t.ownerM.id).expect(403);
       expect(errorCode(owner)).toBe('OWNER_IMMUTABLE');

@@ -1,5 +1,5 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { type AssignableRole, ErrorCode, type Member } from '@leadpilot/shared';
+import { type AssignableRole, ErrorCode, type Member, type Role } from '@leadpilot/shared';
 import { AuditAction, AuditService } from '../audit/audit.service';
 import { DomainError } from '../common/errors/domain-error';
 import { Prisma } from '../generated/prisma/client';
@@ -9,6 +9,7 @@ import { TenantPrisma } from '../prisma/tenant-prisma.service';
 export interface Actor {
   userId: string;
   workspaceId: string;
+  role: Role;
 }
 
 const memberNotFound = () =>
@@ -28,13 +29,22 @@ const cannotModifySelf = () =>
     HttpStatus.FORBIDDEN,
   );
 
+/** Admins are managed by the owner alone: an admin may manage Members only. */
+const ownerManagesAdmins = () =>
+  new DomainError(
+    ErrorCode.FORBIDDEN,
+    'Only the owner can grant, change or remove admins',
+    HttpStatus.FORBIDDEN,
+  );
+
 /** A lead is open until sales marks it won or lost. */
 const OPEN_OUTCOMES = ['NONE', 'CONTACTED', 'QUALIFIED'] as const;
 
 /**
- * The people of one workspace (Settings > Team). Admins manage Members and
- * other Admins; nobody touches the Owner, and nobody changes or removes
- * themselves (ownership transfer is in docs/backlog.md). Every query goes
+ * The people of one workspace (Settings > Team). The Owner manages Admins and
+ * Members; an Admin manages Members only (an Admin cannot grant the Admin role
+ * either, nor change or remove another Admin). Nobody touches the Owner, and
+ * nobody changes or removes themselves (ownership transfer is in docs/backlog.md). Every query goes
  * through `TenantPrisma.for(workspaceId)`: another workspace's membership id
  * is a 404.
  */
@@ -66,6 +76,7 @@ export class MembersService {
   async changeRole(actor: Actor, membershipId: string, role: AssignableRole): Promise<Member> {
     const db = this.tenant.for(actor.workspaceId);
     await this.findTarget(actor, membershipId); // the shared rules, before any write
+    if (role === 'ADMIN' && actor.role !== 'OWNER') throw ownerManagesAdmins();
 
     return db.$transaction(async (tx) => {
       // Read, change and record in one transaction, so the history shows the
@@ -76,6 +87,8 @@ export class MembersService {
       });
       if (!current) throw memberNotFound(); // removed by a parallel request
       if (current.role === 'OWNER') throw ownerImmutable();
+      // They may have been made an admin since the check above.
+      if (current.role === 'ADMIN' && actor.role !== 'OWNER') throw ownerManagesAdmins();
 
       const open = await tx.lead.count({
         where: { ownerId: current.userId, outcome: { in: [...OPEN_OUTCOMES] } },
@@ -148,6 +161,11 @@ export class MembersService {
           }
           throw error;
         });
+      // The role may have changed since findTarget looked (the owner promoted them a
+      // moment ago): check what was really deleted, and undo it all (the lead
+      // unassignment too) by throwing inside the transaction.
+      if (gone.role === 'OWNER') throw ownerImmutable();
+      if (gone.role === 'ADMIN' && actor.role !== 'OWNER') throw ownerManagesAdmins();
       await this.audit.record(tx, actor.workspaceId, {
         actorUserId: actor.userId,
         area: 'team',
@@ -169,6 +187,7 @@ export class MembersService {
     if (!target) throw memberNotFound();
     if (target.userId === actor.userId) throw cannotModifySelf();
     if (target.role === 'OWNER') throw ownerImmutable();
+    if (target.role === 'ADMIN' && actor.role !== 'OWNER') throw ownerManagesAdmins();
     return target;
   }
 }

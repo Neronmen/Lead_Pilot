@@ -242,5 +242,76 @@
   "settingsTeam": {
     "title": "Đội ngũ",
     "sub": "Ai được dùng không gian làm việc này, và mỗi người được làm gì."
+  },
+  "team": {
+    "invite": {
+      "title": "Mời thành viên",
+      "emails": "Email công việc, cách nhau bằng dấu phẩy",
+      "placeholder": "ten@congty.com, …",
+      "as": "Vai trò",
+      "send": "Gửi lời mời",
+      "sending": "Đang gửi lời mời",
+      "none": "Hãy nhập ít nhất một địa chỉ email.",
+      "tooMany": "Mỗi lần chỉ mời được tối đa {max} người.",
+      "invalid": "Hãy kiểm tra các địa chỉ này: {list}.",
+      "roles": {
+        "MEMBER": "Thành viên",
+        "ADMIN": "Quản trị viên"
+      }
+    },
+    "roleHelp": {
+      "OWNER": "Làm được mọi việc của quản trị viên, và có thể xóa không gian làm việc. Chỉ có một chủ sở hữu.",
+      "ADMIN": "Thay đổi cài đặt, nguồn lead, quy tắc phân bổ; mời và quản lý Thành viên.",
+      "MEMBER": "Xử lý lead được giao và hàng chờ duyệt. Không thấy Cài đặt."
+    },
+    "people": {
+      "title": "{count, plural, other {# người}}",
+      "colPerson": "Người dùng",
+      "colRole": "Vai trò",
+      "colActive": "Hoạt động gần nhất",
+      "colActions": "Thao tác",
+      "roleOf": "Vai trò của {name}",
+      "remove": "Gỡ",
+      "you": "Là bạn",
+      "activeNow": "Đang hoạt động",
+      "never": "Chưa có"
+    },
+    "confirm": {
+      "title": "Gỡ {name} khỏi {workspace}?",
+      "body": "{name} sẽ không đăng nhập được vào không gian làm việc này. Lead của họ sẽ chưa có người phụ trách cho tới khi được giao cho người khác. Không dữ liệu nào bị xóa, và tài khoản của họ vẫn còn.",
+      "confirm": "Gỡ {name}",
+      "cancel": "Hủy",
+      "removing": "Đang gỡ"
+    },
+    "empty": {
+      "title": "Hiện mới chỉ có bạn",
+      "body": "Mời nhân viên sale để LeadPilot có thể giao lead cho họ. Họ tham gia với vai trò Thành viên và chỉ thấy lead.",
+      "cta": "Mời thành viên"
+    },
+    "pending": {
+      "title": "Lời mời đang chờ ({count})",
+      "meta": "Mời làm {role} bởi {by} {ago} · hết hạn {expires}",
+      "metaNoInviter": "Mời làm {role} {ago} · hết hạn {expires}",
+      "metaExpired": "Mời làm {role} {ago} · đã hết hạn {expires}",
+      "resend": "Gửi lại",
+      "cancelInvite": "Hủy lời mời",
+      "ownerOnly": "Chỉ chủ sở hữu mới quản lý được lời mời quản trị viên."
+    },
+    "results": {
+      "invited": "Đã gửi lời mời tới {email}.",
+      "already_member": "{email} đã ở trong đội ngũ.",
+      "already_invited": "{email} đã có lời mời đang chờ.",
+      "email_failed": "Lời mời cho {email} đã được lưu nhưng chưa gửi được email. Hãy dùng Gửi lại ở mục Lời mời đang chờ.",
+      "resent": "Đã gửi lại lời mời tới {email}."
+    },
+    "problem": {
+      "changed": "Dữ liệu đã thay đổi trong lúc bạn xem. Hãy tải lại để thấy bản mới nhất.",
+      "reload": "Tải lại",
+      "loadTitle": "Không tải được đội ngũ",
+      "loadBody": "Máy chủ chưa phản hồi. Không có gì bị mất. Hãy thử lại sau giây lát.",
+      "pendingFailed": "Không tải được các lời mời đang chờ.",
+      "dismiss": "Đóng",
+      "retry": "Thử lại"
+    }
   }
 }

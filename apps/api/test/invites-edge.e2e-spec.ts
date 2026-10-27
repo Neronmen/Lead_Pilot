@@ -378,9 +378,15 @@ describe('Invites edge cases (e2e)', () => {
       const res = await http()
         .post('/invites')
         .set('authorization', bearer(admin))
-        .send({ emails: [owner.body.email], role: 'ADMIN' })
+        .send({ emails: [owner.body.email], role: 'MEMBER' })
         .expect(201);
       expect(res.body.results).toEqual([{ email: owner.body.email, status: 'already_member' }]);
+      // Nor may an admin hand out the admin role at all (only the owner does).
+      await http()
+        .post('/invites')
+        .set('authorization', bearer(admin))
+        .send({ emails: [owner.body.email], role: 'ADMIN' })
+        .expect(403);
     });
 
     it('does not turn an expired invite into a password oracle', async () => {

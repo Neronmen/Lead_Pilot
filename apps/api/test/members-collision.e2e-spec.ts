@@ -130,11 +130,11 @@ describe('Members and invites: forced collisions and raw-transaction audit (e2e)
       const t = await team();
       const rowsBefore = (await auditRows(prisma, t.workspaceId)).length;
       const spy = interceptOnce(app.get(TenantPrisma), 'membership', 'updateMany', () =>
-        // The winner: another admin made the person an ADMIN after our read.
+        // The winner: the owner (in another request) made the person an ADMIN after our read.
         prisma.membership.update({ where: { id: t.memberM.id }, data: { role: 'ADMIN' } }),
       );
 
-      const res = await patch(t.admin, t.memberM.id, { role: 'ADMIN' });
+      const res = await patch(t.owner, t.memberM.id, { role: 'ADMIN' });
       spy.mockRestore();
 
       // The winner already made the person an ADMIN, which is what was asked.
@@ -150,11 +150,11 @@ describe('Members and invites: forced collisions and raw-transaction audit (e2e)
       const spy = interceptOnce(app.get(TenantPrisma), 'membership', 'updateMany', () =>
         prisma.membership.update({ where: { id: t.memberM.id }, data: { role: 'ADMIN' } }),
       );
-      await patch(t.admin, t.memberM.id, { role: 'ADMIN' }).expect(200);
+      await patch(t.owner, t.memberM.id, { role: 'ADMIN' }).expect(200);
       spy.mockRestore();
 
       // The role is already ADMIN: the retry is an idempotent 200 with no row.
-      const retry = await patch(t.admin, t.memberM.id, { role: 'ADMIN' }).expect(200);
+      const retry = await patch(t.owner, t.memberM.id, { role: 'ADMIN' }).expect(200);
       expect(retry.body.role).toBe('ADMIN');
       expect(await roleRows(t.workspaceId, 'member.role_changed')).toHaveLength(0);
       // Demoting really changes it and writes the one row, with the real "before".
@@ -171,7 +171,7 @@ describe('Members and invites: forced collisions and raw-transaction audit (e2e)
         prisma.membership.delete({ where: { id: t.memberM.id } }),
       );
 
-      const res = await patch(t.admin, t.memberM.id, { role: 'ADMIN' });
+      const res = await patch(t.owner, t.memberM.id, { role: 'ADMIN' });
       spy.mockRestore();
 
       expect(res.status).toBe(404);
@@ -185,7 +185,7 @@ describe('Members and invites: forced collisions and raw-transaction audit (e2e)
       const spy = interceptOnce(app.get(TenantPrisma), 'auditLog', 'create', async () => {
         throw new Error('history unavailable');
       });
-      const res = await patch(t.admin, t.memberM.id, { role: 'ADMIN' });
+      const res = await patch(t.owner, t.memberM.id, { role: 'ADMIN' });
       spy.mockRestore();
       expect(res.status).toBe(500);
       expect((await membershipOf(prisma, t.member.email, t.workspaceId)).role).toBe('MEMBER');

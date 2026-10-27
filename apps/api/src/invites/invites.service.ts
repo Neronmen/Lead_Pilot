@@ -8,6 +8,7 @@ import {
   type Locale,
   type PendingInvite,
   type ResendInviteResponse,
+  type Role,
 } from '@leadpilot/shared';
 import { AuditAction, type AuditDb, AuditService } from '../audit/audit.service';
 import { DomainError } from '../common/errors/domain-error';
@@ -22,6 +23,7 @@ import { INVITE_TTL_DAYS, inviteLink, newInviteToken } from './invite-token';
 export interface Inviter {
   userId: string;
   workspaceId: string;
+  role: Role;
 }
 
 /** What every email of one batch shares, loaded once. */
@@ -41,6 +43,14 @@ const SEND_CONCURRENCY = 4;
 
 const inviteNotFound = () =>
   new DomainError(ErrorCode.NOT_FOUND, 'Invite not found', HttpStatus.NOT_FOUND);
+
+/** Admins are managed by the owner alone, and that includes their invites. */
+const ownerManagesAdmins = () =>
+  new DomainError(
+    ErrorCode.FORBIDDEN,
+    'Only the owner can invite, resend or cancel admin invites',
+    HttpStatus.FORBIDDEN,
+  );
 
 /**
  * Invites for one workspace (Settings > Team). Every query goes through
@@ -69,6 +79,7 @@ export class InvitesService {
     emails: string[],
     role: AssignableRole,
   ): Promise<CreateInvitesResponse> {
+    if (role === 'ADMIN' && inviter.role !== 'OWNER') throw ownerManagesAdmins();
     // The same address typed twice is one invite (addresses are already lowercased).
     const distinct = [...new Set(emails)];
     const context = await this.senderContext(inviter);
@@ -113,11 +124,12 @@ export class InvitesService {
    */
   async resend(inviter: Inviter, inviteId: string): Promise<ResendInviteResponse> {
     const db = this.tenant.for(inviter.workspaceId);
+    await this.assertMayManage(inviter, inviteId);
     const fresh = newInviteToken();
     const invite = await db
       .$transaction(async (tx) => {
         const row = await tx.invite.update({
-          where: { id: inviteId, acceptedAt: null },
+          where: { id: inviteId, acceptedAt: null, ...this.onlyMemberInvites(inviter) },
           data: {
             tokenHash: fresh.tokenHash,
             expiresAt: fresh.expiresAt,
@@ -130,9 +142,14 @@ export class InvitesService {
         });
         return row;
       })
-      .catch((error: unknown) => {
-        // P2025: no such invite in this workspace, or it was already accepted.
-        if (isRecordNotFound(error)) throw inviteNotFound();
+      .catch(async (error: unknown) => {
+        // P2025: no such invite in this workspace, it was already accepted, or (for
+        // an admin) it turned into an admin invite after the check: look again to
+        // answer 403 or 404 correctly.
+        if (isRecordNotFound(error)) {
+          await this.assertMayManage(inviter, inviteId);
+          throw inviteNotFound();
+        }
         throw error;
       });
     const context = await this.senderContext(inviter);
@@ -147,10 +164,13 @@ export class InvitesService {
   }
 
   async cancel(inviter: Inviter, inviteId: string): Promise<void> {
+    await this.assertMayManage(inviter, inviteId);
     await this.tenant
       .for(inviter.workspaceId)
       .$transaction(async (tx) => {
-        const row = await tx.invite.delete({ where: { id: inviteId, acceptedAt: null } });
+        const row = await tx.invite.delete({
+          where: { id: inviteId, acceptedAt: null, ...this.onlyMemberInvites(inviter) },
+        });
         await this.audit.record(tx, inviter.workspaceId, {
           actorUserId: inviter.userId,
           area: 'team',
@@ -160,10 +180,30 @@ export class InvitesService {
           before: { email: row.email, role: row.role },
         });
       })
-      .catch((error: unknown) => {
-        if (isRecordNotFound(error)) throw inviteNotFound();
+      .catch(async (error: unknown) => {
+        if (isRecordNotFound(error)) {
+          await this.assertMayManage(inviter, inviteId);
+          throw inviteNotFound();
+        }
         throw error;
       });
+  }
+
+  /**
+   * Added to the write itself (not only checked before it): an admin's write matches
+   * Member invites only, so an invite that became an Admin invite in between is untouched.
+   */
+  private onlyMemberInvites(inviter: Inviter): { role?: 'MEMBER' } {
+    return inviter.role === 'OWNER' ? {} : { role: 'MEMBER' };
+  }
+
+  /** 404 for an unknown invite; 403 for an admin invite when the caller is not the owner. */
+  private async assertMayManage(inviter: Inviter, inviteId: string): Promise<void> {
+    const row = await this.tenant
+      .for(inviter.workspaceId)
+      .invite.findFirst({ where: { id: inviteId, acceptedAt: null }, select: { role: true } });
+    if (!row) throw inviteNotFound();
+    if (row.role === 'ADMIN' && inviter.role !== 'OWNER') throw ownerManagesAdmins();
   }
 
   private async inviteOne(
@@ -189,6 +229,8 @@ export class InvitesService {
       // A live invite is left alone (Resend replaces its link). An expired one
       // still holds the "one pending invite per address" slot, so it is reissued.
       if (pending.expiresAt > new Date()) return 'already_invited';
+      // An admin invite is the owner's to reissue (an admin must not downgrade it).
+      if (pending.role === 'ADMIN' && inviter.role !== 'OWNER') return 'already_invited';
       // Conditional, so of two admins reissuing at once only one wins (and
       // sends an email); the other finds a live invite and reports that.
       const reissued = await db.$transaction(async (tx) => {

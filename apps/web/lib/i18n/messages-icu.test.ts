@@ -23,6 +23,13 @@ const values = {
   name: 'Mia',
   workspace: 'Northstar',
   when: 'in 6 days',
+  max: 20,
+  list: 'a@b, c@d',
+  email: 'a@b.co',
+  role: 'Member',
+  by: 'Mia',
+  ago: '2 days ago',
+  expires: 'in 5 days',
 };
 
 describe.each([
