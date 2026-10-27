@@ -37,6 +37,8 @@ Read `SPEC.md` for the product. This file is how we build it.
 - Build: `pnpm build` (`nest build` wipes `apps/api/dist`, which a running `pnpm dev` uses)
 - DB: new migration `pnpm --filter api db:migrate --name <name>` · apply `pnpm --filter api db:deploy` · regenerate client `pnpm --filter api db:generate` (Turbo also runs it before build/lint/typecheck/test)
 - Email list: `pnpm --filter @leadpilot/shared tlds` regenerates `packages/shared/src/tlds.ts` (real top-level domains) from the `tlds` package; a test fails if they disagree.
+- Pipeline: leads are queued (BullMQ on Redis) after ingest; `QUEUE_WORKERS=on` (default) runs the workers inside the API, `off` only queues. AI: `LLM_PROVIDER=auto` uses the free mock unless an `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` is set. Company info: `ENRICHMENT_PROVIDER=mock` (default) or `website`. Tests give every file its own Redis key prefix.
+- Evals: `pnpm eval` (50 labelled leads, accuracy / confusion matrix / cost / latency; `pnpm eval --candidate prompt.txt` compares a second prompt).
 - Seed: `pnpm --filter api seed` (not yet: arrives in M6)
 - CI: `.github/workflows/ci.yml` runs format, lint, typecheck, unit, e2e, build and the browser render checks (Playwright + axe) on push to main and on PRs (it uploads screenshots and the pass/fail table).
 

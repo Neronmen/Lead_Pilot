@@ -1,0 +1,8 @@
+{
+  "industries": ["logistics", "software", "e-commerce"],
+  "companySizes": ["11-50", "51-200"],
+  "countries": ["VN", "US", "SG"],
+  "budgetSignals": ["book a demo", "budget"],
+  "disqualifiers": ["student", "agency", "freelancer"],
+  "notes": null
+}

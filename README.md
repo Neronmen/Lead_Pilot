@@ -51,6 +51,9 @@ Invite emails go to Mailpit (http://localhost:8025) because `.env.example` sets 
 |---|---|---|
 | `JWT_ACCESS_SECRET` | dev value | Required in production (32+ characters). The dev value is refused when `NODE_ENV=production`. |
 | `ENCRYPTION_KEY` | dev value | Required in production: 32 random bytes in base64 (generate: `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`). Encrypts signing secrets in the database. The dev value is public: it is refused in production, so never run a shared or staging server with `NODE_ENV=development`. Losing or changing the key makes stored signing secrets unreadable (switch signing off and on again). |
+| `QUEUE_WORKERS` | `on` | `on` runs the background workers (scoring, clean-up) inside the API; `off` only queues jobs. |
+| `ENRICHMENT_PROVIDER` | `mock` | `mock` (made-up company info, no network) or `website` (reads the company homepage; public addresses only). |
+| `LLM_PROVIDER`, `LLM_MODEL`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` | `auto`, mock | With no key the free built-in mock rates the leads. Set a key to use a real model; the key is never logged or returned. |
 | `AUTH_RATE_LIMIT_PER_MINUTE` | 10 | Sign-up, sign-in and accept-invite requests per IP |
 | `AUTH_REFRESH_RATE_LIMIT_PER_MINUTE` | 60 | Token refresh runs on every page load, so it has its own budget |
 | `INVITE_RATE_LIMIT_PER_MINUTE` / `_PER_DAY` | 5 / 30 | Invite and resend requests per workspace (each sends email) |
@@ -108,6 +111,7 @@ docs/                  design notes, backlog, error-handling guide
 ```
 
 - How errors look and how to add one: [docs/error-handling.md](docs/error-handling.md).
+- What happens to a lead after it arrives (queue, company info, AI rating, review, evals): [docs/pipeline.md](docs/pipeline.md).
 - Sending leads in (`POST /v1/ingest/:sourceId`: API key, optional HMAC signature, Idempotency-Key) and how duplicates are handled: [docs/dedup.md](docs/dedup.md). Lead sources and the API key / signing secret live in Settings > Lead sources and Advanced / Developer.
 - Multi-tenancy: every tenant query goes through `TenantPrisma.for(workspaceId)`, composite foreign keys keep related rows in one workspace, and `apps/api/test/isolation.e2e-spec.ts` fails if an endpoint is not classified and tested across workspaces.
 

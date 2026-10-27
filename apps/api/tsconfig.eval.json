@@ -1,0 +1,12 @@
+{
+  // Compiles only the eval script and the plain files it imports (no Nest, no database).
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist-eval",
+    "rootDir": ".",
+    "noEmit": false,
+    "incremental": false
+  },
+  "include": ["scripts/eval.ts"],
+  "exclude": ["node_modules", "dist", "dist-eval"]
+}

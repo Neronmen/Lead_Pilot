@@ -27,6 +27,7 @@ const SPAM_LOCAL = /^(test|asdf|qwerty|xxx|aaa+|none|noreply|no-reply)\d*$/i;
 function haystack(input: ScoringInput): string {
   const { lead, company } = input;
   return [
+    lead.email,
     lead.company,
     lead.domain,
     JSON.stringify(lead.customFields),
@@ -49,7 +50,7 @@ export function ruleScore(input: ScoringInput): ScoreOutput & { facts: number } 
   const { lead, rubric } = input;
   const text = haystack(input);
   const reasons: string[] = [];
-  let score = 40;
+  let score = 35;
   let facts = 0;
 
   const local = lead.email?.split('@')[0] ?? '';
@@ -68,21 +69,21 @@ export function ruleScore(input: ScoringInput): ScoreOutput & { facts: number } 
 
   if (lead.email) {
     if (lead.isFreeMail) {
-      score -= 15;
+      score -= 5;
       reasons.push('Uses a free email address, not a company one.');
     } else {
-      score += 15;
+      score += 10;
       facts += 1;
       reasons.push('Uses a company email address.');
     }
   }
   if (lead.company) {
-    score += 10;
+    score += 5;
     facts += 1;
     reasons.push(`Names a company (${lead.company}).`);
   }
   if (lead.phone) {
-    score += 5;
+    score += 3;
     facts += 1;
   }
   if (lead.firstName || lead.lastName) facts += 1;
@@ -91,10 +92,10 @@ export function ruleScore(input: ScoringInput): ScoreOutput & { facts: number } 
     facts += 1;
     if (rubric.countries.length > 0) {
       if (rubric.countries.includes(lead.country)) {
-        score += 20;
+        score += 15;
         reasons.push(`Based in ${lead.country}, a country you target.`);
       } else {
-        score -= 10;
+        score -= 5;
         reasons.push(`Based in ${lead.country}, outside the countries you target.`);
       }
     }
@@ -102,20 +103,20 @@ export function ruleScore(input: ScoringInput): ScoreOutput & { facts: number } 
 
   const industry = rubric.industries.find((name) => text.includes(name.toLowerCase()));
   if (industry) {
-    score += 15;
+    score += 25;
     reasons.push(`Looks like it works in ${industry}.`);
   }
   if (input.company && input.company.text) facts += 1;
 
   const signal = rubric.budgetSignals.find((name) => text.includes(name.toLowerCase()));
   if (signal) {
-    score += 10;
+    score += 15;
     reasons.push(`Shows a buying signal: ${signal}.`);
   }
 
   const dealBreaker = rubric.disqualifiers.find((name) => text.includes(name.toLowerCase()));
   if (dealBreaker) {
-    score -= 40;
+    score -= 50;
     reasons.push(`Matches a deal-breaker: ${dealBreaker}.`);
   }
 

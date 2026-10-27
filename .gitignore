@@ -44,3 +44,5 @@ apps/web/AGENTS.md
 .history/
 *.history
 .env_*
+
+dist-eval/

@@ -22,13 +22,11 @@ Items raised in reviews that belong to a later milestone. Each milestone plan st
 
 ## M3 – Pipeline
 
-- The auth rate limiter (`@nestjs/throttler`) keeps its counters in memory, so each API instance counts on its own. Move its storage to Redis when the Redis-backed queues arrive.
 
-- Real SMTP: `SmtpEmailProvider` has no authentication or TLS (Mailpit only). Add `SMTP_USER`/`SMTP_PASS` and required TLS (or a free-tier provider such as Resend behind the same `EmailProvider` interface) before sending real mail. Invites are sent inside the request until the M3 job queue exists; move them to a BullMQ job then.
+- Real SMTP: `SmtpEmailProvider` has no authentication or TLS (Mailpit only). Add `SMTP_USER`/`SMTP_PASS` and required TLS (or a free-tier provider such as Resend behind the same `EmailProvider` interface) before sending real mail. Invites are still sent inside the request, on purpose: the Team page reports `email_failed` at once so an admin can Resend. Move them to a BullMQ job only together with a way to show a failed send later.
 - Demo mode with no `SMTP_HOST` keeps invite emails only in memory (last 100), so the invite flow cannot be completed there. Either default `SMTP_HOST` to Mailpit in the demo setup (docker compose runs it) or show the invite link in the Team page when no mail server is configured (M6 seed and demo).
 - The top-level domain list (`packages/shared/src/tlds.ts`) is a snapshot: a brand-new ending would be refused on sign-up and invites until `tlds` is bumped and the list regenerated. Bump it with the other dependencies (Renovate or a periodic task) and run `pnpm --filter @leadpilot/shared tlds`.
 - A domain label longer than 63 characters passes the email check (it cannot be delivered). Add a length rule to `emailSchema` if it ever matters.
-- Delete spent refresh tokens: a daily job removing rows revoked or expired more than a day ago.
 
 ## M2 – Ingestion (timeline)
 
@@ -45,8 +43,6 @@ Items raised in reviews that belong to a later milestone. Each milestone plan st
 - Reject an all-zero `ENCRYPTION_KEY` in production, and log a warning at boot when the public dev key is in use outside tests.
 - Lead emails: lowercase before insert; validate country codes (step 3).
 
-- `rawPayload` keeps the sender's JSON (personal data) for ever. Add a retention job once BullMQ exists (M3): null `rawPayload` on leads and on `ingested` events after 90 days.
-- Ingest limits (per source, failed auth per IP) count in memory per API instance: move to Redis with the first second instance. Phone dedup has no unique index, so two new leads with the same phone sent at once can both be created (email is guarded by the index).
 - Ingest answers 201/200 after the work is done. When enrichment and scoring arrive (M3), the lead is queued and the endpoint stays fast.
 
 - Ingest signatures cover the timestamp and body but not the Idempotency-Key or source id: a captured signed request can be replayed for 5 minutes (duplicate events without a key). Consider signing `<timestamp>.<idempotency-key>.<body>` or a nonce store.
@@ -57,11 +53,21 @@ Items raised in reviews that belong to a later milestone. Each milestone plan st
 - Website form and spreadsheet upload are hidden in Lead sources until M6. M6 needs a separate public form key limited to one source (with CORS and its own rate limit): the secret API key must never go into a page or snippet. "Email it to your developer" must never include a secret API key or signing secret.
 - Leads list: Tier and Score columns, saved views and a source filter for Members come with scoring (M3) and later; search is `contains` on email, name, company and phone (add `pg_trgm` indexes if it gets slow).
 
-- Retention sweep (M3, with BullMQ): delete `IngestAttempt` rows after ~90 days and expired `IdempotencyKey` rows; null `rawPayload` after 90 days.
 - Two phone-only submissions at the same instant can still create two leads, and two concurrent merges into one lead can lose a custom field (read-modify-write). Fix with an advisory lock per (workspace, phone) or `SELECT ... FOR UPDATE`.
 - `CryptoService` has only a `v1:` prefix and no key id: rotating `ENCRYPTION_KEY` needs a re-encrypt migration. Add `v2:<kid>:` before more secrets are stored (M5 integrations).
 - Leads list: a `cursor` from another workspace gives an empty page instead of 400. Failed-auth limiter map has no hard size cap (add one). With `trust proxy` off, behind a proxy every caller shares one IP for the failed-auth limit (see M6).
 - Env: the missing-`ENCRYPTION_KEY` error should print the generate command.
+
+## M3 – Pipeline (found while building)
+
+- Rating is by the workspace's `reviewThreshold` (default 0.6), but there is no screen to change it and the Review queue cannot show where the threshold sits on the confidence meter (`/auth/me` does not return it). Add both with Settings > General. The design's score cut-offs (when a lead is Hot, Warm or Cold) are not configurable yet: the tier comes from the AI (or the rules' fixed cut-offs 75 / 50 / 25).
+- Review queue: no Undo after Approve or a rating (design), and "Skip" only moves a lead to the end for this session.
+- The AI cost limit is enforced (over it, leads are "rated without AI"), but the 80% / 100% warning emails and a "Rated without AI" filter are not built. Prices per model are a hand-kept table in `llm.provider.ts`: update them when providers change prices.
+- Leads stuck in `PROCESSING` (a worker killed mid-job) are re-run by BullMQ's stalled-job handling, but the recovery sweep only looks at `NEW`. Add `PROCESSING` older than ~15 minutes.
+- Real Anthropic / OpenAI adapters are tested with a fake `fetch` only (no key was used). Run `pnpm eval` with a key before relying on them, and check the model names and prices.
+- `pnpm eval` uses a hand-made set of 50 labelled leads and a rule-based baseline (mock). Replace the labels with exported Review-queue corrections (`Feedback` rows) once there are enough.
+- The website fetch (`ENRICHMENT_PROVIDER=website`) reads only the homepage. Add a short robots.txt check and a per-host politeness delay before enabling it in production.
+- Re-scoring after the ideal customer changes is a button ("also look again") on the Ideal customer form; a rubric version number on each score would show which leads were rated by an older rubric.
 
 ## M4 – Routing & actions
 

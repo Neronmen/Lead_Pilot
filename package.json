@@ -12,6 +12,7 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "test:e2e": "turbo run test:e2e",
+    "eval": "pnpm --filter @leadpilot/shared build && pnpm --filter api eval --",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test:render": "turbo run test:render"
