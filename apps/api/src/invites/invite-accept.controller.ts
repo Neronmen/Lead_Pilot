@@ -14,7 +14,7 @@ import {
 } from '@leadpilot/shared';
 import type { Response } from 'express';
 import { Public } from '../auth/auth-context';
-import { setRefreshCookie } from '../auth/refresh-cookie';
+import { isSecureCookie, setRefreshCookie } from '../auth/refresh-cookie';
 import { ApiZodResponse, ZodBody } from '../common/validation/zod-swagger';
 import type { Env } from '../config/env.schema';
 import { InviteAcceptService } from './invite-accept.service';
@@ -36,7 +36,7 @@ export class InviteAcceptController {
     private readonly accepting: InviteAcceptService,
     config: ConfigService<Env, true>,
   ) {
-    this.secureCookie = config.get('NODE_ENV', { infer: true }) === 'production';
+    this.secureCookie = isSecureCookie(config.get('NODE_ENV', { infer: true }));
   }
 
   @Post('preview')

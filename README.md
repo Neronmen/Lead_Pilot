@@ -2,7 +2,7 @@
 
 AI lead qualification and routing for B2B teams. Leads arrive from forms, webhooks and CSV files; LeadPilot deduplicates them, enriches the company, scores them against your ideal customer profile with an LLM, and routes them to the right rep, with Slack, email, HubSpot or n8n actions. Multi-tenant from day one.
 
-> **Status:** M0 (foundation) is done. M1 (auth and tenancy) has its API done: sign-up, sign-in with rotating refresh tokens, workspaces and roles, email invites, team management, and isolation tests for every endpoint. Its web pages are next. See [SPEC.md](SPEC.md) for the roadmap.
+> **Status:** M0 (foundation) and M1 (auth and tenancy) are done (tag `v0.1-m1`): sign-up, sign-in with rotating refresh tokens, workspaces and roles, email invites, the Team page (the owner manages admins, admins manage members), the app shell, and isolation tests for every endpoint. All pages come in English and Vietnamese, dark and light. M2 (lead ingestion) is next. See [SPEC.md](SPEC.md) for the roadmap.
 
 [![CI](https://github.com/Neronmen/Lead_Pilot/actions/workflows/ci.yml/badge.svg)](https://github.com/Neronmen/Lead_Pilot/actions/workflows/ci.yml)
 
@@ -12,10 +12,10 @@ AI lead qualification and routing for B2B teams. Leads arrive from forms, webhoo
 |---|---|
 | Monorepo | pnpm workspaces + Turborepo |
 | API (`apps/api`) | NestJS 12, Prisma 7 + PostgreSQL 18, Redis 8 (BullMQ from M3), zod, pino, Swagger |
-| Web (`apps/web`) | Next.js 16 (App Router), Tailwind CSS 4, shadcn/ui, TanStack Query |
+| Web (`apps/web`) | Next.js 16 (App Router), Tailwind CSS 4, shadcn/ui, TanStack Query, next-intl (EN/VI), next-themes (dark/light) |
 | Shared (`packages/shared`) | zod schemas and types used by both apps |
-| Tests | Jest + Supertest (unit and e2e against real Postgres/Redis), Node test runner for `shared` |
-| CI | GitHub Actions: format, lint, typecheck, unit, e2e, build |
+| Tests | Jest + Supertest (unit and e2e against real Postgres/Redis), Vitest (web unit), Playwright + axe (web render and accessibility checks), Node test runner for `shared` |
+| CI | GitHub Actions: format, lint, typecheck, unit, e2e, build, browser render checks (Playwright + axe) |
 
 ## Getting started
 
@@ -67,6 +67,8 @@ The rate limiter counts in memory, per API instance; it moves to Redis in M3.
 | `pnpm format` / `pnpm format:check` | Prettier write / check |
 | `pnpm test` | All unit tests |
 | `pnpm test:e2e` | API e2e tests against the `leadpilot_test` database (Docker must be up: they also use Redis and Mailpit) |
+| `pnpm test:render` | Web render checks in a real browser with a mocked API (no Docker): dark/light × EN/VI, accessibility rules, every page state. First run: `pnpm --filter web exec playwright install chromium`. Writes screenshots and `apps/web/e2e/results.md` |
+| `pnpm --filter web icons` | Re-render the PNGs and app icons from the logo SVGs in `design/brand/` |
 | `pnpm --filter @leadpilot/shared tlds` | Regenerate the list of real top-level domains used to check email addresses (after upgrading the `tlds` package) |
 | `pnpm --filter api db:migrate --name <name>` | Create and apply a migration after editing `schema.prisma` |
 | `pnpm --filter api db:deploy` | Apply pending migrations (CI, production) |
@@ -91,11 +93,14 @@ apps/
       redis/           shared Redis client
     test/              e2e tests (Jest + Supertest)
   web/                 Next.js app
-    app/status/        internal status page
-    components/ui/     shadcn/ui components
-    lib/api.ts         typed API client
+    app/               pages: login, signup, invite, (app)/leads, (app)/settings/team, status
+    components/        auth forms, app shell, team page, shadcn/ui components (ui/)
+    lib/               auth client (token in memory, cross-tab refresh lock), i18n, team rules
+    messages/          English and Vietnamese texts (every string goes through them)
+    e2e/               Playwright render checks and the mocked API
 packages/
   shared/              zod schemas and error codes shared by api and web (auth, team, errors)
+design/brand/          logo SVGs and the PNGs generated from them
 infra/postgres/init/   creates leadpilot_test on first start
 docker-compose.yml     local infrastructure
 docs/                  design notes, backlog, error-handling guide

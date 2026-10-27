@@ -16,6 +16,15 @@ function cookieOptions(secure: boolean): CookieOptions {
   return { httpOnly: true, secure, sameSite: 'lax', path: '/auth' };
 }
 
+/**
+ * The refresh cookie is `Secure` (HTTPS only) in production and only there: local
+ * development runs over plain http. One place, so the two controllers that set
+ * the cookie can never disagree.
+ */
+export function isSecureCookie(nodeEnv: string | undefined): boolean {
+  return nodeEnv === 'production';
+}
+
 export function setRefreshCookie(res: Response, token: string, secure: boolean): void {
   res.cookie(REFRESH_COOKIE, token, { ...cookieOptions(secure), maxAge: REFRESH_TOKEN_TTL_MS });
 }

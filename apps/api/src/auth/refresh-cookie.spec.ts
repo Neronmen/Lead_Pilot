@@ -1,6 +1,7 @@
 import type { CookieOptions, Request, Response } from 'express';
 import {
   clearRefreshCookie,
+  isSecureCookie,
   readRefreshCookie,
   REFRESH_COOKIE,
   setRefreshCookie,
@@ -48,5 +49,14 @@ describe('refresh cookie', () => {
     // cookie-parser turns a "j:{...}" value into an object.
     expect(readRefreshCookie(req({ lp_refresh: { a: 1 } }))).toBeUndefined();
     expect(readRefreshCookie(req(undefined))).toBeUndefined();
+  });
+});
+
+describe('isSecureCookie', () => {
+  it('is on in production and nowhere else (development runs over plain http)', () => {
+    expect(isSecureCookie('production')).toBe(true);
+    for (const env of ['development', 'test', 'staging', 'Production', '', undefined]) {
+      expect(isSecureCookie(env)).toBe(false);
+    }
   });
 });

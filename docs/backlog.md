@@ -6,7 +6,9 @@ Items raised in reviews that belong to a later milestone. Each milestone plan st
 
 - Signup `EMAIL_TAKEN` (409) tells a visitor which email addresses already have an account (user enumeration). Accepted trade-off for M1, limited by the signup rate limit (10/min per IP); revisit it (for example answer the same for any address and email the real owner) before production.
 - Terms and Privacy Policy pages: the Sign up page says "you agree to the Terms and Privacy Policy" as plain text because the documents do not exist yet. Write them (and link them from Sign up, Login and the footers) before production.
-- Nothing left from the API steps. Web: the Login, Signup and Accept invite pages (step 9) and Settings > Team (step 10) are in the M1 plan.
+- Team page, small follow-ups: (1) `GET /members` and `GET /invites` are not paginated; add paging before a workspace has hundreds of people. (2) The page keeps the viewer's role from `/auth/me` until reload: refetch `me` when a 403 `FORBIDDEN` comes back after an action. (3) An admin re-inviting an address that holds an expired Admin invite is told `already_invited`; a clearer answer ("only the owner can renew this") needs a new result status in the shared schema.
+- Team page: the "open leads" column returns in M2 (the API already counts them); the remove confirmation then says how many leads become unassigned.
+- (M1 shipped; nothing else left here.)
 
 ## M2 – Ingestion
 

@@ -36,3 +36,6 @@ next-env.d.ts
 .next-e2e/
 apps/web/e2e/screenshots/
 apps/web/e2e/results.md
+
+# Written by `next dev` (agent guidance for Next.js); not ours to keep
+apps/web/AGENTS.md

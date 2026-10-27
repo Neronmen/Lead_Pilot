@@ -31,7 +31,12 @@ import type { Env } from '../config/env.schema';
 import { type AuthContext, CurrentAuth, Public } from './auth-context';
 import { sessionExpired } from './auth.errors';
 import { AuthService } from './auth.service';
-import { clearRefreshCookie, readRefreshCookie, setRefreshCookie } from './refresh-cookie';
+import {
+  clearRefreshCookie,
+  isSecureCookie,
+  readRefreshCookie,
+  setRefreshCookie,
+} from './refresh-cookie';
 import type { IssuedSession } from './session.service';
 import { SessionService } from './session.service';
 
@@ -51,7 +56,7 @@ export class AuthController {
     private readonly sessions: SessionService,
     config: ConfigService<Env, true>,
   ) {
-    this.secureCookie = config.get('NODE_ENV', { infer: true }) === 'production';
+    this.secureCookie = isSecureCookie(config.get('NODE_ENV', { infer: true }));
   }
 
   @Public()

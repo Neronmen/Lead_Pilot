@@ -31,12 +31,13 @@ Read `SPEC.md` for the product. This file is how we build it.
 - Dev all: `pnpm dev` (api :3001, web :3000, Swagger :3001/docs, status page :3000/status). If the developer already runs it, reuse it; never start a second copy.
 - Test: `pnpm test` (all unit) · api unit `pnpm --filter api test` · api e2e `pnpm --filter api test:e2e` (uses `leadpilot_test`, needs docker up: postgres, redis and mailpit) · shared `pnpm --filter @leadpilot/shared test`. The `--filter api` commands skip Turbo, so they test the last built `packages/shared/dist`: after changing a shared schema, run `pnpm --filter @leadpilot/shared build` first (root `pnpm test` / `pnpm test:e2e` rebuild it).
 - Render checks: `pnpm test:render` (Playwright + axe, real Chromium, mocked API, no Docker; builds into `apps/web/.next-e2e`, serves on :3100; first run `pnpm --filter web exec playwright install chromium`). Writes screenshots to `apps/web/e2e/screenshots` and a pass/fail table to `apps/web/e2e/results.md`. It needs port 3100 free. After it runs, `next-env.d.ts` may point at `.next-e2e`: `pnpm dev` restores it.
+- Web unit tests: `pnpm --filter web test` (Vitest; a few use jsdom). Logo and icons: `pnpm --filter web icons` re-renders `design/brand/*.png`, `apps/web/public/email/logo.png` and the app icons from the SVGs.
 - Lint + typecheck + format: `pnpm lint && pnpm typecheck && pnpm format:check` (fix formatting: `pnpm format`)
 - Build: `pnpm build` (`nest build` wipes `apps/api/dist`, which a running `pnpm dev` uses)
 - DB: new migration `pnpm --filter api db:migrate --name <name>` · apply `pnpm --filter api db:deploy` · regenerate client `pnpm --filter api db:generate` (Turbo also runs it before build/lint/typecheck/test)
 - Email list: `pnpm --filter @leadpilot/shared tlds` regenerates `packages/shared/src/tlds.ts` (real top-level domains) from the `tlds` package; a test fails if they disagree.
 - Seed: `pnpm --filter api seed` (not yet: arrives in M6)
-- CI: `.github/workflows/ci.yml` runs format, lint, typecheck, unit, e2e, build on push to main and on PRs.
+- CI: `.github/workflows/ci.yml` runs format, lint, typecheck, unit, e2e, build and the browser render checks (Playwright + axe) on push to main and on PRs (it uploads screenshots and the pass/fail table).
 
 ## Code conventions
 - TypeScript strict. No `any` unless commented.

@@ -79,7 +79,10 @@ export default tseslint.config(
     // - auth/: runs before a workspace is known (global users, a user's
     //   memberships across workspaces at login, the per-request guard).
     // - invites/invite-accept.service.ts: finds an invite by its token across
-    //   workspaces, before the person has a session.
+    //   workspaces, before the person has a session, and then creates the user,
+    //   the membership, the history row (given its workspace id by hand) and the
+    //   first refresh token on the raw client, in one transaction. The write path
+    //   is allowlisted on purpose: there is no workspace session to scope it with.
     files: [
       'apps/api/src/prisma/**/*.ts',
       'apps/api/src/health/**/*.ts',
