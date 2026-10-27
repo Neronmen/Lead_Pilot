@@ -13,4 +13,6 @@ module.exports = {
   setupFiles: ['<rootDir>/test/setup-env.ts'],
   // argon2 hashing and parallel files against one Postgres can pass Jest's 5 s default.
   testTimeout: 20_000,
+  // On GitHub Actions, failures also become annotations on the run (readable without logging in).
+  reporters: process.env.GITHUB_ACTIONS ? ['default', 'github-actions'] : ['default'],
 };
