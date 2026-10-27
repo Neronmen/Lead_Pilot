@@ -36,7 +36,9 @@ export function useSourceActions() {
   const queryClient = useQueryClient();
   const refresh = () => queryClient.invalidateQueries({ queryKey: SOURCES_KEY });
 
+  // gcTime 0: a key or secret in a result is dropped from the mutation cache at once.
   const create = useMutation<SourceWithKey, unknown, CreateSourceRequest>({
+    gcTime: 0,
     mutationFn: (body) =>
       client.request('/sources', { method: 'POST', body, schema: sourceWithKeySchema }),
     onSettled: refresh,
@@ -51,11 +53,13 @@ export function useSourceActions() {
     onSettled: refresh,
   });
   const rotateKey = useMutation<SourceWithKey, unknown, string>({
+    gcTime: 0,
     mutationFn: (id) =>
       client.request(`/sources/${id}/api-key`, { method: 'POST', schema: sourceWithKeySchema }),
     onSettled: refresh,
   });
   const enableSigning = useMutation<HmacSecretResponse, unknown, string>({
+    gcTime: 0,
     mutationFn: (id) =>
       client.request(`/sources/${id}/hmac-secret`, {
         method: 'POST',

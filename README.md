@@ -108,6 +108,7 @@ docs/                  design notes, backlog, error-handling guide
 ```
 
 - How errors look and how to add one: [docs/error-handling.md](docs/error-handling.md).
+- Sending leads in (`POST /v1/ingest/:sourceId`: API key, optional HMAC signature, Idempotency-Key) and how duplicates are handled: [docs/dedup.md](docs/dedup.md). Lead sources and the API key / signing secret live in Settings > Lead sources and Advanced / Developer.
 - Multi-tenancy: every tenant query goes through `TenantPrisma.for(workspaceId)`, composite foreign keys keep related rows in one workspace, and `apps/api/test/isolation.e2e-spec.ts` fails if an endpoint is not classified and tested across workspaces.
 
 ## Conventions worth knowing

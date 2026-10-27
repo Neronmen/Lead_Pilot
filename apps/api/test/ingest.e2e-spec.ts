@@ -192,6 +192,28 @@ describe('Ingest (e2e)', () => {
       });
     });
 
+    it('a phone-only merge fills blanks only: it never overwrites another person on a shared line', async () => {
+      const t = await setup();
+      const first = await send(t, {
+        phone: '+84901234567',
+        firstName: 'Alice',
+        company: 'Acme',
+      }).expect(201);
+      await send(t, {
+        phone: '+84901234567',
+        firstName: 'Bob',
+        company: 'Other',
+        country: 'VN',
+      }).expect(200);
+      const lead = await prisma.lead.findUniqueOrThrow({ where: { id: first.body.leadId } });
+      expect(lead).toMatchObject({ firstName: 'Alice', company: 'Acme', country: 'VN' });
+      // Bob's submission is still on the timeline, raw.
+      const events = await prisma.leadEvent.findMany({
+        where: { leadId: lead.id, type: 'ingested' },
+      });
+      expect(events).toHaveLength(2);
+    });
+
     it('every submission keeps its own timeline event with its own raw payload and time, merged or not', async () => {
       const t = await setup();
       const address = email();
@@ -347,6 +369,10 @@ describe('Ingest (e2e)', () => {
       expect(Number(limited.headers['retry-after'])).toBeGreaterThan(0);
       await send(b, { email: email() }).expect(201);
       expect(await leadsOf(a.workspaceId)).toHaveLength(2);
+      // A flood costs no database row per refused request: it is not counted.
+      expect(
+        await prisma.ingestAttempt.count({ where: { sourceId: a.sourceId, outcome: 'REJECTED' } }),
+      ).toBe(0);
     });
   });
 
@@ -386,6 +412,34 @@ describe('Ingest (e2e)', () => {
       const replay = JSON.stringify({ email: email() });
       const old = sign(t.secret!, replay, now - 400);
       await post(t, replay, { ...old, 'x-timestamp': String(now) }).expect(401);
+    });
+
+    it('a captured signed request sent again inside the window changes nothing, even with a new Idempotency-Key', async () => {
+      const t = await setup({ signed: true });
+      const body = JSON.stringify({ email: email(), note: 'captured' });
+      const headers = sign(t.secret!, body);
+      const first = await post(t, body, headers).expect(201);
+      const again = await post(t, body, headers).expect(201);
+      const withKey = await post(t, body, { ...headers, 'idempotency-key': 'attacker-key' }).expect(
+        201,
+      );
+      for (const res of [again, withKey]) {
+        expect(res.body).toEqual(first.body);
+        expect(res.headers['idempotent-replayed']).toBe('true');
+      }
+      expect(await prisma.leadEvent.count({ where: { leadId: first.body.leadId } })).toBe(1);
+      // A legitimate retry: new timestamp and signature, same Idempotency-Key as the first try.
+      const retryBody = JSON.stringify({ email: email() });
+      await post(t, retryBody, {
+        ...sign(t.secret!, retryBody),
+        'idempotency-key': 'order-9',
+      }).expect(201);
+      const retry = await post(t, retryBody, {
+        ...sign(t.secret!, retryBody, Math.floor(Date.now() / 1000) + 1),
+        'idempotency-key': 'order-9',
+      }).expect(201);
+      expect(retry.headers['idempotent-replayed']).toBe('true');
+      expect(await leadsOf(t.workspaceId)).toHaveLength(2);
     });
 
     it('the signature cannot be checked against an unsigned source: signing off ignores the headers', async () => {

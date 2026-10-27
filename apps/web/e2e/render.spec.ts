@@ -346,7 +346,7 @@ test.describe('phone width', () => {
     await page.screenshot({ path: join(SHOTS, 'dark-en-mobile-drawer.png') });
 
     await drawer.getByRole('link', { name: en.shell.nav.settings }).click();
-    await expect(page).toHaveURL(/\/settings\/team$/);
+    await expect(page).toHaveURL(/\/settings\/sources$/);
     await expect(drawer).toHaveCount(0);
 
     await page.getByRole('button', { name: en.shell.menu }).click();

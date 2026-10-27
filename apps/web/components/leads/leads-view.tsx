@@ -52,8 +52,6 @@ export function LeadsView() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-
       <div className="flex flex-wrap items-end gap-3">
         <div className="relative min-w-[240px] flex-1">
           <Label htmlFor="lead-search" className="sr-only">

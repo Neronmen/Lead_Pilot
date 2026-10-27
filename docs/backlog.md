@@ -57,6 +57,12 @@ Items raised in reviews that belong to a later milestone. Each milestone plan st
 - Website form and spreadsheet upload are hidden in Lead sources until M6. M6 needs a separate public form key limited to one source (with CORS and its own rate limit): the secret API key must never go into a page or snippet. "Email it to your developer" must never include a secret API key or signing secret.
 - Leads list: Tier and Score columns, saved views and a source filter for Members come with scoring (M3) and later; search is `contains` on email, name, company and phone (add `pg_trgm` indexes if it gets slow).
 
+- Retention sweep (M3, with BullMQ): delete `IngestAttempt` rows after ~90 days and expired `IdempotencyKey` rows; null `rawPayload` after 90 days.
+- Two phone-only submissions at the same instant can still create two leads, and two concurrent merges into one lead can lose a custom field (read-modify-write). Fix with an advisory lock per (workspace, phone) or `SELECT ... FOR UPDATE`.
+- `CryptoService` has only a `v1:` prefix and no key id: rotating `ENCRYPTION_KEY` needs a re-encrypt migration. Add `v2:<kid>:` before more secrets are stored (M5 integrations).
+- Leads list: a `cursor` from another workspace gives an empty page instead of 400. Failed-auth limiter map has no hard size cap (add one). With `trust proxy` off, behind a proxy every caller shares one IP for the failed-auth limit (see M6).
+- Env: the missing-`ENCRYPTION_KEY` error should print the generate command.
+
 ## M4 – Routing & actions
 
 - Build the "New Hot lead" alert email from the approved design (docs/design-notes.md, Emails; the plain-text version is on the canvas). The invite email's `EmailLayout` and copy pattern in `apps/api/src/email` are the model.

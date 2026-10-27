@@ -200,7 +200,10 @@ export class SourcesService {
             if (isCode(error, 'P2025')) throw sourceNotFound();
             throw error;
           });
-        return { source: await this.one(actor.workspaceId, row), apiKey: key.key };
+        // The old key is already dead: the new one must reach the caller even if the
+        // counts for the response cannot be read.
+        const source = await this.one(actor.workspaceId, row).catch(() => toSource(row, 0, null));
+        return { source, apiKey: key.key };
       } catch (error) {
         if (isCode(error, 'P2002') && attempt < KEY_ATTEMPTS) continue;
         throw error;

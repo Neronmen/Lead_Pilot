@@ -1,6 +1,6 @@
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import { setTimeout as sleep } from 'node:timers/promises';
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ErrorCode } from '@leadpilot/shared';
 import { DomainError } from '../common/errors/domain-error';
 import { CryptoService } from '../crypto/crypto.service';
@@ -61,6 +61,8 @@ type Tx = Parameters<Parameters<Db['$transaction']>[0]>[0];
 
 @Injectable()
 export class IngestService {
+  private readonly logger = new Logger(IngestService.name);
+
   constructor(
     private readonly auth: IngestAuthService,
     private readonly tenant: TenantPrisma,
@@ -91,30 +93,45 @@ export class IngestService {
 
     const payload = this.parse(req);
 
-    const key = req.header('idempotency-key');
-    if (key === undefined) return { ...(await this.store(db, source, payload)), replayed: false };
-    if (!IDEMPOTENCY_KEY.test(key)) {
+    const explicit = req.header('idempotency-key');
+    if (explicit !== undefined && !IDEMPOTENCY_KEY.test(explicit)) {
       throw badRequest([{ path: 'Idempotency-Key', code: 'invalid_idempotency_key' }]);
     }
+    // A signed request is valid for 5 minutes, so a captured copy could be sent
+    // again inside that window. Its signature is therefore claimed like an
+    // Idempotency-Key: the second copy gets the first answer back and changes nothing.
+    const signature = source.hmacSecretEnc === null ? undefined : signatureOf(req);
+    const keys = [signature ? `sig:${signature}` : undefined, explicit].filter(
+      (key): key is string => key !== undefined,
+    );
+    if (keys.length === 0) return { ...(await this.store(db, source, payload)), replayed: false };
 
     const requestHash = createHash('sha256').update(req.rawBody).digest('hex');
-    const claim = await this.claim(db, source, key, requestHash);
-    if (claim.replay) {
-      await this.record(db, source, 'REPLAYED');
-      return { ...claim.replay, replayed: true };
+    const claimed: string[] = [];
+    const release = () =>
+      db.idempotencyKey.deleteMany({ where: { id: { in: claimed } } }).catch(() => undefined);
+    for (const key of keys) {
+      const claim = await this.claim(db, source, key, requestHash);
+      if (claim.replay) {
+        await release();
+        await this.record(db, source, 'REPLAYED');
+        return { ...claim.replay, replayed: true };
+      }
+      claimed.push(claim.id);
     }
     let outcome: Omit<IngestOutcome, 'replayed'>;
     try {
       outcome = await this.store(db, source, payload);
     } catch (error) {
-      // Nothing was stored: free the key so the sender can retry (a corrected body, or the same one).
-      await db.idempotencyKey.deleteMany({ where: { id: claim.id } }).catch(() => undefined);
+      // Nothing was stored: free the keys so the sender can retry (a corrected body, or the same one).
+      await release();
       throw error;
     }
-    // The lead is stored. If saving the answer fails the key stays reserved
-    // (never freed), so a retry cannot add the lead twice.
-    await db.idempotencyKey.update({
-      where: { id: claim.id },
+    // The lead is stored. If saving the answer fails, the keys stay reserved until
+    // they are taken over as abandoned (60 s): a quick retry is answered "still
+    // processing" rather than adding the lead twice.
+    await db.idempotencyKey.updateMany({
+      where: { id: { in: claimed } },
       data: { responseStatus: outcome.status, responseBody: outcome.body },
     });
     return { ...outcome, replayed: false };
@@ -175,7 +192,10 @@ export class IngestService {
         hmacAad(source.workspaceId, source.sourceId),
       );
     } catch {
-      return false; // unreadable secret: refuse rather than accept unsigned data
+      // Unreadable secret (the ENCRYPTION_KEY changed?): refuse rather than accept
+      // unsigned data, and tell the operator, since the sender only sees a 401.
+      this.logger.warn({ sourceId: source.sourceId }, 'Signing secret could not be decrypted');
+      return false;
     }
     const expected = createHmac('sha256', secret)
       .update(`${timestamp}.`)
@@ -374,7 +394,17 @@ export class IngestService {
     }
 
     // Merge: the newest non-empty value wins; nothing is ever blanked out.
-    const { customFields, ...fields } = lead;
+    const { customFields, ...incoming } = lead;
+    // Matched by email: the same person, the newest values win. Matched by phone
+    // alone (a shared line can belong to several people): only blanks are filled,
+    // so one person's name and company never overwrite another's.
+    const fields = byEmail
+      ? incoming
+      : Object.fromEntries(
+          Object.entries(incoming).filter(
+            ([name]) => existing[name as keyof typeof existing] == null,
+          ),
+        );
     const changed = (Object.keys(fields) as (keyof typeof fields)[]).filter(
       (name) =>
         fields[name] !== undefined && fields[name] !== existing[name as keyof typeof existing],
@@ -383,10 +413,12 @@ export class IngestService {
       where: { id: existing.id },
       data: {
         ...fields,
-        customFields: {
-          ...(existing.customFields as Prisma.JsonObject),
-          ...customFields,
-        } as Prisma.InputJsonObject,
+        customFields: (byEmail
+          ? { ...(existing.customFields as Prisma.JsonObject), ...customFields }
+          : {
+              ...customFields,
+              ...(existing.customFields as Prisma.JsonObject),
+            }) as Prisma.InputJsonObject,
         rawPayload: raw,
       },
     });
@@ -414,6 +446,11 @@ export class IngestService {
 function badString(text: string): string | null {
   if (text.includes('\u0000')) return 'nul_character';
   return LONE_SURROGATE.test(text) ? 'invalid_unicode' : null;
+}
+
+/** The lowercase hex of a well-formed `X-Signature`, else undefined. */
+function signatureOf(req: IngestRequest): string | undefined {
+  return /^sha256=([0-9a-f]{64})$/i.exec(req.header('x-signature') ?? '')?.[1]?.toLowerCase();
 }
 
 /** The API key from `Authorization: Bearer …` or `X-API-Key`. */
@@ -444,7 +481,7 @@ function inspect(value: unknown, depth: number): string | null {
 
 /** The reason code a refused submission is counted under (Lead sources), or null when it is not a refusal. */
 function rejectionReason(error: unknown): string | null {
-  if (error instanceof RateLimitedError) return 'rate_limited';
+  // A rate-limited request is NOT recorded: a flood must not cost one database row per request.
   if (!(error instanceof DomainError)) return null;
   if (error.code === ErrorCode.UNSUPPORTED_MEDIA_TYPE) return 'unsupported_media_type';
   if (error.code === ErrorCode.IDEMPOTENCY_KEY_REUSED) return 'idempotency_key_reused';

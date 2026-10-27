@@ -17,7 +17,8 @@ phone and, later, on "domain + similar name"; both were dropped. Fuzzy matching 
 
 ## What a merge does
 
-- The newest non-empty value wins. A merge never blanks a stored value.
+- Merged by **email** (the same person): the newest non-empty value wins. A merge never blanks a stored value.
+- Merged by **phone alone** (a shared line can belong to several people): only blank fields are filled; a name or company already stored is never overwritten, and existing custom fields win. The submission itself stays on the timeline.
 - The lead keeps the latest `rawPayload`; **every** submission also leaves its own `ingested` event on
   the lead's timeline, with its own received time and its own raw payload. A `merged` event records
   which rule matched and which fields changed.
@@ -32,7 +33,17 @@ plain words. An idempotent retry answered from the stored first result is a *rep
 separately and not part of *received*. Submissions with a wrong key cannot be attributed to a source and
 are not counted.
 
+## Signed requests and replays
+
+A signed request is valid for 5 minutes. To stop a captured copy being sent again inside that window,
+the signature is claimed like an Idempotency-Key: the second copy gets the first answer back
+(`Idempotent-Replayed: true`) and changes nothing, even when sent with a new `Idempotency-Key` header.
+
 ## Known limits
+
+- Requests refused for being too fast (rate limit) and bodies over the size limit are not counted in the
+  numbers (the first would cost a database row per request; the second is refused before the source is
+  known). Requests with a wrong key cannot be attributed to a source either.
 
 - Two *new* leads with the same phone and different emails sent at the same instant can both be
   created without the flag (email is protected by a unique index; phone is not).
