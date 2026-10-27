@@ -320,14 +320,16 @@
       "remove": "Remove",
       "you": "That’s you",
       "activeNow": "Active now",
-      "never": "Not yet"
+      "never": "Not yet",
+      "colOpen": "Open leads"
     },
     "confirm": {
       "title": "Remove {name} from {workspace}?",
       "body": "{name} won’t be able to sign in to this workspace. Their leads become unassigned until they get a new owner. Nothing is deleted, and their account stays.",
       "confirm": "Remove {name}",
       "cancel": "Cancel",
-      "removing": "Removing"
+      "removing": "Removing",
+      "bodyOpen": "{name} won’t be able to sign in to this workspace. Their {count, plural, one {# open lead becomes} other {# open leads become}} unassigned until they get a new owner, and their closed leads lose their owner too. Nothing is deleted, and their account stays."
     },
     "empty": {
       "title": "It’s just you for now",

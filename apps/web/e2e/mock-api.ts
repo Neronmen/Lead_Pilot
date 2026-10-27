@@ -40,6 +40,7 @@ export class MockApi {
     role: Role;
     lastActiveAt: string | null;
     joinedAt: string;
+    openLeads: number;
   }[] = [];
   pending: {
     id: string;
@@ -177,7 +178,7 @@ export class MockApi {
       role,
       lastActiveAt: active,
       joinedAt: hours(500),
-      openLeads: 0,
+      openLeads: n === 4 ? 14 : n === 3 ? 6 : 0,
     });
     const viewer = {
       ...person(1, this.name, 'daniel@northstargrowth.com', this.role, new Date().toISOString()),

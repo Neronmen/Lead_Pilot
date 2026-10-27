@@ -320,14 +320,16 @@
       "remove": "Gỡ",
       "you": "Là bạn",
       "activeNow": "Đang hoạt động",
-      "never": "Chưa có"
+      "never": "Chưa có",
+      "colOpen": "Khách tiềm năng đang mở"
     },
     "confirm": {
       "title": "Gỡ {name} khỏi {workspace}?",
       "body": "{name} sẽ không đăng nhập được vào không gian làm việc này. Khách tiềm năng của họ sẽ chưa có người phụ trách cho tới khi được giao cho người khác. Không dữ liệu nào bị xóa, và tài khoản của họ vẫn còn.",
       "confirm": "Gỡ {name}",
       "cancel": "Hủy",
-      "removing": "Đang gỡ"
+      "removing": "Đang gỡ",
+      "bodyOpen": "{name} sẽ không đăng nhập được vào không gian làm việc này. {count, plural, other {# khách tiềm năng đang mở}} của họ sẽ chưa có người phụ trách cho tới khi được giao cho người khác, và các khách tiềm năng đã đóng cũng mất người phụ trách. Không dữ liệu nào bị xóa, và tài khoản của họ vẫn còn."
     },
     "empty": {
       "title": "Hiện mới chỉ có bạn",
@@ -362,7 +364,7 @@
   },
   "settingsSources": {
     "title": "Nguồn khách tiềm năng",
-    "sub": "Khách tiềm năng tiềm năng đến từ đâu và từng nguồn có đang hoạt động không."
+    "sub": "Khách tiềm năng đến từ đâu và từng nguồn có đang hoạt động không."
   },
   "sources": {
     "add": "Thêm nguồn",

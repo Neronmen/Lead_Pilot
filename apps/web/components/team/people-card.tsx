@@ -52,7 +52,7 @@ export function PeopleCard({
       >
         {t('people.title', { count: members.length })}
       </h2>
-      <table className="w-full min-w-[640px] border-collapse text-[13px]">
+      <table className="w-full min-w-[720px] border-collapse text-[13px]">
         <thead>
           <tr className="text-left text-xs text-muted-foreground">
             <th
@@ -66,6 +66,12 @@ export function PeopleCard({
               className="border-b border-border px-3 py-2 font-medium whitespace-nowrap"
             >
               {t('people.colRole')}
+            </th>
+            <th
+              scope="col"
+              className="border-b border-border px-3 py-2 text-right font-medium whitespace-nowrap"
+            >
+              {t('people.colOpen')}
             </th>
             <th
               scope="col"
@@ -211,6 +217,9 @@ function PeopleRows({
                   </span>
                 )}
               </td>
+              <td className="border-b border-border px-3 text-right whitespace-nowrap tabular-nums">
+                {member.openLeads}
+              </td>
               <td className="border-b border-border px-3 whitespace-nowrap text-muted-foreground">
                 {lastActive(member)}
               </td>
@@ -237,6 +246,7 @@ function PeopleRows({
               <tr>
                 <ConfirmRemove
                   name={display}
+                  openLeads={member.openLeads}
                   workspace={workspaceName}
                   busy={removeMember.isPending}
                   onCancel={() => closeConfirm(member)}
@@ -253,12 +263,14 @@ function PeopleRows({
 
 function ConfirmRemove({
   name,
+  openLeads,
   workspace,
   busy,
   onCancel,
   onConfirm,
 }: {
   name: string;
+  openLeads: number;
   workspace: string;
   busy: boolean;
   onCancel: () => void;
@@ -266,7 +278,7 @@ function ConfirmRemove({
 }) {
   const t = useTranslations('team');
   return (
-    <td colSpan={4} className="border-b border-border px-[18px] pb-3.5">
+    <td colSpan={5} className="border-b border-border px-[18px] pb-3.5">
       <div
         role="alertdialog"
         aria-labelledby="team-confirm-title"
@@ -281,7 +293,9 @@ function ConfirmRemove({
             {t('confirm.title', { name, workspace })}
           </span>
           <span id="team-confirm-body" className="text-[13px] leading-[19px] text-muted-foreground">
-            {t('confirm.body', { name })}
+            {openLeads > 0
+              ? t('confirm.bodyOpen', { name, count: openLeads })
+              : t('confirm.body', { name })}
           </span>
         </span>
         <span className="flex gap-2">

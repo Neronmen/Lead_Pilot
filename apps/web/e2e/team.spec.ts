@@ -85,10 +85,10 @@ test.describe('who sees which controls', () => {
     await expect(you.getByText(t.people.you)).toBeVisible();
     await expect(you.getByRole('button')).toHaveCount(0);
     await expect(you.getByRole('combobox')).toHaveCount(0);
-    // The leads column does not exist in M1.
     await expect(page.getByRole('columnheader')).toHaveText([
       t.people.colPerson,
       t.people.colRole,
+      t.people.colOpen,
       t.people.colActive,
       t.people.colActions,
     ]);
@@ -198,9 +198,9 @@ test.describe('removing someone', () => {
       .click();
     const dialog = page.getByRole('alertdialog');
     await expect(dialog).toContainText('Remove Ethan Brooks from Northstar Growth?');
-    await expect(dialog).toContainText('Their leads become unassigned');
-    // No lead count (there is no lead data yet), and nothing about "routing rules".
-    await expect(dialog).not.toContainText(/\d+ open leads|routing rules/i);
+    await expect(row(page, 'ethan.brooks@northstargrowth.com')).toContainText('14'); // the open-leads column
+    await expect(dialog).toContainText('Their 14 open leads become unassigned');
+    await expect(dialog).not.toContainText(/routing rules/i);
     await shot(page, 'dark-en-team-remove-confirm');
     await dialog.getByRole('button', { name: t.confirm.cancel }).click();
     await expect(dialog).toHaveCount(0);
@@ -211,6 +211,12 @@ test.describe('removing someone', () => {
       .click();
     await page.getByRole('button', { name: 'Remove Ethan Brooks', exact: true }).last().click();
     await expect(page.getByRole('alertdialog')).toHaveCount(0);
+    // Someone with no open leads gets the short wording.
+    await row(page, 'noah@northstargrowth.com')
+      .getByRole('button', { name: /Remove/ })
+      .click();
+    await expect(page.getByRole('alertdialog')).toContainText('Their leads become unassigned');
+    await page.getByRole('alertdialog').getByRole('button', { name: t.confirm.cancel }).click();
     await expect(row(page, 'Ethan Brooks')).toHaveCount(0);
     expect(api.requests.filter((r) => r.method === 'DELETE')).toHaveLength(1);
     await context.close();
@@ -221,7 +227,7 @@ test.describe('removing someone', () => {
     await page.goto(URL);
     await row(page, 'Ethan Brooks').getByRole('button', { name: /Gỡ/ }).click();
     await expect(page.getByRole('alertdialog')).toContainText(
-      'Lead của họ sẽ chưa có người phụ trách',
+      '14 khách tiềm năng đang mở của họ sẽ chưa có người phụ trách',
     );
     await context.close();
   });
