@@ -10,6 +10,7 @@ module.exports = {
   transform: { '^.+\\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.json' }] },
   testEnvironment: 'node',
   globalSetup: '<rootDir>/test/global-setup.ts',
+  globalTeardown: '<rootDir>/test/global-teardown.ts',
   setupFiles: ['<rootDir>/test/setup-env.ts'],
   // argon2 hashing and parallel files against one Postgres can pass Jest's 5 s default.
   testTimeout: 20_000,

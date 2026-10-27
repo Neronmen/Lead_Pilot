@@ -21,10 +21,10 @@ describe('Ingest (e2e)', () => {
     app = await createTestApp();
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     const limits = app.get(IngestLimits);
-    limits.perSource.reset();
-    limits.failedAuthPerIp.reset();
+    await limits.perSource.reset();
+    await limits.failedAuthPerIp.reset();
     limits.perSource.limit = 1000;
     limits.failedAuthPerIp.limit = 1000;
   });

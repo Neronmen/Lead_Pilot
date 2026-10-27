@@ -19,6 +19,8 @@ describe('validateEnv', () => {
       REDIS_URL: 'redis://localhost:6379',
       JWT_ACCESS_SECRET,
       ENCRYPTION_KEY,
+      QUEUE_WORKERS: 'on',
+      QUEUE_PREFIX: 'bull',
       AUTH_RATE_LIMIT_PER_MINUTE: 10,
       AUTH_REFRESH_RATE_LIMIT_PER_MINUTE: 60,
       INVITE_RATE_LIMIT_PER_MINUTE: 5,
@@ -26,6 +28,12 @@ describe('validateEnv', () => {
       SMTP_PORT: 1025,
       EMAIL_FROM: 'LeadPilot <no-reply@leadpilot.local>',
     });
+  });
+
+  it('QUEUE_WORKERS is on or off, and QUEUE_PREFIX is a plain word', () => {
+    expect(validateEnv({ ...base, QUEUE_WORKERS: 'off' }).QUEUE_WORKERS).toBe('off');
+    expect(() => validateEnv({ ...base, QUEUE_WORKERS: 'yes' })).toThrow(/QUEUE_WORKERS/);
+    expect(() => validateEnv({ ...base, QUEUE_PREFIX: 'a b:c' })).toThrow(/QUEUE_PREFIX/);
   });
 
   it('requires DATABASE_URL and only accepts postgres URLs', () => {

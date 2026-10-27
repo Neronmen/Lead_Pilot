@@ -153,7 +153,9 @@ describe('Members: races, sessions, history and scale (e2e)', () => {
           expect(rows.filter((row) => row.action === 'member.removed')).toHaveLength(0);
         }
       }
-    });
+      // Six rounds, each setting up a team with password hashing: more than the default
+      // 20 s when the whole suite runs in parallel.
+    }, 90_000);
 
     it('a removal racing a refresh rotation leaves no usable session in the workspace', async () => {
       for (let i = 0; i < 4; i += 1) {

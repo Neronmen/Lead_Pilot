@@ -5,7 +5,10 @@ import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import type { Env } from '../config/env.schema';
 
-export const REDIS_CLIENT = Symbol('REDIS_CLIENT');
+import { RedisWindowStore } from './redis-window.store';
+import { REDIS_CLIENT, WINDOW_STORE } from './redis.tokens';
+
+export { REDIS_CLIENT };
 
 const SHUTDOWN_TIMEOUT_MS = 2_000;
 
@@ -40,8 +43,17 @@ function createRedisClient(config: ConfigService<Env, true>): Redis {
 
 @Global()
 @Module({
-  providers: [{ provide: REDIS_CLIENT, inject: [ConfigService], useFactory: createRedisClient }],
-  exports: [REDIS_CLIENT],
+  providers: [
+    { provide: REDIS_CLIENT, inject: [ConfigService], useFactory: createRedisClient },
+    // Rate-limit counters (auth and ingest). The key prefix keeps tests apart from a dev server.
+    {
+      provide: WINDOW_STORE,
+      inject: [REDIS_CLIENT, ConfigService],
+      useFactory: (redis: Redis, config: ConfigService<Env, true>) =>
+        new RedisWindowStore(redis, config.get('QUEUE_PREFIX', { infer: true })),
+    },
+  ],
+  exports: [REDIS_CLIENT, WINDOW_STORE],
 })
 export class RedisModule implements OnApplicationShutdown {
   constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis) {}

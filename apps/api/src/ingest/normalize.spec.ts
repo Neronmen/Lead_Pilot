@@ -1,5 +1,5 @@
 import { normalizePayload } from './normalize';
-import { FixedWindowLimiter } from './rate-limiter';
+import { FixedWindowLimiter, MemoryWindowStore } from './rate-limiter';
 
 const ok = (payload: Record<string, unknown>, country: string | null = null) => {
   const result = normalizePayload(payload, country);
@@ -72,25 +72,34 @@ describe('normalizePayload', () => {
 });
 
 describe('FixedWindowLimiter', () => {
-  it('allows `limit` hits per window, then says how long to wait, and starts over', () => {
+  it('allows `limit` hits per window, then says how long to wait, and starts over', async () => {
     let now = 1_000_000;
-    const limiter = new FixedWindowLimiter(2, 60_000, () => now);
-    expect(limiter.hit('a')).toBe(0);
-    expect(limiter.hit('a')).toBe(0);
-    expect(limiter.hit('a')).toBe(60);
-    expect(limiter.hit('b')).toBe(0);
+    const limiter = new FixedWindowLimiter(2, new MemoryWindowStore(() => now), 'test');
+    expect(await limiter.hit('a')).toBe(0);
+    expect(await limiter.hit('a')).toBe(0);
+    expect(await limiter.hit('a')).toBe(60);
+    expect(await limiter.hit('b')).toBe(0);
     now += 59_000;
-    expect(limiter.hit('a')).toBe(1);
+    expect(await limiter.hit('a')).toBe(1);
     now += 1_000;
-    expect(limiter.hit('a')).toBe(0);
+    expect(await limiter.hit('a')).toBe(0);
   });
 
-  it('blockedFor counts nothing; record counts without checking', () => {
-    const limiter = new FixedWindowLimiter(2);
-    expect(limiter.blockedFor('ip')).toBe(0);
-    limiter.record('ip');
-    expect(limiter.blockedFor('ip')).toBe(0);
-    limiter.record('ip');
-    expect(limiter.blockedFor('ip')).toBeGreaterThan(0);
+  it('blockedFor counts nothing; record counts without checking', async () => {
+    const limiter = new FixedWindowLimiter(2, new MemoryWindowStore(), 'test');
+    expect(await limiter.blockedFor('ip')).toBe(0);
+    await limiter.record('ip');
+    expect(await limiter.blockedFor('ip')).toBe(0);
+    await limiter.record('ip');
+    expect(await limiter.blockedFor('ip')).toBeGreaterThan(0);
+  });
+
+  it('two limiters sharing one store do not mix their counts (names keep them apart)', async () => {
+    const store = new MemoryWindowStore();
+    const a = new FixedWindowLimiter(1, store, 'a');
+    const b = new FixedWindowLimiter(1, store, 'b');
+    expect(await a.hit('k')).toBe(0);
+    expect(await b.hit('k')).toBe(0);
+    expect(await a.hit('k')).toBeGreaterThan(0);
   });
 });

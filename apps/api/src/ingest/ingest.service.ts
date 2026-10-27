@@ -10,7 +10,7 @@ import { PipelineQueue } from '../queue/pipeline.queue';
 import { hmacAad } from '../sources/sources.service';
 import { type AuthenticatedSource, IngestAuthService } from './ingest-auth.service';
 import { type NormalizedLead, normalizePayload } from './normalize';
-import { FixedWindowLimiter } from './rate-limiter';
+import { FixedWindowLimiter, type WindowStore } from './rate-limiter';
 
 /** Signed requests older (or newer) than this are refused: a captured request cannot be replayed later. */
 export const REPLAY_WINDOW_SECONDS = 5 * 60;
@@ -24,9 +24,14 @@ const IDEMPOTENCY_KEY = /^[\x21-\x7e]{1,128}$/;
 /** The two limits (SPEC §4.8). Fields are public so tests can lower or raise them. */
 export class IngestLimits {
   /** Leads per source per minute. */
-  perSource = new FixedWindowLimiter(120);
+  readonly perSource: FixedWindowLimiter;
   /** Failed authentications per IP per minute: slows down guessing keys. */
-  failedAuthPerIp = new FixedWindowLimiter(20);
+  readonly failedAuthPerIp: FixedWindowLimiter;
+
+  constructor(store: WindowStore) {
+    this.perSource = new FixedWindowLimiter(120, store, 'ingest:source');
+    this.failedAuthPerIp = new FixedWindowLimiter(20, store, 'ingest:failed-auth');
+  }
 }
 
 export class RateLimitedError extends DomainError {
@@ -90,7 +95,7 @@ export class IngestService {
     source: AuthenticatedSource,
     db: Db,
   ): Promise<IngestOutcome> {
-    const retryAfter = this.limits.perSource.hit(source.sourceId);
+    const retryAfter = await this.limits.perSource.hit(source.sourceId);
     if (retryAfter > 0) throw new RateLimitedError(retryAfter);
 
     const payload = this.parse(req);
@@ -167,9 +172,9 @@ export class IngestService {
       // Too many failures from one address: stop answering it. A request that
       // authenticates is never blocked, so a noisy neighbour behind the same
       // proxy or NAT cannot lock customers out.
-      const blocked = this.limits.failedAuthPerIp.blockedFor(req.ip);
+      const blocked = await this.limits.failedAuthPerIp.blockedFor(req.ip);
       if (blocked > 0) throw new RateLimitedError(blocked);
-      this.limits.failedAuthPerIp.record(req.ip);
+      await this.limits.failedAuthPerIp.record(req.ip);
       throw unauthorized();
     }
     return source;

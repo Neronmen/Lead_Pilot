@@ -3,6 +3,9 @@ import { ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { RedisThrottlerStorage } from '../redis/redis-throttler.storage';
+import { WINDOW_STORE } from '../redis/redis.tokens';
+import type { RedisWindowStore } from '../redis/redis-window.store';
 import type { Env } from '../config/env.schema';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
@@ -30,10 +33,11 @@ const JWT_AUDIENCE = 'leadpilot-api';
         verifyOptions: { algorithms: ['HS256'], issuer: JWT_ISSUER, audience: JWT_AUDIENCE },
       }),
     }),
-    // In-memory counters: per API instance. Moves to Redis in M3 (docs/backlog.md).
+    // Counters live in Redis, so several API instances count together.
     ThrottlerModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (config: ConfigService<Env, true>) => ({
+      inject: [ConfigService, WINDOW_STORE],
+      useFactory: (config: ConfigService<Env, true>, store: RedisWindowStore) => ({
+        storage: new RedisThrottlerStorage(store),
         throttlers: [
           {
             name: 'default',
