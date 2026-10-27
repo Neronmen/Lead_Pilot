@@ -50,16 +50,16 @@ export function inviteCopy(input: InviteEmailInput): InviteCopy {
       subject: `${inviter} đã mời bạn tham gia ${workspace} trên LeadPilot`,
       preheader: admin
         ? 'Tham gia với vai trò quản trị viên và giúp cả đội bắt đầu.'
-        : 'Tham gia với vai trò thành viên và bắt đầu xử lý lead được giao cho bạn.',
+        : 'Tham gia với vai trò thành viên và bắt đầu xử lý khách tiềm năng được giao cho bạn.',
       headline: `${inviter} đã mời bạn tham gia ${workspace}`,
       body: admin
-        ? 'Bạn tham gia với vai trò quản trị viên. Quản trị viên thay đổi cài đặt, nguồn lead và quy tắc phân bổ, và mời thêm người.'
-        : 'Bạn tham gia với vai trò thành viên. Thành viên xử lý lead được giao, kiểm tra lead trong hàng chờ duyệt và ghi kết quả.',
+        ? 'Bạn tham gia với vai trò quản trị viên. Quản trị viên thay đổi cài đặt, nguồn khách tiềm năng và quy tắc phân bổ, và mời thêm người.'
+        : 'Bạn tham gia với vai trò thành viên. Thành viên xử lý khách tiềm năng được giao, kiểm tra khách tiềm năng trong hàng chờ duyệt và ghi kết quả.',
       button: 'Chấp nhận lời mời',
       linkIntro: 'Nút không bấm được? Hãy dán đường dẫn này vào trình duyệt:',
       expiry: `Đường dẫn có hiệu lực trong ${input.expiresInDays} ngày và chỉ dùng được một lần.`,
       why: `Bạn nhận email này vì ${inviter} đã mời ${input.to} tham gia ${workspace} trên LeadPilot. Nếu bạn không mong đợi email này, hãy bỏ qua: sẽ không có gì xảy ra nếu bạn không chấp nhận.`,
-      brand: 'LeadPilot · Lọc và phân bổ lead bằng AI',
+      brand: 'LeadPilot · Lọc và phân bổ khách tiềm năng bằng AI',
       plainAction: 'Chấp nhận lời mời:',
     };
   }

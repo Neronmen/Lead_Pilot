@@ -2,7 +2,7 @@
 
 import type { LeadListItem, LeadStatus } from '@leadpilot/shared';
 import { LoaderCircle, Plug, Search, SearchX, Users } from 'lucide-react';
-import { useFormatter, useTranslations } from 'next-intl';
+import { useFormatter, useNow, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { canManage, useCurrentMe } from '@/components/app-shell/me-context';
@@ -39,6 +39,9 @@ export function LeadsView() {
   // Members cannot read the sources list, so the source filter is for Owner and Admin.
   const sources = useSources(admin);
   const leads = useLeads(filters);
+  // One clock for every row, passed explicitly: without it next-intl falls back to the
+  // environment's time and logs ENVIRONMENT_FALLBACK (server and client could disagree).
+  const now = useNow({ updateInterval: 60_000 });
   const items = leads.data?.pages.flatMap((page) => page.items) ?? [];
   const filtered = hasFilters(filters);
 
@@ -178,7 +181,7 @@ export function LeadsView() {
               </thead>
               <tbody>
                 {items.map((lead) => (
-                  <LeadRow key={lead.id} lead={lead} />
+                  <LeadRow key={lead.id} lead={lead} now={now} />
                 ))}
               </tbody>
             </table>
@@ -233,7 +236,7 @@ function Th({ children, first }: { children: React.ReactNode; first?: boolean })
   );
 }
 
-function LeadRow({ lead }: { lead: LeadListItem }) {
+function LeadRow({ lead, now }: { lead: LeadListItem; now: Date }) {
   const t = useTranslations('leads');
   const format = useFormatter();
   const added = new Date(lead.createdAt);
@@ -271,7 +274,7 @@ function LeadRow({ lead }: { lead: LeadListItem }) {
       <td className="px-3 whitespace-nowrap">{t(`statusName.${lead.status}`)}</td>
       <td className="px-3 whitespace-nowrap text-muted-foreground">
         <time dateTime={lead.createdAt} title={added.toLocaleString()}>
-          {format.relativeTime(added)}
+          {format.relativeTime(added, now)}
         </time>
       </td>
     </tr>

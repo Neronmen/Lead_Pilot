@@ -125,7 +125,7 @@ One term per concept, on every board. Product names (LeadPilot, Slack, HubSpot, 
 
 | English | Tiếng Việt | Notes |
 |---|---|---|
-| lead | lead | Common in Vietnamese sales teams; not translated. |
+| lead | khách tiềm năng | Decided in M2: never "lead" and never "khách hàng" (that means a customer). English stays "Leads". |
 | Hot / Warm / Cold / Junk | Nóng / Ấm / Lạnh / Rác | Tier names. |
 | tier | hạng | "Xếp hạng" is the verb: the AI rates a lead. |
 | score | điểm | "Chấm điểm" is the verb: the AI scores a lead. |
@@ -133,11 +133,11 @@ One term per concept, on every board. Product names (LeadPilot, Slack, HubSpot, 
 | owner (of a workspace) | chủ sở hữu | |
 | admin / member | quản trị viên / thành viên | |
 | workspace | không gian làm việc | |
-| source | nguồn | "Nguồn lead" in Settings. |
+| source | nguồn | "Nguồn khách tiềm năng" in Settings. |
 | routing, routing rule | phân bổ, quy tắc phân bổ | |
 | review queue | hàng chờ duyệt | |
 | enrichment, company info | thông tin công ty | Not "làm giàu dữ liệu". |
-| pipeline (the lead flow) | luồng lead | Not left in English. |
+| pipeline (the lead flow) | luồng khách tiềm năng | Not left in English. |
 | ideal customer | khách hàng lý tưởng | Not "tiêu chí ICP". |
 | deal-breaker | điều loại trừ | |
 | integration | tích hợp | |

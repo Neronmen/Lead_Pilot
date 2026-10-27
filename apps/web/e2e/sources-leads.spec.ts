@@ -215,8 +215,14 @@ test.describe('Leads list', () => {
     browser,
   }) => {
     const { context, page } = await open(browser);
+    const consoleProblems: string[] = [];
+    page.on('console', (message) => {
+      if (['error', 'warning'].includes(message.type())) consoleProblems.push(message.text());
+    });
     await page.goto(`${APP}/leads`);
     await expect(page.getByRole('row')).toHaveCount(6); // header + 5
+    // Relative times use an explicit clock: no next-intl ENVIRONMENT_FALLBACK in the console.
+    expect(consoleProblems.filter((text) => text.includes('ENVIRONMENT_FALLBACK'))).toEqual([]);
     await expect(page.getByRole('columnheader')).toHaveText([
       t.colLead,
       t.colCompany,

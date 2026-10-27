@@ -1,6 +1,6 @@
 {
   "meta": {
-    "description": "Lọc và phân bổ lead bằng AI"
+    "description": "Lọc và phân bổ khách tiềm năng bằng AI"
   },
   "language": {
     "label": "Ngôn ngữ",
@@ -29,7 +29,7 @@
     "workspaceMembers": "{count, plural, other {# thành viên}}",
     "nav": {
       "overview": "Tổng quan",
-      "leads": "Lead",
+      "leads": "Khách tiềm năng",
       "review": "Hàng chờ duyệt",
       "rules": "Quy tắc phân bổ",
       "settings": "Cài đặt"
@@ -51,15 +51,15 @@
     "title": "Cài đặt",
     "navLabel": "Các mục cài đặt",
     "nav": {
-      "sources": "Nguồn khách hàng",
+      "sources": "Nguồn khách tiềm năng",
       "team": "Đội ngũ",
       "advanced": "Nâng cao / Nhà phát triển"
     }
   },
   "noAccess": {
     "title": "Chỉ quản trị viên mới thay đổi được cài đặt",
-    "body": "Hãy nhờ chủ sở hữu hoặc một quản trị viên của không gian làm việc nếu cần thay đổi. Bạn vẫn xử lý lead như bình thường.",
-    "back": "Về lead của tôi"
+    "body": "Hãy nhờ chủ sở hữu hoặc một quản trị viên của không gian làm việc nếu cần thay đổi. Bạn vẫn xử lý khách tiềm năng như bình thường.",
+    "back": "Về khách tiềm năng của tôi"
   },
   "auth": {
     "footer": "© {year} LeadPilot",
@@ -76,8 +76,8 @@
       "create": "Tạo không gian làm việc"
     },
     "aside": {
-      "eyebrow": "LUỒNG LEAD TRỰC TIẾP",
-      "pitch": "Mọi lead được chấm điểm và phân bổ trước khi kịp nguội.",
+      "eyebrow": "LUỒNG KHÁCH TIỀM NĂNG TRỰC TIẾP",
+      "pitch": "Mọi khách tiềm năng được chấm điểm và phân bổ trước khi kịp nguội.",
       "gate": "AI CHẤM ĐIỂM",
       "sources": "NGUỒN",
       "chips": {
@@ -128,11 +128,11 @@
       "signIn": "Đăng nhập",
       "signInInstead": "Đăng nhập",
       "aside": {
-        "title": "Lead Nóng đầu tiên được phân bổ chỉ sau khoảng 10 phút",
+        "title": "Khách tiềm năng Nóng đầu tiên được phân bổ chỉ sau khoảng 10 phút",
         "sub": "Bốn bước ngắn sau khi đăng ký. Không cần cài đặt, không cần thẻ tín dụng.",
         "steps": {
           "s1": {
-            "title": "Kết nối nguồn lead",
+            "title": "Kết nối nguồn khách tiềm năng",
             "body": "Dán form lên website, hoặc kết nối Zapier."
           },
           "s2": {
@@ -141,11 +141,11 @@
           },
           "s3": {
             "title": "Kết nối Slack hoặc email",
-            "body": "Biết ngay khi có lead Nóng."
+            "body": "Biết ngay khi có khách tiềm năng Nóng."
           },
           "s4": {
             "title": "Mời đội của bạn",
-            "body": "Lead tự động đến đúng nhân viên sale."
+            "body": "Khách tiềm năng tự động đến đúng nhân viên sale."
           }
         },
         "youGet": "Đội của bạn sẽ thấy",
@@ -165,8 +165,8 @@
       "title": "Tham gia {workspace}",
       "joiningAs": "Bạn tham gia với vai trò",
       "roleHelp": {
-        "MEMBER": "Thành viên xử lý lead được giao, kiểm tra lead trong hàng chờ duyệt và ghi kết quả.",
-        "ADMIN": "Quản trị viên thay đổi cài đặt, nguồn lead, quy tắc phân bổ và mời người khác."
+        "MEMBER": "Thành viên xử lý khách tiềm năng được giao, kiểm tra khách tiềm năng trong hàng chờ duyệt và ghi kết quả.",
+        "ADMIN": "Quản trị viên thay đổi cài đặt, nguồn khách tiềm năng, quy tắc phân bổ và mời người khác."
       },
       "email": "Email",
       "emailHint": "Lời mời gắn với địa chỉ này.",
@@ -211,7 +211,7 @@
     "CANNOT_MODIFY_SELF": "Bạn không thể đổi vai trò hoặc gỡ chính mình.",
     "UNKNOWN": "Có lỗi không mong muốn. Hãy thử lại.",
     "NETWORK": "Không kết nối được LeadPilot. Hãy kiểm tra mạng và thử lại.",
-    "SOURCE_HAS_LEADS": "Nguồn này đã có lead nên không xóa được. Hãy tắt nguồn thay vì xóa.",
+    "SOURCE_HAS_LEADS": "Nguồn này đã có khách tiềm năng nên không xóa được. Hãy tắt nguồn thay vì xóa.",
     "HMAC_ALREADY_ENABLED": "Chữ ký đã được bật cho nguồn này. Hãy tắt chữ ký trước để lấy bí mật mới.",
     "PAYLOAD_TOO_LARGE": "Yêu cầu quá lớn.",
     "UNSUPPORTED_MEDIA_TYPE": "Hãy gửi yêu cầu dưới dạng JSON.",
@@ -242,15 +242,15 @@
     "fallback": "Giá trị này chưa đúng."
   },
   "leads": {
-    "title": "Khách hàng",
-    "emptyTitle": "Chưa có khách hàng",
-    "emptyBody": "Khách hàng sẽ xuất hiện ở đây ngay khi họ đến.",
-    "emptyAdminBody": "Hãy kết nối một nguồn, khách mới sẽ xuất hiện ở đây khi đến.",
+    "title": "Khách tiềm năng",
+    "emptyTitle": "Chưa có khách tiềm năng",
+    "emptyBody": "Khách tiềm năng sẽ xuất hiện ở đây ngay khi họ đến.",
+    "emptyAdminBody": "Hãy kết nối một nguồn, khách tiềm năng mới sẽ xuất hiện ở đây khi đến.",
     "connect": "Kết nối nguồn",
-    "loadTitle": "Không tải được danh sách khách hàng",
+    "loadTitle": "Không tải được danh sách khách tiềm năng",
     "loadBody": "Hãy kiểm tra kết nối và thử lại.",
     "retry": "Thử lại",
-    "search": "Tìm khách hàng",
+    "search": "Tìm khách tiềm năng",
     "searchPlaceholder": "Tìm theo tên, email, công ty hoặc số điện thoại",
     "status": "Trạng thái",
     "allStatuses": "Mọi trạng thái",
@@ -261,9 +261,9 @@
     "companyEmail": "Email công ty",
     "freeEmail": "Chỉ email miễn phí",
     "clear": "Xóa bộ lọc",
-    "noMatchTitle": "Không có khách phù hợp",
+    "noMatchTitle": "Không có khách tiềm năng phù hợp",
     "noMatchBody": "Hãy thử tìm kiếm khác hoặc xóa bộ lọc.",
-    "colLead": "Khách hàng",
+    "colLead": "Khách tiềm năng",
     "colCompany": "Công ty",
     "colSource": "Nguồn",
     "colStatus": "Trạng thái",
@@ -279,7 +279,7 @@
       "ROUTED": "Đã giao",
       "FAILED": "Lỗi"
     },
-    "count": "Đang hiển thị {count, plural, other {# khách}}"
+    "count": "Đang hiển thị {count, plural, other {# khách tiềm năng}}"
   },
   "settingsTeam": {
     "title": "Đội ngũ",
@@ -303,8 +303,8 @@
     },
     "roleHelp": {
       "OWNER": "Làm được mọi việc của quản trị viên, và có thể xóa không gian làm việc. Chỉ có một chủ sở hữu.",
-      "ADMIN": "Thay đổi cài đặt, nguồn lead, quy tắc phân bổ; mời và quản lý Thành viên.",
-      "MEMBER": "Xử lý lead được giao và hàng chờ duyệt. Không thấy Cài đặt."
+      "ADMIN": "Thay đổi cài đặt, nguồn khách tiềm năng, quy tắc phân bổ; mời và quản lý Thành viên.",
+      "MEMBER": "Xử lý khách tiềm năng được giao và hàng chờ duyệt. Không thấy Cài đặt."
     },
     "people": {
       "title": "{count, plural, other {# người}}",
@@ -320,14 +320,14 @@
     },
     "confirm": {
       "title": "Gỡ {name} khỏi {workspace}?",
-      "body": "{name} sẽ không đăng nhập được vào không gian làm việc này. Lead của họ sẽ chưa có người phụ trách cho tới khi được giao cho người khác. Không dữ liệu nào bị xóa, và tài khoản của họ vẫn còn.",
+      "body": "{name} sẽ không đăng nhập được vào không gian làm việc này. Khách tiềm năng của họ sẽ chưa có người phụ trách cho tới khi được giao cho người khác. Không dữ liệu nào bị xóa, và tài khoản của họ vẫn còn.",
       "confirm": "Gỡ {name}",
       "cancel": "Hủy",
       "removing": "Đang gỡ"
     },
     "empty": {
       "title": "Hiện mới chỉ có bạn",
-      "body": "Mời nhân viên sale để LeadPilot có thể giao lead cho họ. Họ tham gia với vai trò Thành viên và chỉ thấy lead.",
+      "body": "Mời nhân viên sale để LeadPilot có thể giao khách tiềm năng cho họ. Họ tham gia với vai trò Thành viên và chỉ thấy khách tiềm năng.",
       "cta": "Mời thành viên"
     },
     "pending": {
@@ -357,30 +357,30 @@
     }
   },
   "settingsSources": {
-    "title": "Nguồn khách hàng",
-    "sub": "Khách hàng tiềm năng đến từ đâu và từng nguồn có đang hoạt động không."
+    "title": "Nguồn khách tiềm năng",
+    "sub": "Khách tiềm năng tiềm năng đến từ đâu và từng nguồn có đang hoạt động không."
   },
   "sources": {
     "add": "Thêm nguồn",
     "cancel": "Hủy",
-    "loadTitle": "Không tải được các nguồn khách hàng",
+    "loadTitle": "Không tải được các nguồn khách tiềm năng",
     "loadBody": "Hãy kiểm tra kết nối và thử lại.",
     "retry": "Thử lại",
     "empty": {
-      "title": "Chưa có nguồn khách hàng",
-      "body": "Kết nối công cụ gửi khách hàng cho bạn, như Zapier, Make hoặc n8n. Khách mới sẽ xuất hiện trong danh sách ngay khi đến.",
+      "title": "Chưa có nguồn khách tiềm năng",
+      "body": "Kết nối công cụ gửi khách tiềm năng cho bạn, như Zapier, Make hoặc n8n. Khách tiềm năng mới sẽ xuất hiện trong danh sách ngay khi đến.",
       "cta": "Kết nối nguồn"
     },
     "kind": {
-      "WEBHOOK": "Gửi khách qua webhook",
+      "WEBHOOK": "Gửi khách tiềm năng qua webhook",
       "FORM": "Biểu mẫu website",
       "CSV": "Bảng tính"
     },
     "status": {
-      "working": "Đang hoạt động · {count, plural, other {# khách}} trong 30 ngày qua",
-      "quiet": "Im lặng · {days, plural, other {# ngày}} không có khách. Hãy kiểm tra {name} còn được kết nối không.",
-      "waiting": "Đang chờ khách đầu tiên",
-      "off": "Đã tắt · khách gửi tới nguồn này sẽ bị từ chối"
+      "working": "Đang hoạt động · {count, plural, other {# khách tiềm năng}} trong 30 ngày qua",
+      "quiet": "Im lặng · {days, plural, other {# ngày}} không có khách tiềm năng. Hãy kiểm tra {name} còn được kết nối không.",
+      "waiting": "Đang chờ khách tiềm năng đầu tiên",
+      "off": "Đã tắt · khách tiềm năng gửi tới nguồn này sẽ bị từ chối"
     },
     "actions": {
       "rename": "Đổi tên",
@@ -396,13 +396,13 @@
     "renameLabel": "Tên mới cho {name}",
     "form": {
       "title": "Thêm nguồn",
-      "tool": "Công cụ nào gửi khách cho bạn?",
+      "tool": "Công cụ nào gửi khách tiềm năng cho bạn?",
       "zapier": "Zapier, Make hoặc n8n",
       "zapierHint": "Thêm bước “gửi webhook” trong quy trình tự động của bạn.",
       "other": "Công cụ khác",
       "otherHint": "Bất kỳ công cụ nào gửi được dữ liệu tới một địa chỉ web. Thiết lập trong Nâng cao / Nhà phát triển.",
       "name": "Đặt tên cho nguồn này",
-      "namePlaceholder": "Zapier – khách từ website",
+      "namePlaceholder": "Zapier – khách tiềm năng từ website",
       "create": "Tạo nguồn",
       "creating": "Đang tạo…",
       "empty": "Hãy đặt tên cho nguồn."
@@ -410,13 +410,13 @@
     "ready": {
       "title": "{name} đã sẵn sàng",
       "body": "Hãy sao chép khóa ngay. Vì an toàn, khóa chỉ hiển thị một lần.",
-      "urlLabel": "Địa chỉ để gửi khách tới",
+      "urlLabel": "Địa chỉ để gửi khách tiềm năng tới",
       "keyLabel": "Khóa API của bạn",
       "shown": "Chỉ hiển thị một lần",
       "done": "Xong",
       "steps": {
         "zapier": "Trong Zapier, Make hoặc n8n, thêm bước gửi webhook (POST, JSON). Dán địa chỉ ở trên và thêm header tên Authorization với giá trị Bearer theo sau là khóa của bạn.",
-        "other": "Gửi mỗi khách dưới dạng JSON tới địa chỉ ở trên, kèm header Authorization: Bearer và khóa của bạn. Có ví dụ trong Nâng cao / Nhà phát triển."
+        "other": "Gửi mỗi khách tiềm năng dưới dạng JSON tới địa chỉ ở trên, kèm header Authorization: Bearer và khóa của bạn. Có ví dụ trong Nâng cao / Nhà phát triển."
       },
       "advanced": "Mở Nâng cao / Nhà phát triển"
     },
@@ -436,8 +436,8 @@
     "retry": "Thử lại",
     "empty": {
       "title": "Chưa có nguồn nào",
-      "body": "Hãy thêm một nguồn khách hàng trước. Địa chỉ và khóa của nguồn sẽ hiện ở đây.",
-      "cta": "Đến Nguồn khách hàng"
+      "body": "Hãy thêm một nguồn khách tiềm năng trước. Địa chỉ và khóa của nguồn sẽ hiện ở đây.",
+      "cta": "Đến Nguồn khách tiềm năng"
     },
     "url": "Địa chỉ",
     "key": "Khóa API",
@@ -448,7 +448,7 @@
     "newKeyShown": "Khóa mới. Hãy sao chép ngay: khóa chỉ hiển thị một lần.",
     "signing": "Ký yêu cầu",
     "signingOn": "Bật · yêu cầu phải được ký bằng bí mật của bạn và sẽ bị từ chối nếu chữ ký sai hoặc cũ hơn 5 phút.",
-    "signingOff": "Tắt · ai có khóa cũng gửi được khách. Hãy bật chữ ký để bảo vệ thêm.",
+    "signingOff": "Tắt · ai có khóa cũng gửi được khách tiềm năng. Hãy bật chữ ký để bảo vệ thêm.",
     "signingEnable": "Bật chữ ký",
     "signingDisable": "Tắt chữ ký",
     "signingDisableWarn": "Yêu cầu sẽ không cần chữ ký nữa. Bí mật sẽ bị xóa.",
@@ -457,8 +457,8 @@
     "cancel": "Hủy",
     "working": "Đang xử lý…",
     "examples": "Ví dụ",
-    "exampleBasic": "Gửi một khách",
-    "exampleSigned": "Gửi một khách có chữ ký (Node.js)",
+    "exampleBasic": "Gửi một khách tiềm năng",
+    "exampleSigned": "Gửi một khách tiềm năng có chữ ký (Node.js)",
     "placeholderKey": "KHOA_API_CUA_BAN",
     "placeholderSecret": "BI_MAT_KY_CUA_BAN"
   },
