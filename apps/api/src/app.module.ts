@@ -18,6 +18,8 @@ import { validateEnv } from './config/env.schema';
 import { HealthModule } from './health/health.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './redis/redis.module';
+import { QueueModule } from './queue/queue.module';
+import { PipelineModule } from './pipeline/pipeline.module';
 
 // One .env at the repo root, shared by all apps. Same depth from src/ and dist/.
 // Real environment variables take precedence over the file.
@@ -34,6 +36,8 @@ const ROOT_ENV_FILE = resolve(__dirname, '../../../.env');
     LoggerModule.forRootAsync({ inject: [ConfigService], useFactory: buildLoggerParams }),
     PrismaModule,
     RedisModule,
+    QueueModule,
+    PipelineModule,
     HealthModule,
     AuditModule,
     EmailModule,

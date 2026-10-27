@@ -6,6 +6,7 @@ import { DomainError } from '../common/errors/domain-error';
 import { CryptoService } from '../crypto/crypto.service';
 import { Prisma } from '../generated/prisma/client';
 import { TenantPrisma } from '../prisma/tenant-prisma.service';
+import { PipelineQueue } from '../queue/pipeline.queue';
 import { hmacAad } from '../sources/sources.service';
 import { type AuthenticatedSource, IngestAuthService } from './ingest-auth.service';
 import { type NormalizedLead, normalizePayload } from './normalize';
@@ -68,6 +69,7 @@ export class IngestService {
     private readonly tenant: TenantPrisma,
     private readonly crypto: CryptoService,
     private readonly limits: IngestLimits,
+    private readonly pipeline: PipelineQueue,
   ) {}
 
   async handle(req: IngestRequest): Promise<IngestOutcome> {
@@ -316,7 +318,15 @@ export class IngestService {
     // insert, and the retry then finds the first lead and merges into it.
     for (let attempt = 0; ; attempt += 1) {
       try {
-        return await db.$transaction((tx) => this.upsert(tx, source, normalized.lead, payload));
+        const stored = await db.$transaction((tx) =>
+          this.upsert(tx, source, normalized.lead, payload),
+        );
+        // After the commit, so a worker never looks for a lead that is not saved yet.
+        await this.pipeline.enqueueLead({
+          workspaceId: source.workspaceId,
+          leadId: stored.body.leadId,
+        });
+        return stored;
       } catch (error) {
         const conflict =
           error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';

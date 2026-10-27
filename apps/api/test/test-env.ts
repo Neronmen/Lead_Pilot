@@ -16,6 +16,9 @@ export function applyTestEnv(): void {
   // sets its own low limit.
   process.env.AUTH_RATE_LIMIT_PER_MINUTE ??= '1000';
   process.env.AUTH_REFRESH_RATE_LIMIT_PER_MINUTE ??= '1000';
+  // Jobs are queued but not run behind a test's back; a test that needs a worker runs one itself.
+  process.env.QUEUE_WORKERS ??= 'off';
+  process.env.QUEUE_PREFIX ??= 'bull-test';
   process.env.INVITE_RATE_LIMIT_PER_MINUTE ??= '1000';
   process.env.INVITE_RATE_LIMIT_PER_DAY ??= '10000';
 

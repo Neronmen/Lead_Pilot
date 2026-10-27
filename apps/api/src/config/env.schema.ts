@@ -43,6 +43,14 @@ export const envSchema = z
     // 32 random bytes, base64 (generate: node -e "console.log(require('crypto').randomBytes(32).toString('base64'))").
     // Required in production. Changing it makes every stored secret unreadable.
     ENCRYPTION_KEY: z.string().optional(),
+    // Runs the background workers (scoring pipeline, cleanup jobs) inside this API process.
+    // "off" only queues jobs: tests use it, and a second process can do the work.
+    QUEUE_WORKERS: z.enum(['on', 'off']).default('on'),
+    // Redis key prefix of the queues: tests use their own, so they never touch a dev worker's jobs.
+    QUEUE_PREFIX: z
+      .string()
+      .regex(/^[A-Za-z0-9_-]{1,40}$/)
+      .default('bull'),
     // Requests per minute per IP on login, signup and accept invite.
     AUTH_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(1).default(10),
     // Refresh runs on every page load and tab, so it gets a larger budget.
