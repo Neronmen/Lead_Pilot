@@ -45,11 +45,17 @@ export function readLocaleCookie(cookies: string): Locale | null {
  * Vietnamese on another device sees Vietnamese here too. Failing to load is
  * not worth blocking the sign-in for: the app loads it again.
  */
-export async function finishSignIn(client: AuthClient, queryClient: QueryClient): Promise<void> {
+export async function finishSignIn(
+  client: AuthClient,
+  queryClient: QueryClient,
+  options: { followWorkspace?: boolean } = {},
+): Promise<void> {
   try {
     const me = await client.request('/auth/me', { schema: meResponseSchema });
     queryClient.setQueryData(ME_QUERY_KEY, me);
-    const wanted = me.user.locale;
+    // `followWorkspace` (after sign-up): the language just chosen for the workspace is
+    // the one to start in. Otherwise only a language the person saved themselves counts.
+    const wanted = me.user.locale ?? (options.followWorkspace ? me.workspace.defaultLocale : null);
     // The cookie is read by the server on the next page load; the sign-in page's own
     // navigation (router.replace) renders the next page with it (covered by the
     // "account language wins" render check).

@@ -32,6 +32,8 @@ export class MockApi {
   private readonly delay: number;
   /** The language saved on the account (null: follow the workspace). */
   locale: 'en' | 'vi' | null = null;
+  /** The workspace's language: set when a workspace is created. */
+  workspaceLocale: 'en' | 'vi' = 'en';
 
   constructor(options: MockOptions = {}) {
     this.role = options.role ?? 'OWNER';
@@ -52,7 +54,7 @@ export class MockApi {
         id: '22222222-2222-4222-8222-222222222222',
         name: 'Northstar Growth',
         slug: 'northstar',
-        defaultLocale: 'en',
+        defaultLocale: this.workspaceLocale,
         currency: 'USD',
         timezone: 'UTC',
         defaultCountry: null,
@@ -95,7 +97,11 @@ export class MockApi {
       return json(status, { accessToken: `token-${this.requests.length}`, expiresIn: 900 });
     };
     if (path === '/auth/login') return session();
-    if (path === '/auth/signup') return session(201);
+    if (path === '/auth/signup') {
+      const locale = (sent as { locale?: string } | undefined)?.locale;
+      if (locale === 'en' || locale === 'vi') this.workspaceLocale = locale;
+      return session(201);
+    }
     if (path === '/auth/invites/accept') return session();
     if (path === '/auth/invites/preview') {
       return json(200, {

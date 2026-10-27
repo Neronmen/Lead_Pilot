@@ -14,10 +14,12 @@ import { cn } from '@/lib/utils';
 export async function AuthShell({
   children,
   aside,
+  asideClassName,
   className,
 }: {
   children: ReactNode;
   aside?: ReactNode;
+  asideClassName?: string;
   className?: string;
 }) {
   const t = await getTranslations();
@@ -45,7 +47,12 @@ export async function AuthShell({
         </footer>
       </div>
       {aside ? (
-        <aside className="hidden min-w-0 flex-1 basis-[480px] flex-col justify-center gap-6 border-l border-border bg-card px-11 py-12 lg:flex">
+        <aside
+          className={cn(
+            'hidden min-w-0 flex-1 basis-[480px] flex-col justify-center gap-6 border-l border-border bg-card px-11 py-12 lg:flex',
+            asideClassName,
+          )}
+        >
           {aside}
         </aside>
       ) : null}

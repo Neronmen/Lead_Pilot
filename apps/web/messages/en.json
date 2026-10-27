@@ -98,6 +98,63 @@
         "scored": "Scored in",
         "scoredValue": "1.4s"
       }
+    },
+    "signup": {
+      "title": "Create your workspace",
+      "sub": "You’ll be the owner. You can invite your team once it’s set up.",
+      "name": "Full name",
+      "workspace": "Workspace name",
+      "email": "Work email",
+      "password": "Password",
+      "passwordHint": "12 characters minimum.",
+      "passwordGood": "12 characters or more: good.",
+      "language": "Workspace language",
+      "currency": "Currency",
+      "country": "Default country for phone numbers",
+      "currencies": {
+        "USD": "USD, US dollar",
+        "VND": "VND, Vietnamese đồng"
+      },
+      "languages": {
+        "en": "English",
+        "vi": "Tiếng Việt"
+      },
+      "submit": "Create workspace",
+      "submitting": "Creating workspace",
+      "agree": "By creating a workspace you agree to the Terms and Privacy Policy.",
+      "have": "Already have an account?",
+      "signIn": "Sign in",
+      "signInInstead": "Sign in instead",
+      "aside": {
+        "title": "Your first Hot lead, routed in about 10 minutes",
+        "sub": "Four short steps after you sign up. Nothing to install, and no credit card.",
+        "steps": {
+          "s1": {
+            "title": "Connect a lead source",
+            "body": "Paste a form on your site, or connect Zapier."
+          },
+          "s2": {
+            "title": "Describe your ideal customer",
+            "body": "Industries, company size, countries, deal-breakers."
+          },
+          "s3": {
+            "title": "Connect Slack or email",
+            "body": "Hear about Hot leads the moment they arrive."
+          },
+          "s4": {
+            "title": "Invite your team",
+            "body": "Leads go to the right rep automatically."
+          }
+        },
+        "youGet": "What your team will see",
+        "reasons": {
+          "r1": "Logistics is one of your target industries",
+          "r2": "Asked for a demo and wants to start this quarter",
+          "r3": "Company size fits who you sell to"
+        },
+        "routed": "Sent to Mia Johnson and posted in #hot-leads, 1.4 seconds after the form was sent."
+      },
+      "passwordTooLong": "128 characters maximum."
     }
   },
   "emailHint": {

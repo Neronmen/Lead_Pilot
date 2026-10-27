@@ -31,6 +31,8 @@ export function LoginForm({ next, signupHref }: { next: string | null; signupHre
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<FormErrors | null>(null);
   const [busy, setBusy] = useState(false);
+  // `busy` is state, so two submit events in the same tick would both see false.
+  const sending = useRef(false);
 
   // The cursor starts in the email box. (`autoFocus` is lost here: the page renders
   // the form twice while it checks the session, and the first copy is thrown away.)
@@ -50,13 +52,14 @@ export function LoginForm({ next, signupHref }: { next: string | null; signupHre
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
-    if (busy) return;
+    if (sending.current) return;
     // The same rules as the API, so an empty field is explained at once.
     const parsed = loginRequestSchema.safeParse({ email, password });
     if (!parsed.success) {
       setErrors(issuesToFormErrors(toValidationIssues(parsed.error.issues)));
       return;
     }
+    sending.current = true;
     setBusy(true);
     setErrors(null);
     try {
@@ -67,6 +70,7 @@ export function LoginForm({ next, signupHref }: { next: string | null; signupHre
       router.replace(safeNext(next));
     } catch (error) {
       setErrors(formErrors(error));
+      sending.current = false;
       setBusy(false);
     }
   }
@@ -125,7 +129,7 @@ export function LoginForm({ next, signupHref }: { next: string | null; signupHre
 
       <p className="text-center text-sm text-muted-foreground">
         {t('newHere')}{' '}
-        <Link href={signupHref} className="text-accent-text hover:underline">
+        <Link href={signupHref} className="text-accent-text underline underline-offset-4">
           {t('create')}
         </Link>
       </p>

@@ -29,6 +29,9 @@ const SAME_IN_BOTH = new Set([
   'auth.aside.sample.score',
   'auth.aside.sample.assignedValue',
   'auth.aside.sample.actionsValue',
+  // Each language is always written in its own language.
+  'auth.signup.languages.en',
+  'auth.signup.languages.vi',
 ]);
 
 test('every Vietnamese message differs from the English one (nothing left untranslated)', () => {

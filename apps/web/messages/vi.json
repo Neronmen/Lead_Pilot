@@ -98,6 +98,63 @@
         "scored": "Chấm điểm trong",
         "scoredValue": "1,4 giây"
       }
+    },
+    "signup": {
+      "title": "Tạo không gian làm việc",
+      "sub": "Bạn sẽ là chủ sở hữu. Bạn có thể mời đội của mình sau khi thiết lập xong.",
+      "name": "Họ và tên",
+      "workspace": "Tên không gian làm việc",
+      "email": "Email công việc",
+      "password": "Mật khẩu",
+      "passwordHint": "Tối thiểu 12 ký tự.",
+      "passwordGood": "Từ 12 ký tự trở lên: tốt.",
+      "language": "Ngôn ngữ không gian làm việc",
+      "currency": "Tiền tệ",
+      "country": "Quốc gia mặc định cho số điện thoại",
+      "currencies": {
+        "USD": "USD, đô la Mỹ",
+        "VND": "VND, đồng Việt Nam"
+      },
+      "languages": {
+        "en": "English",
+        "vi": "Tiếng Việt"
+      },
+      "submit": "Tạo không gian làm việc",
+      "submitting": "Đang tạo không gian làm việc",
+      "agree": "Khi tạo không gian làm việc, bạn đồng ý với Điều khoản và Chính sách riêng tư.",
+      "have": "Đã có tài khoản?",
+      "signIn": "Đăng nhập",
+      "signInInstead": "Đăng nhập",
+      "aside": {
+        "title": "Lead Nóng đầu tiên được phân bổ chỉ sau khoảng 10 phút",
+        "sub": "Bốn bước ngắn sau khi đăng ký. Không cần cài đặt, không cần thẻ tín dụng.",
+        "steps": {
+          "s1": {
+            "title": "Kết nối nguồn lead",
+            "body": "Dán form lên website, hoặc kết nối Zapier."
+          },
+          "s2": {
+            "title": "Mô tả khách hàng lý tưởng",
+            "body": "Ngành, quy mô công ty, quốc gia, điều loại trừ."
+          },
+          "s3": {
+            "title": "Kết nối Slack hoặc email",
+            "body": "Biết ngay khi có lead Nóng."
+          },
+          "s4": {
+            "title": "Mời đội của bạn",
+            "body": "Lead tự động đến đúng nhân viên sale."
+          }
+        },
+        "youGet": "Đội của bạn sẽ thấy",
+        "reasons": {
+          "r1": "Logistics là một ngành mục tiêu của bạn",
+          "r2": "Muốn xem demo và bắt đầu trong quý này",
+          "r3": "Quy mô công ty đúng đối tượng bạn bán"
+        },
+        "routed": "Đã giao cho Mia Johnson và báo vào #hot-leads, 1,4 giây sau khi form được gửi."
+      },
+      "passwordTooLong": "Tối đa 128 ký tự."
     }
   },
   "emailHint": {

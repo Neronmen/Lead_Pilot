@@ -40,6 +40,17 @@ const DYNAMIC: Record<string, string[]> = {
   'shell.roles.${me.role}': ROLES.map((r) => `shell.roles.${r}`),
   'shell.nav.${id}': ['leads', 'settings'].map((id) => `shell.nav.${id}`),
   'settings.nav.${id}': ['team'].map((id) => `settings.nav.${id}`),
+  'auth.signup.aside.steps.${step}.title': ['s1', 's2', 's3', 's4'].map(
+    (step) => `auth.signup.aside.steps.${step}.title`,
+  ),
+  'auth.signup.aside.steps.${step}.body': ['s1', 's2', 's3', 's4'].map(
+    (step) => `auth.signup.aside.steps.${step}.body`,
+  ),
+  'auth.signup.aside.reasons.${reason}': ['r1', 'r2', 'r3'].map(
+    (reason) => `auth.signup.aside.reasons.${reason}`,
+  ),
+  'auth.signup.languages.${code}': ['en', 'vi'].map((code) => `auth.signup.languages.${code}`),
+  'auth.signup.currencies.${code}': ['USD', 'VND'].map((code) => `auth.signup.currencies.${code}`),
   'auth.aside.chips.${chip}': ['web', 'zapier', 'csv', 'linkedin'].map(
     (chip) => `auth.aside.chips.${chip}`,
   ),

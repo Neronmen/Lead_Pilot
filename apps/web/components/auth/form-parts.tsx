@@ -4,6 +4,7 @@ import { AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useId, useState, type ComponentProps, type ReactNode } from 'react';
 import { Input } from '@/components/ui/input';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
@@ -12,22 +13,32 @@ interface TextFieldProps extends Omit<ComponentProps<typeof Input>, 'id'> {
   /** Already translated. */
   error?: string;
   hint?: ReactNode;
+  /** Keep the room of one line for a hint that may appear, so the page does not jump. */
+  hintSpace?: boolean;
   /** Something after the input, such as the show-password button. */
   end?: ReactNode;
 }
 
 /**
  * A labelled input with an optional hint and error. The error and hint are
- * tied to the input (`aria-describedby`), and the error is announced when it
- * appears (`role="alert"`), so a screen reader hears what to fix.
+ * tied to the input (`aria-describedby`). The forms move focus to the first
+ * invalid field, so a screen reader reads its error right then.
  */
-export function TextField({ label, error, hint, end, className, ...input }: TextFieldProps) {
+export function TextField({
+  label,
+  error,
+  hint,
+  hintSpace,
+  end,
+  className,
+  ...input
+}: TextFieldProps) {
   const id = useId();
   const hintId = `${id}-hint`;
   const errorId = `${id}-error`;
   const describedBy = [hint ? hintId : null, error ? errorId : null].filter(Boolean).join(' ');
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex min-w-0 flex-col gap-1.5">
       <Label htmlFor={id}>{label}</Label>
       <div className="relative">
         <Input
@@ -41,8 +52,11 @@ export function TextField({ label, error, hint, end, className, ...input }: Text
           <div className="absolute inset-y-0 right-0 flex items-center pr-1">{end}</div>
         ) : null}
       </div>
-      {hint ? (
-        <div id={hintId} className="text-xs text-muted-foreground">
+      {hint || hintSpace ? (
+        <div
+          id={hint ? hintId : undefined}
+          className={cn('text-xs text-muted-foreground', hintSpace && 'min-h-4')}
+        >
           {hint}
         </div>
       ) : null}
@@ -92,6 +106,37 @@ export function FormAlert({ children }: { children: ReactNode }) {
     >
       <AlertCircle className="mt-px size-4 shrink-0" aria-hidden />
       <span>{children}</span>
+    </div>
+  );
+}
+
+/** A labelled `<select>` (the browser's own, like the design's). */
+export function SelectField({
+  label,
+  error,
+  className,
+  children,
+  ...select
+}: ComponentProps<typeof NativeSelect> & { label: string; error?: string }) {
+  const id = useId();
+  const errorId = `${id}-error`;
+  return (
+    <div className="flex min-w-0 flex-col gap-1.5">
+      <Label htmlFor={id}>{label}</Label>
+      <NativeSelect
+        {...select}
+        id={id}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? errorId : undefined}
+        className={className}
+      >
+        {children}
+      </NativeSelect>
+      {error ? (
+        <p id={errorId} className="text-xs text-danger-text">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }
