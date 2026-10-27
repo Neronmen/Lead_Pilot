@@ -39,3 +39,8 @@ apps/web/e2e/results.md
 
 # Written by `next dev` (agent guidance for Next.js); not ours to keep
 apps/web/AGENTS.md
+
+# Editor local-history copies and backup copies of .env must never be committed
+.history/
+*.history
+.env_*
