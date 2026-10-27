@@ -21,6 +21,7 @@ describe('GeminiLlmProvider (fake fetch: nothing leaves the machine)', () => {
       text: '{"score":50}',
       inputTokens: 321,
       outputTokens: 45,
+      thinkingTokens: 0,
     });
     expect(seen!.url).toBe(
       'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent',
@@ -60,7 +61,7 @@ describe('GeminiLlmProvider (fake fetch: nothing leaves the machine)', () => {
         .complete({ system: 's', user: 'u' })
         .catch((e: unknown) => e);
       expect(error).toBeInstanceOf(LlmError);
-      expect(String((error as Error).message)).not.toMatch(/FAKE-gemini|html|bad key|SAFETY/);
+      expect(String((error as Error).message)).not.toMatch(/FAKE-gemini|html|bad key/);
     }
   });
 
@@ -72,6 +73,42 @@ describe('GeminiLlmProvider (fake fetch: nothing leaves the machine)', () => {
     );
     const error = await provider.complete({ system: 's', user: 'u' }).catch((e: unknown) => e);
     expect((error as Error).message).toBe('The AI service stopped early (MAX_TOKENS)');
+  });
+
+  it('gives every failure a short fixed code that can be counted, and reports thinking tokens', async () => {
+    const codeOf = async (doFetch: typeof fetch) =>
+      (
+        (await new GeminiLlmProvider(KEY, 'gemini-3.5-flash-lite', doFetch)
+          .complete({ system: 's', user: 'u' })
+          .catch((e: unknown) => e)) as LlmError
+      ).code;
+    const respond = (status: number) => () => Promise.resolve(new Response('{}', { status }));
+    expect(await codeOf(respond(429))).toBe('http_429');
+    expect(await codeOf(respond(503))).toBe('http_503');
+    expect(await codeOf(() => Promise.reject(new Error('boom')))).toBe('unreachable');
+    expect(
+      await codeOf(() => Promise.reject(Object.assign(new Error('t'), { name: 'TimeoutError' }))),
+    ).toBe('timeout');
+    expect(await codeOf(() => Promise.resolve(new Response('<html>', { status: 200 })))).toBe(
+      'unreadable',
+    );
+    expect(await codeOf(() => ok({ promptFeedback: { blockReason: 'SAFETY' } }))).toBe(
+      'blocked_SAFETY',
+    );
+    expect(
+      await codeOf(() =>
+        ok({ candidates: [{ finishReason: 'MAX_TOKENS', content: { parts: [{ text: '{' }] } }] }),
+      ),
+    ).toBe('finish_MAX_TOKENS');
+    expect(await codeOf(() => ok({ candidates: [] }))).toBe('no_text');
+
+    const answered = await new GeminiLlmProvider(KEY, 'gemini-3.5-flash-lite', () =>
+      ok({
+        candidates: [{ finishReason: 'STOP', content: { parts: [{ text: '{}' }] } }],
+        usageMetadata: { promptTokenCount: 10, candidatesTokenCount: 5, thoughtsTokenCount: 700 },
+      }),
+    ).complete({ system: 's', user: 'u' });
+    expect(answered.thinkingTokens).toBe(700);
   });
 
   it('refuses a model name that could change the URL path', () => {

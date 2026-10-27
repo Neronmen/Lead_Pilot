@@ -16,7 +16,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { scoreOutputSchema, type IcpRubric, type ScoreOutput } from '@leadpilot/shared';
 import { chooseLlm } from '../src/scoring/llm.factory';
-import { costUsd, type LlmProvider } from '../src/scoring/llm.provider';
+import { costUsd, LlmError, type LlmProvider } from '../src/scoring/llm.provider';
 import { PROMPT_V1, buildUserMessage } from '../src/scoring/prompt';
 import type { ScoringInput } from '../src/scoring/rules';
 import { extractJson } from '../src/scoring/scoring.util';
@@ -38,6 +38,9 @@ interface RunResult {
   invalid: number;
   /** Why answers were unusable, most common first: an error message, "not JSON" or a schema problem. */
   problems: [string, number][];
+  accuracyOfValid: number;
+  avgOutputTokens: number;
+  avgThinkingTokens: number;
   avgCostUsd: number;
   avgLatencyMs: number;
 }
@@ -54,6 +57,14 @@ const leads: Labelled[] = readFileSync(resolve(root, 'leads.jsonl'), 'utf8')
   .filter((line) => line.trim())
   .map((line) => JSON.parse(line) as Labelled);
 
+/** A short fixed word for why an answer was unusable (counted and printed per reason). */
+function reasonOf(error: unknown): string {
+  if (error instanceof LlmError) return error.code; // http_429, timeout, finish_MAX_TOKENS, ...
+  if (error instanceof SyntaxError) return 'json_parse_failed';
+  if (error instanceof Error && error.message === 'no JSON object') return 'json_not_found';
+  return 'other';
+}
+
 async function run(name: string, template: string, llm: LlmProvider): Promise<RunResult> {
   const matrix = Object.fromEntries(
     TIERS.map((tier) => [tier, Object.fromEntries([...TIERS, 'invalid'].map((g) => [g, 0]))]),
@@ -64,6 +75,9 @@ async function run(name: string, template: string, llm: LlmProvider): Promise<Ru
   const note = (reason: string) => problems.set(reason, (problems.get(reason) ?? 0) + 1);
   let cost = 0;
   let latency = 0;
+  let answered = 0;
+  let outputTokens = 0;
+  let thinkingTokens = 0;
   for (const item of leads) {
     const started = Date.now();
     let guess: Guess = 'invalid';
@@ -73,20 +87,20 @@ async function run(name: string, template: string, llm: LlmProvider): Promise<Ru
         user: buildUserMessage({ lead: item.lead, company: item.company, rubric }),
       });
       cost += costUsd(llm.model, answer.inputTokens, answer.outputTokens);
+      outputTokens += answer.outputTokens;
+      thinkingTokens += answer.thinkingTokens ?? 0;
+      answered += 1;
       const parsed = scoreOutputSchema.safeParse(extractJson(answer.text));
       if (parsed.success) guess = (parsed.data as ScoreOutput).isSpam ? 'junk' : parsed.data.tier;
-      else
-        note(
-          `schema: ${parsed.error.issues[0]?.path.join('.') || 'answer'} (${parsed.error.issues[0]?.code})`,
-        );
+      else {
+        // Which field and what is wrong with it (names from our own schema, no values).
+        const issue = parsed.error.issues[0];
+        note(`schema_${issue?.path.join('.') || 'answer'}_${issue?.code}`);
+      }
     } catch (error) {
-      // An unusable answer counts as "invalid" (a miss), not as a crash of the run. The reason is
-      // kept (messages hold a status code at most, never the key or the answer).
-      note(
-        error instanceof SyntaxError || (error as Error).message === 'no JSON object'
-          ? 'not valid JSON (cut off?)'
-          : String((error as Error).message).slice(0, 120),
-      );
+      // An unusable answer counts as "invalid" (a miss), not as a crash of the run. Only a short
+      // fixed code is kept: never the key, the lead's text or what the AI service sent back.
+      note(reasonOf(error));
     }
     latency += Date.now() - started;
     if (guess === 'invalid') invalid += 1;
@@ -98,7 +112,10 @@ async function run(name: string, template: string, llm: LlmProvider): Promise<Ru
     accuracy: correct / leads.length,
     matrix,
     invalid,
-    problems: [...problems.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5),
+    problems: [...problems.entries()].sort((a, b) => b[1] - a[1]),
+    accuracyOfValid: leads.length === invalid ? 0 : correct / (leads.length - invalid),
+    avgOutputTokens: answered ? outputTokens / answered : 0,
+    avgThinkingTokens: answered ? thinkingTokens / answered : 0,
     avgCostUsd: cost / leads.length,
     avgLatencyMs: latency / leads.length,
   };
@@ -109,8 +126,14 @@ function print(result: RunResult): void {
   console.log(
     `  Accuracy (exact tier): ${(result.accuracy * 100).toFixed(1)}%  (${leads.length} leads)`,
   );
+  console.log(
+    `  Accuracy over the answers that were usable: ${(result.accuracyOfValid * 100).toFixed(1)}%  (${leads.length - result.invalid} of ${leads.length})`,
+  );
   console.log(`  Unusable answers: ${result.invalid}`);
   for (const [reason, count] of result.problems) console.log(`    ${count} x ${reason}`);
+  console.log(
+    `  Average tokens per answer: ${result.avgOutputTokens.toFixed(0)} written, ${result.avgThinkingTokens.toFixed(0)} thinking`,
+  );
   console.log(`  Average cost per lead: $${result.avgCostUsd.toFixed(5)}`);
   console.log(
     `  Average latency: ${result.avgLatencyMs.toFixed(0)} ms (includes waiting for the pacing slot)`,

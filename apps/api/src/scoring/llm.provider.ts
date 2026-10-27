@@ -9,6 +9,8 @@ export interface LlmResponse {
   text: string;
   inputTokens: number;
   outputTokens: number;
+  /** Tokens the model spent "thinking" before answering, when the provider reports them. */
+  thinkingTokens?: number;
 }
 
 /** A way to ask an AI model. Real ones need an API key; the mock needs nothing. */
@@ -26,7 +28,14 @@ export const LLM_PROVIDER = Symbol('LLM_PROVIDER');
  * most: never the request, the answer or a key, because it ends up in logs.
  */
 export class LlmError extends Error {
-  constructor(message: string) {
+  /**
+   * A short fixed code for counting failures (`http_429`, `timeout`, `finish_MAX_TOKENS`...): safe to
+   * print, unlike anything the AI service sent back.
+   */
+  constructor(
+    message: string,
+    readonly code: string = 'error',
+  ) {
     super(message);
     this.name = 'LlmError';
   }

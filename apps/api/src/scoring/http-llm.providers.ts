@@ -22,14 +22,20 @@ async function post(
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
-  } catch {
-    throw new LlmError('The AI service could not be reached');
+  } catch (error) {
+    const timedOut =
+      error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError');
+    throw timedOut
+      ? new LlmError('The AI service took too long', 'timeout')
+      : new LlmError('The AI service could not be reached', 'unreachable');
   }
-  if (!response.ok) throw new LlmError(`The AI service answered ${response.status}`);
+  if (!response.ok) {
+    throw new LlmError(`The AI service answered ${response.status}`, `http_${response.status}`);
+  }
   try {
     return await response.json();
   } catch {
-    throw new LlmError('The AI service sent an unreadable answer');
+    throw new LlmError('The AI service sent an unreadable answer', 'unreadable');
   }
 }
 
@@ -63,7 +69,7 @@ export class AnthropicLlmProvider implements LlmProvider {
       usage?: { input_tokens?: number; output_tokens?: number };
     };
     const text = data.content?.find((part) => part.type === 'text')?.text;
-    if (typeof text !== 'string') throw new LlmError('The AI service sent no text');
+    if (typeof text !== 'string') throw new LlmError('The AI service sent no text', 'no_text');
     return {
       text,
       inputTokens: num(data.usage?.input_tokens),
@@ -102,7 +108,7 @@ export class OpenAiLlmProvider implements LlmProvider {
       usage?: { prompt_tokens?: number; completion_tokens?: number };
     };
     const text = data.choices?.[0]?.message?.content;
-    if (typeof text !== 'string') throw new LlmError('The AI service sent no text');
+    if (typeof text !== 'string') throw new LlmError('The AI service sent no text', 'no_text');
     return {
       text,
       inputTokens: num(data.usage?.prompt_tokens),
@@ -150,19 +156,29 @@ export class GeminiLlmProvider implements LlmProvider {
       },
     )) as {
       candidates?: { finishReason?: string; content?: { parts?: { text?: string }[] } }[];
-      usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number };
+      promptFeedback?: { blockReason?: string };
+      usageMetadata?: {
+        promptTokenCount?: number;
+        candidatesTokenCount?: number;
+        thoughtsTokenCount?: number;
+      };
     };
     const text = data.candidates?.[0]?.content?.parts?.map((part) => part.text ?? '').join('');
     const finish = data.candidates?.[0]?.finishReason;
     // A fixed list of words from Google, never the answer: safe to put in a message.
     if (finish && /^[A-Z_]{3,40}$/.test(finish) && finish !== 'STOP') {
-      throw new LlmError(`The AI service stopped early (${finish})`);
+      throw new LlmError(`The AI service stopped early (${finish})`, `finish_${finish}`);
     }
-    if (!text) throw new LlmError('The AI service sent no text');
+    const blocked = data.promptFeedback?.blockReason;
+    if (blocked && /^[A-Z_]{3,40}$/.test(blocked)) {
+      throw new LlmError(`The AI service blocked the request (${blocked})`, `blocked_${blocked}`);
+    }
+    if (!text) throw new LlmError('The AI service sent no text', 'no_text');
     return {
       text,
       inputTokens: num(data.usageMetadata?.promptTokenCount),
       outputTokens: num(data.usageMetadata?.candidatesTokenCount),
+      thinkingTokens: num(data.usageMetadata?.thoughtsTokenCount),
     };
   }
 }
