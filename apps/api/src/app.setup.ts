@@ -3,6 +3,7 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import type { Env } from './config/env.schema';
+import { readRawBody } from './ingest/raw-body';
 
 /**
  * App-level setup that is not expressed as module providers. Shared by
@@ -12,6 +13,8 @@ export function configureApp(app: NestExpressApplication, config: ConfigService<
   app.disable('x-powered-by');
   // Reads the httpOnly refresh-token cookie on /auth routes.
   app.use(cookieParser());
+  // Ingest needs the exact bytes (signatures), read before any body parser.
+  app.use('/v1/ingest', readRawBody());
   app.enableCors({ origin: config.get('WEB_ORIGIN', { infer: true }), credentials: true });
   app.enableShutdownHooks();
   setupSwagger(app);

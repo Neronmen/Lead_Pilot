@@ -34,6 +34,13 @@ export const ErrorCode = {
   SOURCE_HAS_LEADS: 'SOURCE_HAS_LEADS',
   /** The source already has a signing secret; it is shown once, so switch signing off first to get a new one. */
   HMAC_ALREADY_ENABLED: 'HMAC_ALREADY_ENABLED',
+
+  // Ingest (M2): what a sending system can be told. Every authentication problem
+  // is plain UNAUTHORIZED, so the answer never tells whether a source exists.
+  PAYLOAD_TOO_LARGE: 'PAYLOAD_TOO_LARGE',
+  UNSUPPORTED_MEDIA_TYPE: 'UNSUPPORTED_MEDIA_TYPE',
+  /** The same Idempotency-Key was sent with a different body. */
+  IDEMPOTENCY_KEY_REUSED: 'IDEMPOTENCY_KEY_REUSED',
 } as const;
 
 export type KnownErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

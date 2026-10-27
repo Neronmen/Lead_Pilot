@@ -210,7 +210,10 @@
     "UNKNOWN": "Something unexpected happened. Try again.",
     "NETWORK": "Can’t reach LeadPilot. Check your connection and try again.",
     "SOURCE_HAS_LEADS": "This source already has leads, so it cannot be deleted. Switch it off instead.",
-    "HMAC_ALREADY_ENABLED": "Signing is already on for this source. Switch it off first to get a new secret."
+    "HMAC_ALREADY_ENABLED": "Signing is already on for this source. Switch it off first to get a new secret.",
+    "PAYLOAD_TOO_LARGE": "The request is too large.",
+    "UNSUPPORTED_MEDIA_TYPE": "Send the request as JSON.",
+    "IDEMPOTENCY_KEY_REUSED": "This Idempotency-Key was already used with different data."
   },
   "validation": {
     "invalid_type": "This field is required.",

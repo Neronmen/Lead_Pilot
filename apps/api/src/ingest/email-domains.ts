@@ -1,0 +1,40 @@
+/** Throwaway inboxes: a lead with one of these is refused (small list; extend as needed). */
+export const DISPOSABLE_DOMAINS: ReadonlySet<string> = new Set([
+  '10minutemail.com',
+  'dispostable.com',
+  'fakeinbox.com',
+  'getnada.com',
+  'guerrillamail.com',
+  'guerrillamail.net',
+  'maildrop.cc',
+  'mailinator.com',
+  'mintemail.com',
+  'sharklasers.com',
+  'temp-mail.org',
+  'tempmail.com',
+  'throwawaymail.com',
+  'trashmail.com',
+  'yopmail.com',
+]);
+
+/** Personal inboxes: kept, but flagged (`isFreeMail`) and never used as the company domain. */
+export const FREE_MAIL_DOMAINS: ReadonlySet<string> = new Set([
+  '163.com',
+  'aol.com',
+  'gmail.com',
+  'gmx.com',
+  'googlemail.com',
+  'hotmail.com',
+  'icloud.com',
+  'live.com',
+  'mail.com',
+  'me.com',
+  'msn.com',
+  'outlook.com',
+  'proton.me',
+  'protonmail.com',
+  'qq.com',
+  'yahoo.com',
+  'yandex.com',
+  'zoho.com',
+]);

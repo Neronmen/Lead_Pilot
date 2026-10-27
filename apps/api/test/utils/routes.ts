@@ -52,6 +52,8 @@ export const PUBLIC = new Set([
   'POST /auth/logout',
   'POST /auth/invites/preview',
   'POST /auth/invites/accept',
+  // Signed in with a source's API key, not a user: its tests are in ingest.e2e-spec.ts.
+  'POST /v1/ingest/:sourceId',
 ]);
 export const OWN = new Set(['GET /auth/me', 'PATCH /auth/me']);
 export const WORKSPACE_COLLECTION = new Set([

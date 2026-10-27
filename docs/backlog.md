@@ -45,6 +45,15 @@ Items raised in reviews that belong to a later milestone. Each milestone plan st
 - Reject an all-zero `ENCRYPTION_KEY` in production, and log a warning at boot when the public dev key is in use outside tests.
 - Lead emails: lowercase before insert; validate country codes (step 3).
 
+- `rawPayload` keeps the sender's JSON (personal data) for ever. Add a retention job once BullMQ exists (M3): null `rawPayload` on leads and on `ingested` events after 90 days.
+- Ingest limits (per source, failed auth per IP) count in memory per API instance: move to Redis with the first second instance. Phone dedup has no unique index, so two new leads with the same phone sent at once can both be created (email is guarded by the index).
+- Ingest answers 201/200 after the work is done. When enrichment and scoring arrive (M3), the lead is queued and the endpoint stays fast.
+
+- Ingest signatures cover the timestamp and body but not the Idempotency-Key or source id: a captured signed request can be replayed for 5 minutes (duplicate events without a key). Consider signing `<timestamp>.<idempotency-key>.<body>` or a nonce store.
+- Set explicit `requestTimeout`/`headersTimeout` in `main.ts` (slow senders hold up to 256 KB per connection before auth). Key the failed-auth limiter on the IPv6 /64, and set `trust proxy` before deploy (see M6).
+- Country codes come from libphonenumber (includes non-ISO `AC`, `TA`, lacks `AQ`, `BV`); switch to an ISO 3166 list. Decide whether an invalid phone should reject the whole lead or only be flagged (today: rejected).
+- Merging by phone keeps the stored email and records the other one in the `merged` event (`otherEmail`); decide whether leads should hold several emails.
+
 ## M4 – Routing & actions
 
 - Build the "New Hot lead" alert email from the approved design (docs/design-notes.md, Emails; the plain-text version is on the canvas). The invite email's `EmailLayout` and copy pattern in `apps/api/src/email` are the model.

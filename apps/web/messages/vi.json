@@ -210,7 +210,10 @@
     "UNKNOWN": "Có lỗi không mong muốn. Hãy thử lại.",
     "NETWORK": "Không kết nối được LeadPilot. Hãy kiểm tra mạng và thử lại.",
     "SOURCE_HAS_LEADS": "Nguồn này đã có lead nên không xóa được. Hãy tắt nguồn thay vì xóa.",
-    "HMAC_ALREADY_ENABLED": "Chữ ký đã được bật cho nguồn này. Hãy tắt chữ ký trước để lấy bí mật mới."
+    "HMAC_ALREADY_ENABLED": "Chữ ký đã được bật cho nguồn này. Hãy tắt chữ ký trước để lấy bí mật mới.",
+    "PAYLOAD_TOO_LARGE": "Yêu cầu quá lớn.",
+    "UNSUPPORTED_MEDIA_TYPE": "Hãy gửi yêu cầu dưới dạng JSON.",
+    "IDEMPOTENCY_KEY_REUSED": "Idempotency-Key này đã được dùng với dữ liệu khác."
   },
   "validation": {
     "invalid_type": "Ô này là bắt buộc.",
