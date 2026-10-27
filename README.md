@@ -124,9 +124,22 @@ use a real model, put ONE key in `.env` (never commit it; the app never logs or 
 | --- | --- |
 | `ANTHROPIC_API_KEY` | `LLM_PROVIDER=auto` then uses Anthropic (default model `claude-haiku-5-5`). |
 | `OPENAI_API_KEY` | Used if no Anthropic key is set (default model `gpt-4o-mini`). |
-| `LLM_PROVIDER` | `auto` (default), `mock`, `anthropic` or `openai`. `mock` forces the free mock even if a key is set. |
+| `GEMINI_API_KEY`, `GEMINI_PAID_TIER` | Used if neither of the above is set; see the Gemini section below. |
+| `LLM_PROVIDER` | `auto` (default), `mock`, `anthropic`, `openai` or `gemini`. `mock` forces the free mock even if a key is set. |
 | `LLM_MODEL` | Optional. Use a model that is in the price table in `apps/api/src/scoring/llm.provider.ts`, or its cost is estimated high. |
 | `AI_DEFAULT_MONTHLY_LIMIT_USD` | Monthly spend allowed for a workspace that set no limit (default 5; `0` = none). Over it, leads are rated by simple rules and still saved. |
+
+### Gemini (Google)
+
+Set `LLM_PROVIDER=gemini` (or just `GEMINI_API_KEY` with `auto`), put the key in `.env` yourself, and pick a model
+with `LLM_MODEL` (default `gemini-2.5-flash-lite`; for example `gemini-3.5-flash-lite`). The key is sent in a
+header only and is never logged. Gemini is tracked as **$0** because the free tier has no charge; on a paid
+tier add the model and its prices to the table in `llm.provider.ts`.
+
+> **WARNING: the free tier is for fake or demo data only.** On Google's free tier, Google may use what you
+> send to improve its products. Never send real customer leads through a free-tier key. For real customers use
+> a **paid tier** (then set `GEMINI_PAID_TIER=true`) or a provider that does not train on your data. In
+> production, running Gemini without `GEMINI_PAID_TIER=true` logs a warning at startup.
 
 **What it costs.** One lead is about 700 tokens in and 120 out. `pnpm eval` rates 50 leads, so one run is about
 **$0.07** with `claude-haiku-5-5` and about **$0.01** with `gpt-4o-mini` (twice that with `--candidate`, which runs a

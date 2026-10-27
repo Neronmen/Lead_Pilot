@@ -110,3 +110,52 @@ export class OpenAiLlmProvider implements LlmProvider {
     };
   }
 }
+
+/** A model name goes into the URL path: letters, digits, dots, dashes and underscores only. */
+const GEMINI_MODEL = /^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/;
+
+/**
+ * Google Gemini API (generateContent, JSON output mode). The key goes in the
+ * `x-goog-api-key` header, never in the URL (URLs end up in logs and proxies).
+ *
+ * The free tier lets Google use what is sent to improve its products: see the
+ * warning in the README before sending anything that is not fake or demo data.
+ */
+export class GeminiLlmProvider implements LlmProvider {
+  readonly name = 'gemini';
+
+  constructor(
+    private readonly apiKey: string,
+    readonly model: string,
+    private readonly doFetch: Fetch = fetch,
+  ) {
+    if (!GEMINI_MODEL.test(model)) throw new LlmError('The Gemini model name is not valid');
+  }
+
+  async complete(request: LlmRequest): Promise<LlmResponse> {
+    const data = (await post(
+      this.doFetch,
+      `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent`,
+      { 'x-goog-api-key': this.apiKey },
+      {
+        systemInstruction: { parts: [{ text: request.system }] },
+        contents: [{ role: 'user', parts: [{ text: request.user }] }],
+        generationConfig: {
+          temperature: 0,
+          maxOutputTokens: 800,
+          responseMimeType: 'application/json',
+        },
+      },
+    )) as {
+      candidates?: { content?: { parts?: { text?: string }[] } }[];
+      usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number };
+    };
+    const text = data.candidates?.[0]?.content?.parts?.map((part) => part.text ?? '').join('');
+    if (!text) throw new LlmError('The AI service sent no text');
+    return {
+      text,
+      inputTokens: num(data.usageMetadata?.promptTokenCount),
+      outputTokens: num(data.usageMetadata?.candidatesTokenCount),
+    };
+  }
+}

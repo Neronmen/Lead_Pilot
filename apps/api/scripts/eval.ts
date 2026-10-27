@@ -105,10 +105,12 @@ function print(result: RunResult): void {
 async function main(): Promise<void> {
   const candidateAt = process.argv.indexOf('--candidate');
   const llm = chooseLlm({
-    LLM_PROVIDER: (process.env.LLM_PROVIDER as 'auto' | 'mock' | 'anthropic' | 'openai') ?? 'auto',
+    LLM_PROVIDER:
+      (process.env.LLM_PROVIDER as 'auto' | 'mock' | 'anthropic' | 'openai' | 'gemini') ?? 'auto',
     LLM_MODEL: process.env.LLM_MODEL,
     ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY,
   });
   console.log(
     `Scorer: ${llm.name} (${llm.model})${llm.name === 'mock' ? ' - the free built-in mock' : ''}`,

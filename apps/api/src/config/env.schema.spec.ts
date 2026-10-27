@@ -23,6 +23,7 @@ describe('validateEnv', () => {
       ENRICHMENT_PROVIDER: 'mock',
       LLM_PROVIDER: 'auto',
       AI_DEFAULT_MONTHLY_LIMIT_USD: 5,
+      GEMINI_PAID_TIER: 'false',
       QUEUE_PREFIX: 'bull',
       AUTH_RATE_LIMIT_PER_MINUTE: 10,
       AUTH_REFRESH_RATE_LIMIT_PER_MINUTE: 60,

@@ -49,6 +49,9 @@ const UNLISTED_PRICE = { input: 15, output: 75 };
 export function costUsd(model: string, inputTokens: number, outputTokens: number): number {
   // The mock and the rules cost nothing; everything else costs at least the unlisted price.
   if (model === 'mock-1' || model === 'rules-1') return 0;
+  // Gemini is tracked as $0: it is used on Google's free tier (rate-limited, no charge). If you
+  // move to a paid tier, add the model and its prices to the table above and drop this line.
+  if (model.startsWith('gemini-')) return 0;
   const price = PRICE_PER_MILLION[model] ?? UNLISTED_PRICE;
   return (inputTokens * price.input + outputTokens * price.output) / 1_000_000;
 }

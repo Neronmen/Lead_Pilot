@@ -51,13 +51,17 @@ export const envSchema = z
     ENRICHMENT_PROVIDER: z.enum(['mock', 'website']).default('mock'),
     // Which AI rates the leads. "auto": Anthropic if ANTHROPIC_API_KEY is set, else OpenAI if
     // OPENAI_API_KEY is set, else the free built-in mock (no key needed: the demo works as is).
-    LLM_PROVIDER: z.enum(['auto', 'mock', 'anthropic', 'openai']).default('auto'),
+    LLM_PROVIDER: z.enum(['auto', 'mock', 'anthropic', 'openai', 'gemini']).default('auto'),
     LLM_MODEL: z.string().trim().min(1).max(100).optional(),
     // Monthly AI spend allowed for a workspace that has set no limit of its own, in US dollars.
     // Leads arrive from the open internet, so "no limit" is never the silent default. 0 = no limit.
     AI_DEFAULT_MONTHLY_LIMIT_USD: z.coerce.number().min(0).default(5),
     ANTHROPIC_API_KEY: z.string().trim().min(10).optional(),
     OPENAI_API_KEY: z.string().trim().min(10).optional(),
+    GEMINI_API_KEY: z.string().trim().min(10).optional(),
+    // Say "true" when the Gemini key is on a PAID tier (which does not train on your data). On the
+    // free tier Google may use submitted content, so production without this logs a warning.
+    GEMINI_PAID_TIER: z.enum(['true', 'false']).default('false'),
     // Redis key prefix of the queues and rate-limit counters: tests use their own, so they never
     // touch a dev server's jobs or limits.
     QUEUE_PREFIX: z
