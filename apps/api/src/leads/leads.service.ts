@@ -36,9 +36,17 @@ export class LeadsService {
       include: {
         source: { select: { id: true, name: true, type: true } },
         owner: { select: { user: { select: { id: true, name: true } } } },
+        possibleDuplicateOf: { select: { id: true, firstName: true, lastName: true, email: true } },
       },
     });
     const page = rows.slice(0, query.limit);
+    // Each submission leaves one "ingested" event: more than one means later ones were merged in.
+    const submitted = await db.leadEvent.groupBy({
+      by: ['leadId'],
+      where: { type: 'ingested', leadId: { in: page.map((row) => row.id) } },
+      _count: { _all: true },
+    });
+    const submissions = new Map(submitted.map((row) => [row.leadId, row._count._all]));
     return {
       items: page.map((row) => ({
         id: row.id,
@@ -51,6 +59,17 @@ export class LeadsService {
         status: row.status,
         source: row.source,
         owner: row.owner ? { id: row.owner.user.id, name: row.owner.user.name } : null,
+        submissions: Math.max(1, submissions.get(row.id) ?? 1),
+        possibleDuplicateOf: row.possibleDuplicateOf
+          ? {
+              id: row.possibleDuplicateOf.id,
+              name:
+                [row.possibleDuplicateOf.firstName, row.possibleDuplicateOf.lastName]
+                  .filter(Boolean)
+                  .join(' ') || null,
+              email: row.possibleDuplicateOf.email,
+            }
+          : null,
         createdAt: row.createdAt.toISOString(),
       })),
       nextCursor: rows.length > query.limit ? page[page.length - 1]!.id : null,

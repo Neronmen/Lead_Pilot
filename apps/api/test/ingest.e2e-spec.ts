@@ -144,15 +144,107 @@ describe('Ingest (e2e)', () => {
       expect(changed.sort()).toEqual(['company', 'phone']);
     });
 
-    it('merges by phone when there is no email match, and never across workspaces', async () => {
+    it('merges on phone only when the submission has no email; never across workspaces', async () => {
       const a = await setup();
       const b = await setup();
       const first = await send(a, { phone: '+84901234567', firstName: 'Ann' }).expect(201);
-      const same = await send(a, { phone: '+84 901 234 567', email: email() }).expect(200);
+      const same = await send(a, { phone: '+84 901 234 567', company: 'Acme' }).expect(200);
       expect(same.body.leadId).toBe(first.body.leadId);
       // The same phone in another workspace is a different lead.
       const other = await send(b, { phone: '+84901234567' }).expect(201);
       expect(other.body.leadId).not.toBe(first.body.leadId);
+    });
+
+    it('same phone with a different email is NOT merged: a separate lead flagged as a possible duplicate', async () => {
+      const t = await setup();
+      const first = await send(t, { email: 'ann@gmail.com', phone: '+84901234567' }).expect(201);
+      const second = await send(t, { email: email(), phone: '+84 901 234 567' }).expect(201);
+      expect(second.body.leadId).not.toBe(first.body.leadId);
+
+      const created = await prisma.lead.findUniqueOrThrow({ where: { id: second.body.leadId } });
+      expect(created.possibleDuplicateOfId).toBe(first.body.leadId);
+      const older = await prisma.lead.findUniqueOrThrow({ where: { id: first.body.leadId } });
+      expect(older).toMatchObject({
+        email: 'ann@gmail.com',
+        isFreeMail: true,
+        possibleDuplicateOfId: null,
+      });
+      for (const [leadId, other] of [
+        [created.id, 'ofLeadId'],
+        [older.id, 'newLeadId'],
+      ] as const) {
+        const events = await prisma.leadEvent.findMany({
+          where: { leadId, type: 'possible_duplicate' },
+        });
+        expect(events).toHaveLength(1);
+        expect(events[0]!.payload).toMatchObject({
+          [other]: leadId === created.id ? older.id : created.id,
+        });
+      }
+      // A phone-only submission afterwards merges into the OLDER lead and keeps its email and flag.
+      const third = await send(t, { phone: '+84901234567' }).expect(200);
+      expect(third.body.leadId).toBe(first.body.leadId);
+      expect(
+        await prisma.lead.findUniqueOrThrow({ where: { id: first.body.leadId } }),
+      ).toMatchObject({
+        email: 'ann@gmail.com',
+        isFreeMail: true,
+      });
+    });
+
+    it('every submission keeps its own timeline event with its own raw payload and time, merged or not', async () => {
+      const t = await setup();
+      const address = email();
+      const first = await send(t, { email: address, note: 'first' }).expect(201);
+      await send(t, { email: address, note: 'second', phone: '+84901234567' }).expect(200);
+      await send(t, { email: address, note: 'third' }).expect(200);
+      const events = await prisma.leadEvent.findMany({
+        where: { leadId: first.body.leadId },
+        orderBy: { createdAt: 'asc' },
+      });
+      const ingested = events.filter((e) => e.type === 'ingested');
+      expect(
+        ingested.map((e) => (e.payload as { rawPayload: { note: string } }).rawPayload.note),
+      ).toEqual(['first', 'second', 'third']);
+      expect(new Set(ingested.map((e) => e.createdAt.getTime())).size).toBe(3);
+      expect(events.filter((e) => e.type === 'merged')).toHaveLength(2);
+      // The lead itself keeps only the latest payload; the earlier ones live on the timeline.
+      const lead = await prisma.lead.findUniqueOrThrow({ where: { id: first.body.leadId } });
+      expect((lead.rawPayload as { note: string }).note).toBe('third');
+    });
+
+    it('counts what happened per source: received = created + merged + rejected, replays apart', async () => {
+      const t = await setup();
+      const auth = { authorization: `Bearer ${t.owner.accessToken}` };
+      const address = email();
+      await send(t, { email: address }).expect(201);
+      await send(t, { email: address }).expect(200);
+      await send(t, { email: 'x@mailinator.com' }).expect(400);
+      await send(t, { email: 'y@mailinator.com' }).expect(400);
+      await send(t, { name: 'no contact' }).expect(400);
+      await send(t, { email: email() }, { 'idempotency-key': 'k1' }).expect(201);
+      await send(t, { email: email() }, { 'idempotency-key': 'k1' }).expect(422); // different body
+      const body = { email: email() };
+      await send(t, body, { 'idempotency-key': 'k2' }).expect(201);
+      await send(t, body, { 'idempotency-key': 'k2' }).expect(201); // a replay
+      await send({ sourceId: t.sourceId, key: `${t.key}x` }, { email: email() }).expect(401); // not counted
+
+      const list = await api().get('/sources').set(auth).expect(200);
+      const stats = (list.body as Array<{ id: string; last30Days: Record<string, unknown> }>).find(
+        (s) => s.id === t.sourceId,
+      )!.last30Days;
+      expect(stats).toEqual({
+        received: 8, // 3 created + 1 merged + 4 rejected
+        created: 3,
+        merged: 1,
+        rejected: 4,
+        replayed: 1,
+        topRejections: [
+          { reason: 'disposable_email', count: 2 },
+          expect.objectContaining({ count: 1 }),
+          expect.objectContaining({ count: 1 }),
+        ],
+      });
     });
 
     it('two submissions of one email at once make one lead', async () => {
@@ -414,23 +506,6 @@ describe('Ingest (e2e)', () => {
       expect(proto.body.error.details.issues).toEqual([{ path: '', code: 'reserved_field' }]);
       // A valid surrogate pair (an emoji) is fine.
       await send(t, `{"email":"${email()}","note":"\\ud83d\\ude00"}`).expect(201);
-    });
-
-    it('a phone-only submission never blanks the free-mail flag or replaces the stored email', async () => {
-      const t = await setup();
-      const first = await send(t, { email: 'ann@gmail.com', phone: '+84901234567' }).expect(201);
-      const other = email();
-      const merged = await send(t, { phone: '+84901234567', email: other }).expect(200);
-      expect(merged.body.leadId).toBe(first.body.leadId);
-      await send(t, { phone: '+84901234567' }).expect(200);
-      const lead = await prisma.lead.findUniqueOrThrow({ where: { id: first.body.leadId } });
-      expect(lead).toMatchObject({ email: 'ann@gmail.com', isFreeMail: true });
-      const events = await prisma.leadEvent.findMany({
-        where: { leadId: lead.id, type: 'merged' },
-      });
-      expect(events.some((e) => (e.payload as { otherEmail?: string }).otherEmail === other)).toBe(
-        true,
-      );
     });
 
     it('refuses a wrong content type, broken JSON, and a body that is not an object', async () => {

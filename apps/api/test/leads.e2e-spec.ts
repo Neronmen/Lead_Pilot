@@ -75,6 +75,28 @@ describe('Leads list (e2e)', () => {
     await request(app.getHttpServer()).get('/leads').expect(401);
   });
 
+  it('shows how many times a lead was submitted, and which lead it may duplicate', async () => {
+    const t = await setup();
+    const older = await t.lead({ email: 'ann@gmail.com', firstName: 'Ann', phone: '+84901234567' });
+    const newer = await t.lead({ email: 'ann.lee@acme.com', possibleDuplicateOfId: older.id });
+    const event = (leadId: string) => ({
+      workspaceId: t.workspaceId,
+      leadId,
+      type: 'ingested',
+      payload: {},
+    });
+    await prisma.leadEvent.createMany({
+      data: [event(older.id), event(older.id), event(newer.id)],
+    });
+    const res = await get(t.owner).expect(200);
+    const byId = new Map((res.body.items as Array<{ id: string }>).map((l) => [l.id, l as never]));
+    expect(byId.get(older.id)).toMatchObject({ submissions: 2, possibleDuplicateOf: null });
+    expect(byId.get(newer.id)).toMatchObject({
+      submissions: 1,
+      possibleDuplicateOf: { id: older.id, name: 'Ann', email: 'ann@gmail.com' },
+    });
+  });
+
   it('pages with a cursor: every lead once, no gaps', async () => {
     const t = await setup();
     for (let i = 0; i < 5; i += 1) await t.lead({ email: `p${i}@acme.com` });

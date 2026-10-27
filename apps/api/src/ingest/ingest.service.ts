@@ -70,11 +70,26 @@ export class IngestService {
 
   async handle(req: IngestRequest): Promise<IngestOutcome> {
     const source = await this.authenticate(req);
+    const db = this.tenant.for(source.workspaceId);
+    try {
+      return await this.process(req, source, db);
+    } catch (error) {
+      // From here the source is known, so a refusal counts in its numbers (Lead sources).
+      const reason = rejectionReason(error);
+      if (reason) await this.record(db, source, 'REJECTED', reason);
+      throw error;
+    }
+  }
+
+  private async process(
+    req: IngestRequest,
+    source: AuthenticatedSource,
+    db: Db,
+  ): Promise<IngestOutcome> {
     const retryAfter = this.limits.perSource.hit(source.sourceId);
     if (retryAfter > 0) throw new RateLimitedError(retryAfter);
 
     const payload = this.parse(req);
-    const db = this.tenant.for(source.workspaceId);
 
     const key = req.header('idempotency-key');
     if (key === undefined) return { ...(await this.store(db, source, payload)), replayed: false };
@@ -84,7 +99,10 @@ export class IngestService {
 
     const requestHash = createHash('sha256').update(req.rawBody).digest('hex');
     const claim = await this.claim(db, source, key, requestHash);
-    if (claim.replay) return { ...claim.replay, replayed: true };
+    if (claim.replay) {
+      await this.record(db, source, 'REPLAYED');
+      return { ...claim.replay, replayed: true };
+    }
     let outcome: Omit<IngestOutcome, 'replayed'>;
     try {
       outcome = await this.store(db, source, payload);
@@ -100,6 +118,25 @@ export class IngestService {
       data: { responseStatus: outcome.status, responseBody: outcome.body },
     });
     return { ...outcome, replayed: false };
+  }
+
+  /** One row per submission for the Lead sources numbers. Never fails the request. */
+  private async record(
+    db: Db,
+    source: AuthenticatedSource,
+    outcome: 'REJECTED' | 'REPLAYED',
+    reason?: string,
+  ): Promise<void> {
+    await db.ingestAttempt
+      .create({
+        data: {
+          workspaceId: source.workspaceId,
+          sourceId: source.sourceId,
+          outcome,
+          reason: reason ?? null,
+        },
+      })
+      .catch(() => undefined);
   }
 
   // ── Who is calling ──────────────────────────────────────────────────────
@@ -274,16 +311,33 @@ export class IngestService {
     lead: NormalizedLead,
     payload: Record<string, unknown>,
   ): Promise<Omit<IngestOutcome, 'replayed'>> {
-    // Dedup order (SPEC §4.2): exact email, then exact phone.
+    // Dedup (decided in M2, a deviation from SPEC §4.2, which also merged on phone):
+    // - exact email: the same person, merge;
+    // - no email in the submission, exact phone: merge into that lead;
+    // - an email we do not know with a phone we do: a different email may be a
+    //   different person (a shared office line), so NO silent merge: a separate
+    //   lead flagged "possible duplicate" for a person to decide.
     const byEmail = lead.email ? await tx.lead.findFirst({ where: { email: lead.email } }) : null;
     const byPhone =
       !byEmail && lead.phone
         ? await tx.lead.findFirst({ where: { phone: lead.phone }, orderBy: { createdAt: 'asc' } })
         : null;
-    const existing = byEmail ?? byPhone;
+    const existing = byEmail ?? (lead.email ? null : byPhone);
     const raw = payload as Prisma.InputJsonObject;
+    // Each submission leaves its own "ingested" event (own received time, own raw payload).
+    const ingested = (leadId: string) => ({
+      workspaceId: source.workspaceId,
+      leadId,
+      type: 'ingested',
+      payload: { sourceId: source.sourceId, rawPayload: raw },
+    });
+    const attempt = (outcome: 'CREATED' | 'MERGED') =>
+      tx.ingestAttempt.create({
+        data: { workspaceId: source.workspaceId, sourceId: source.sourceId, outcome },
+      });
 
     if (!existing) {
+      const possibleDuplicate = lead.email ? byPhone : null;
       const created = await tx.lead.create({
         data: {
           workspaceId: source.workspaceId,
@@ -292,29 +346,35 @@ export class IngestService {
           isFreeMail: lead.isFreeMail ?? false,
           customFields: lead.customFields as Prisma.InputJsonObject,
           rawPayload: raw,
+          possibleDuplicateOfId: possibleDuplicate?.id ?? null,
         },
       });
-      await tx.leadEvent.create({
-        data: {
-          workspaceId: source.workspaceId,
-          leadId: created.id,
-          type: 'ingested',
-          payload: { sourceId: source.sourceId, rawPayload: raw },
-        },
-      });
+      await tx.leadEvent.create({ data: ingested(created.id) });
+      if (possibleDuplicate) {
+        // Written on both leads, so either timeline tells the story.
+        await tx.leadEvent.createMany({
+          data: [
+            {
+              workspaceId: source.workspaceId,
+              leadId: created.id,
+              type: 'possible_duplicate',
+              payload: { ofLeadId: possibleDuplicate.id, matchedBy: 'phone' },
+            },
+            {
+              workspaceId: source.workspaceId,
+              leadId: possibleDuplicate.id,
+              type: 'possible_duplicate',
+              payload: { newLeadId: created.id, matchedBy: 'phone' },
+            },
+          ],
+        });
+      }
+      await attempt('CREATED');
       return { status: HttpStatus.CREATED, body: { leadId: created.id, result: 'created' } };
     }
 
     // Merge: the newest non-empty value wins; nothing is ever blanked out.
-    // Matched by phone: the stored email stays (it is the dedup key); a different
-    // one is only recorded in the "merged" event.
-    const { customFields, email, ...rest } = lead;
-    const keepEmail = byEmail || !existing.email;
-    // isFreeMail describes the stored email: leave it alone when that email stays.
-    if (!keepEmail) delete rest.isFreeMail;
-    const fields = keepEmail ? { ...rest, email } : rest;
-    const otherEmail =
-      !byEmail && existing.email && email && email !== existing.email ? email : undefined;
+    const { customFields, ...fields } = lead;
     const changed = (Object.keys(fields) as (keyof typeof fields)[]).filter(
       (name) =>
         fields[name] !== undefined && fields[name] !== existing[name as keyof typeof existing],
@@ -332,12 +392,7 @@ export class IngestService {
     });
     await tx.leadEvent.createMany({
       data: [
-        {
-          workspaceId: source.workspaceId,
-          leadId: existing.id,
-          type: 'ingested',
-          payload: { sourceId: source.sourceId, rawPayload: raw },
-        },
+        ingested(existing.id),
         {
           workspaceId: source.workspaceId,
           leadId: existing.id,
@@ -346,11 +401,11 @@ export class IngestService {
             sourceId: source.sourceId,
             matchedBy: byEmail ? 'email' : 'phone',
             changed,
-            ...(otherEmail ? { otherEmail } : {}),
           },
         },
       ],
     });
+    await attempt('MERGED');
     return { status: HttpStatus.OK, body: { leadId: existing.id, result: 'merged' } };
   }
 }
@@ -383,6 +438,19 @@ function inspect(value: unknown, depth: number): string | null {
     if (keyProblem) return keyProblem;
     const problem = inspect(child, depth + 1);
     if (problem) return problem;
+  }
+  return null;
+}
+
+/** The reason code a refused submission is counted under (Lead sources), or null when it is not a refusal. */
+function rejectionReason(error: unknown): string | null {
+  if (error instanceof RateLimitedError) return 'rate_limited';
+  if (!(error instanceof DomainError)) return null;
+  if (error.code === ErrorCode.UNSUPPORTED_MEDIA_TYPE) return 'unsupported_media_type';
+  if (error.code === ErrorCode.IDEMPOTENCY_KEY_REUSED) return 'idempotency_key_reused';
+  if (error.code === ErrorCode.VALIDATION_FAILED) {
+    const issues = (error.details as { issues?: { code?: string }[] } | undefined)?.issues;
+    return issues?.[0]?.code ?? 'invalid_request';
   }
   return null;
 }

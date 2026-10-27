@@ -4,6 +4,7 @@ import {
   ErrorCode,
   type HmacSecretResponse,
   type Source,
+  type SourceStats,
   type SourceWithKey,
   type UpdateSourceRequest,
 } from '@leadpilot/shared';
@@ -77,7 +78,10 @@ export class SourcesService {
     const latest = await db.lead.groupBy({ by: ['sourceId'], _max: { createdAt: true } });
     const counts = new Map(recent.map((row) => [row.sourceId, row._count._all]));
     const last = new Map(latest.map((row) => [row.sourceId, row._max.createdAt]));
-    return rows.map((row) => toSource(row, counts.get(row.id) ?? 0, last.get(row.id) ?? null));
+    const stats = await this.stats(workspaceId);
+    return rows.map((row) =>
+      toSource(row, counts.get(row.id) ?? 0, last.get(row.id) ?? null, stats.get(row.id)),
+    );
   }
 
   async create(actor: Actor, input: CreateSourceRequest): Promise<SourceWithKey> {
@@ -264,11 +268,70 @@ export class SourcesService {
       db.lead.count({ where: { sourceId: row.id, createdAt: { gte: since } } }),
       db.lead.aggregate({ where: { sourceId: row.id }, _max: { createdAt: true } }),
     ]);
-    return toSource(row, recent, latest._max.createdAt);
+    const stats = await this.stats(workspaceId, row.id);
+    return toSource(row, recent, latest._max.createdAt, stats.get(row.id));
+  }
+
+  /**
+   * Submissions of the last 30 days per source. `received` is the sum of the
+   * three outcomes it is made of, so the numbers always add up; replays are apart.
+   */
+  private async stats(workspaceId: string, sourceId?: string): Promise<Map<string, SourceStats>> {
+    const db = this.tenant.for(workspaceId);
+    const where = {
+      createdAt: { gte: new Date(Date.now() - 30 * DAY_MS) },
+      ...(sourceId ? { sourceId } : {}),
+    };
+    const [outcomes, reasons] = await Promise.all([
+      db.ingestAttempt.groupBy({ by: ['sourceId', 'outcome'], where, _count: { _all: true } }),
+      db.ingestAttempt.groupBy({
+        by: ['sourceId', 'reason'],
+        where: { ...where, outcome: 'REJECTED' },
+        _count: { _all: true },
+      }),
+    ]);
+    const result = new Map<string, SourceStats>();
+    const of = (id: string) => {
+      let stats = result.get(id);
+      if (!stats) {
+        stats = emptyStats();
+        result.set(id, stats);
+      }
+      return stats;
+    };
+    for (const row of outcomes) {
+      const stats = of(row.sourceId);
+      const count = row._count._all;
+      if (row.outcome === 'CREATED') stats.created += count;
+      else if (row.outcome === 'MERGED') stats.merged += count;
+      else if (row.outcome === 'REJECTED') stats.rejected += count;
+      else stats.replayed += count;
+    }
+    for (const stats of result.values())
+      stats.received = stats.created + stats.merged + stats.rejected;
+    for (const row of [...reasons].sort((a, b) => b._count._all - a._count._all)) {
+      const top = of(row.sourceId).topRejections;
+      if (top.length < 3) top.push({ reason: row.reason ?? 'other', count: row._count._all });
+    }
+    return result;
   }
 }
 
-function toSource(row: SourceRow, leadsLast30Days: number, lastLeadAt: Date | null): Source {
+const emptyStats = (): SourceStats => ({
+  received: 0,
+  created: 0,
+  merged: 0,
+  rejected: 0,
+  replayed: 0,
+  topRejections: [],
+});
+
+function toSource(
+  row: SourceRow,
+  leadsLast30Days: number,
+  lastLeadAt: Date | null,
+  stats: SourceStats = emptyStats(),
+): Source {
   return {
     id: row.id,
     name: row.name,
@@ -279,5 +342,6 @@ function toSource(row: SourceRow, leadsLast30Days: number, lastLeadAt: Date | nu
     createdAt: row.createdAt.toISOString(),
     leadsLast30Days,
     lastLeadAt: lastLeadAt ? lastLeadAt.toISOString() : null,
+    last30Days: stats,
   };
 }

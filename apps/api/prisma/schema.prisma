@@ -269,6 +269,7 @@ model Source {
   workspace       Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   leads           Lead[]
   idempotencyKeys IdempotencyKey[]
+  ingestAttempts  IngestAttempt[]
 
   @@unique([id, workspaceId])
   @@index([workspaceId])
@@ -291,6 +292,31 @@ model IdempotencyKey {
 
   @@unique([sourceId, key])
   @@index([expiresAt])
+}
+
+/// What happened to one submission to the ingest endpoint, for the per-source
+/// numbers on Lead sources. Only submissions whose source is known (the API key
+/// was valid) are logged. received = CREATED + MERGED + REJECTED; REPLAYED
+/// (an idempotent retry answered from the stored response) is counted apart.
+enum IngestOutcome {
+  CREATED
+  MERGED
+  REJECTED
+  REPLAYED
+}
+
+model IngestAttempt {
+  id          String        @id @default(uuid(7)) @db.Uuid
+  workspaceId String        @db.Uuid
+  sourceId    String        @db.Uuid
+  outcome     IngestOutcome
+  /// Why a REJECTED submission was refused: a code such as "invalid_email".
+  reason      String?
+  createdAt   DateTime      @default(now())
+
+  source Source @relation(fields: [sourceId, workspaceId], references: [id, workspaceId], onDelete: Cascade, onUpdate: Restrict)
+
+  @@index([workspaceId, sourceId, createdAt])
 }
 
 // ─── Leads ──────────────────────────────────────────────────────────────────
@@ -327,12 +353,17 @@ model Lead {
   ownerId      String?     @db.Uuid
   /// e.g. { "hubspot": "123" }
   externalIds  Json        @default("{}")
+  /// Set when a submission had a new email but the same phone as this older lead:
+  /// kept apart (no silent merge) and flagged for a person to decide.
+  possibleDuplicateOfId String? @db.Uuid
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 
   workspace  Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   source     Source      @relation(fields: [sourceId, workspaceId], references: [id, workspaceId], onDelete: Restrict, onUpdate: Restrict)
   owner      Membership? @relation("LeadOwner", fields: [workspaceId, ownerId], references: [workspaceId, userId], onDelete: NoAction, onUpdate: Restrict)
+  possibleDuplicateOf Lead?  @relation("PossibleDuplicate", fields: [possibleDuplicateOfId, workspaceId], references: [id, workspaceId], onDelete: NoAction, onUpdate: Restrict)
+  possibleDuplicates  Lead[] @relation("PossibleDuplicate")
   events     LeadEvent[]
   scores     Score[]
   actionRuns ActionRun[]

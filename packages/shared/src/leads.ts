@@ -28,6 +28,12 @@ export const leadListItemSchema = z.object({
   status: leadStatusSchema,
   source: z.object({ id: idSchema, name: z.string(), type: sourceTypeSchema }),
   owner: z.object({ id: idSchema, name: z.string().nullable() }).nullable(),
+  /** How many submissions this lead holds: more than 1 means later ones were merged into it. */
+  submissions: z.number().int().positive(),
+  /** Set when a later submission had the same phone but a different email: kept apart, for a person to decide. */
+  possibleDuplicateOf: z
+    .object({ id: idSchema, name: z.string().nullable(), email: z.string().nullable() })
+    .nullable(),
   createdAt: timestampSchema,
 });
 
