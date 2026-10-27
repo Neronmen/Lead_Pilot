@@ -87,6 +87,8 @@ export default tseslint.config(
     //   sweep run across every workspace with no request (so no workspace to scope
     //   to), and one statement is raw SQL (strip raw payloads out of JSON). Every
     //   statement only deletes, blanks or re-queues; none reads data out.
+    // - enrichment/enrichment.service.ts: the company-info cache is one global table of
+    //   public website metadata (no workspace, no lead data), which the scope cannot query.
     // - ingest/ingest-auth.service.ts: finds a source by its API key prefix
     //   (globally unique) before the workspace is known; read-only, one lookup.
     files: [
@@ -98,6 +100,7 @@ export default tseslint.config(
       'apps/api/src/invites/invite-accept.service.ts',
       'apps/api/src/ingest/ingest-auth.service.ts',
       'apps/api/src/maintenance/maintenance.service.ts',
+      'apps/api/src/enrichment/enrichment.service.ts',
     ],
     rules: { 'no-restricted-imports': 'off', 'no-restricted-syntax': 'off' },
   },

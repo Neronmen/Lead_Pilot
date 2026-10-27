@@ -46,6 +46,9 @@ export const envSchema = z
     // Runs the background workers (scoring pipeline, cleanup jobs) inside this API process.
     // "off" only queues jobs: tests use it, and a second process can do the work.
     QUEUE_WORKERS: z.enum(['on', 'off']).default('on'),
+    // Where company info comes from: "mock" (made-up, no network: the demo and tests) or
+    // "website" (reads the lead's company homepage, public internet addresses only).
+    ENRICHMENT_PROVIDER: z.enum(['mock', 'website']).default('mock'),
     // Redis key prefix of the queues and rate-limit counters: tests use their own, so they never
     // touch a dev server's jobs or limits.
     QUEUE_PREFIX: z

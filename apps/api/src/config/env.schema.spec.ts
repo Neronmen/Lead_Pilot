@@ -20,6 +20,7 @@ describe('validateEnv', () => {
       JWT_ACCESS_SECRET,
       ENCRYPTION_KEY,
       QUEUE_WORKERS: 'on',
+      ENRICHMENT_PROVIDER: 'mock',
       QUEUE_PREFIX: 'bull',
       AUTH_RATE_LIMIT_PER_MINUTE: 10,
       AUTH_REFRESH_RATE_LIMIT_PER_MINUTE: 60,

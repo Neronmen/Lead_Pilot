@@ -21,6 +21,7 @@ import { RedisModule } from './redis/redis.module';
 import { QueueModule } from './queue/queue.module';
 import { PipelineModule } from './pipeline/pipeline.module';
 import { MaintenanceModule } from './maintenance/maintenance.module';
+import { EnrichmentModule } from './enrichment/enrichment.module';
 
 // One .env at the repo root, shared by all apps. Same depth from src/ and dist/.
 // Real environment variables take precedence over the file.
@@ -40,6 +41,7 @@ const ROOT_ENV_FILE = resolve(__dirname, '../../../.env');
     QueueModule,
     PipelineModule,
     MaintenanceModule,
+    EnrichmentModule,
     HealthModule,
     AuditModule,
     EmailModule,
