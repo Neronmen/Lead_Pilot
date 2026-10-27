@@ -136,6 +136,10 @@ with `LLM_MODEL` (default `gemini-2.5-flash-lite`; for example `gemini-3.5-flash
 header only and is never logged. Gemini is tracked as **$0** because the free tier has no charge; on a paid
 tier add the model and its prices to the table in `llm.provider.ts`.
 
+**Free-tier limits.** Gemini Flash-Lite's free tier allows about 15 calls a minute and 500 a day. Set
+`LLM_MAX_REQUESTS_PER_MINUTE=12` in `.env`: calls then wait their turn (in this process) instead of being refused
+and falling back to the rules. At 12 a minute `pnpm eval` (50 leads) takes about 4-5 minutes and uses 10% of the day.
+
 > **WARNING: the free tier is for fake or demo data only.** On Google's free tier, Google may use what you
 > send to improve its products. Never send real customer leads through a free-tier key. For real customers use
 > a **paid tier** (then set `GEMINI_PAID_TIER=true`) or a provider that does not train on your data. In

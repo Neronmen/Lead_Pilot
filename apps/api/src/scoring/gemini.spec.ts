@@ -1,6 +1,7 @@
 import { GeminiLlmProvider } from './http-llm.providers';
 import { chooseLlm, geminiWarning } from './llm.factory';
 import { costUsd, LlmError } from './llm.provider';
+import { PacedLlm } from './paced-llm';
 
 // A fake key, only ever sent to a fake fetch.
 const KEY = 'FAKE-gemini-key-for-tests-0000';
@@ -108,5 +109,39 @@ describe('choosing Gemini, and the production warning', () => {
     expect(geminiWarning({ ...base, NODE_ENV: 'test' })).toBeNull();
     expect(geminiWarning({ ...base, provider: 'anthropic' })).toBeNull();
     expect(geminiWarning({ ...base, provider: 'mock' })).toBeNull();
+  });
+});
+
+describe('pacing (free tiers allow only a few calls a minute)', () => {
+  it('spaces concurrent calls apart in order, and leaves the mock alone', async () => {
+    const calls: number[] = [];
+    const inner = {
+      name: 'gemini',
+      model: 'gemini-3.5-flash-lite',
+      complete: () => {
+        calls.push(Date.now());
+        return Promise.resolve({ text: '{}', inputTokens: 1, outputTokens: 1 });
+      },
+    };
+    const paced = new PacedLlm(inner, 600); // one call every 100 ms
+    const started = Date.now();
+    await Promise.all([1, 2, 3, 4].map(() => paced.complete({ system: 's', user: 'u' })));
+    expect(calls).toHaveLength(4);
+    expect(calls[3]! - started).toBeGreaterThanOrEqual(270); // the 4th waited about 300 ms
+    for (let i = 1; i < calls.length; i += 1)
+      expect(calls[i]! - calls[i - 1]!).toBeGreaterThanOrEqual(80);
+    expect(paced.name).toBe('gemini');
+    expect(paced.model).toBe('gemini-3.5-flash-lite');
+
+    const real = chooseLlm({
+      LLM_PROVIDER: 'gemini',
+      GEMINI_API_KEY: KEY,
+      LLM_MAX_REQUESTS_PER_MINUTE: 12,
+    });
+    expect(real).toBeInstanceOf(PacedLlm);
+    expect(chooseLlm({ LLM_PROVIDER: 'mock', LLM_MAX_REQUESTS_PER_MINUTE: 12 })).not.toBeInstanceOf(
+      PacedLlm,
+    );
+    expect(chooseLlm({ LLM_PROVIDER: 'gemini', GEMINI_API_KEY: KEY })).not.toBeInstanceOf(PacedLlm);
   });
 });

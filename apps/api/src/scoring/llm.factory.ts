@@ -1,5 +1,6 @@
 import { AnthropicLlmProvider, GeminiLlmProvider, OpenAiLlmProvider } from './http-llm.providers';
 import type { LlmProvider } from './llm.provider';
+import { PacedLlm } from './paced-llm';
 import { MockLlmProvider } from './mock-llm.provider';
 
 /**
@@ -7,12 +8,20 @@ import { MockLlmProvider } from './mock-llm.provider';
  * first), so with no key the mock runs and the whole app works for free.
  */
 export function chooseLlm(env: {
+  /** Calls per minute the AI may receive from this process (0 or unset: no pacing). */
+  LLM_MAX_REQUESTS_PER_MINUTE?: number;
   LLM_PROVIDER: 'auto' | 'mock' | 'anthropic' | 'openai' | 'gemini';
   LLM_MODEL?: string;
   ANTHROPIC_API_KEY?: string;
   OPENAI_API_KEY?: string;
   GEMINI_API_KEY?: string;
 }): LlmProvider {
+  const llm = pick(env);
+  const perMinute = env.LLM_MAX_REQUESTS_PER_MINUTE ?? 0;
+  return perMinute > 0 && llm.name !== 'mock' ? new PacedLlm(llm, perMinute) : llm;
+}
+
+function pick(env: Parameters<typeof chooseLlm>[0]): LlmProvider {
   const wanted = env.LLM_PROVIDER;
   if ((wanted === 'anthropic' || wanted === 'auto') && env.ANTHROPIC_API_KEY) {
     return new AnthropicLlmProvider(env.ANTHROPIC_API_KEY, env.LLM_MODEL ?? 'claude-haiku-5-5');

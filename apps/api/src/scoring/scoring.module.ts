@@ -22,6 +22,7 @@ import { ScoringService } from './scoring.service';
         chooseLlm({
           LLM_PROVIDER: config.get('LLM_PROVIDER', { infer: true }),
           LLM_MODEL: config.get('LLM_MODEL', { infer: true }),
+          LLM_MAX_REQUESTS_PER_MINUTE: config.get('LLM_MAX_REQUESTS_PER_MINUTE', { infer: true }),
           ANTHROPIC_API_KEY: config.get('ANTHROPIC_API_KEY', { infer: true }),
           OPENAI_API_KEY: config.get('OPENAI_API_KEY', { infer: true }),
           GEMINI_API_KEY: config.get('GEMINI_API_KEY', { infer: true }),

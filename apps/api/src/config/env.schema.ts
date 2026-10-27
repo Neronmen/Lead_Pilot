@@ -55,6 +55,10 @@ export const envSchema = z
     LLM_MODEL: z.string().trim().min(1).max(100).optional(),
     // Monthly AI spend allowed for a workspace that has set no limit of its own, in US dollars.
     // Leads arrive from the open internet, so "no limit" is never the silent default. 0 = no limit.
+    // Calls per minute sent to the real AI from this process. Free tiers are small (Gemini free
+    // Flash-Lite: 15 a minute, 500 a day): set a little under the limit so a burst waits instead of
+    // being refused. 0 = no pacing.
+    LLM_MAX_REQUESTS_PER_MINUTE: z.coerce.number().int().min(0).max(10_000).default(0),
     AI_DEFAULT_MONTHLY_LIMIT_USD: z.coerce.number().min(0).default(5),
     ANTHROPIC_API_KEY: z.string().trim().min(10).optional(),
     OPENAI_API_KEY: z.string().trim().min(10).optional(),

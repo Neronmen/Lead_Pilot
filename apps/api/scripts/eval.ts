@@ -108,6 +108,7 @@ async function main(): Promise<void> {
     LLM_PROVIDER:
       (process.env.LLM_PROVIDER as 'auto' | 'mock' | 'anthropic' | 'openai' | 'gemini') ?? 'auto',
     LLM_MODEL: process.env.LLM_MODEL,
+    LLM_MAX_REQUESTS_PER_MINUTE: Number(process.env.LLM_MAX_REQUESTS_PER_MINUTE ?? 0) || 0,
     ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     GEMINI_API_KEY: process.env.GEMINI_API_KEY,
