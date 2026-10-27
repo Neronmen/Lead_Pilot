@@ -84,6 +84,18 @@ export class MockApi {
         createdAt: days(60),
         leadsLast30Days: 487,
         lastLeadAt: days(0),
+        last30Days: {
+          received: 560,
+          created: 487,
+          merged: 61,
+          rejected: 12,
+          replayed: 4,
+          topRejections: [
+            { reason: 'disposable_email', count: 7 },
+            { reason: 'invalid_phone', count: 3 },
+            { reason: 'contact_required', count: 2 },
+          ],
+        },
       },
       {
         id: 'dddddddd-0000-4000-8000-000000000002',
@@ -95,6 +107,14 @@ export class MockApi {
         createdAt: days(90),
         leadsLast30Days: 2,
         lastLeadAt: days(20),
+        last30Days: {
+          received: 2,
+          created: 2,
+          merged: 0,
+          rejected: 0,
+          replayed: 0,
+          topRejections: [],
+        },
       },
     ];
     const lead = (
@@ -119,13 +139,22 @@ export class MockApi {
         type: 'WEBHOOK',
       },
       owner: null,
+      submissions: 1,
+      possibleDuplicateOf: null,
       createdAt: new Date(Date.now() - n * 3600_000).toISOString(),
       ...over,
     });
     this.leads = [
-      lead(1, 'Ann Lee', 'ann.lee@brightpath.io', 'Brightpath', 0),
+      lead(1, 'Ann Lee', 'ann.lee@brightpath.io', 'Brightpath', 0, { submissions: 3 }),
       lead(2, 'Nguyễn Văn An', 'an@acme.vn', 'Acme Vietnam', 0, { status: 'NEEDS_REVIEW' }),
-      lead(3, null, 'sam@gmail.com', null, 1, { isFreeMail: true }),
+      lead(3, null, 'sam@gmail.com', null, 1, {
+        isFreeMail: true,
+        possibleDuplicateOf: {
+          id: 'eeeeeeee-0000-4000-8000-000000000001',
+          name: 'Ann Lee',
+          email: 'ann.lee@brightpath.io',
+        },
+      }),
       lead(5, 'Priya Shah', 'priya@northwind.com', 'Northwind', 0, { status: 'ROUTED' }),
       lead(8, 'Tom Becker', 'tom@becker.de', 'Becker GmbH', 1, { status: 'FAILED' }),
     ];
@@ -310,6 +339,14 @@ export class MockApi {
         createdAt: new Date().toISOString(),
         leadsLast30Days: 0,
         lastLeadAt: null,
+        last30Days: {
+          received: 0,
+          created: 0,
+          merged: 0,
+          rejected: 0,
+          replayed: 0,
+          topRejections: [],
+        },
       };
       this.sources.push(source);
       return json(201, {
@@ -413,6 +450,14 @@ export interface MockSource {
   createdAt: string;
   leadsLast30Days: number;
   lastLeadAt: string | null;
+  last30Days: {
+    received: number;
+    created: number;
+    merged: number;
+    rejected: number;
+    replayed: number;
+    topRejections: { reason: string; count: number }[];
+  };
 }
 
 export interface MockLead {
@@ -426,6 +471,8 @@ export interface MockLead {
   status: 'NEW' | 'PROCESSING' | 'NEEDS_REVIEW' | 'ROUTED' | 'FAILED';
   source: { id: string; name: string; type: 'WEBHOOK' | 'FORM' | 'CSV' };
   owner: { id: string; name: string | null } | null;
+  submissions: number;
+  possibleDuplicateOf: { id: string; name: string | null; email: string | null } | null;
   createdAt: string;
 }
 

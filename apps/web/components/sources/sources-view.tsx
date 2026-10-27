@@ -12,6 +12,8 @@ import { sourceStatus } from '@/lib/sources/status';
 import { useSourceActions, useSources } from '@/lib/sources/use-sources';
 import { cn } from '@/lib/utils';
 import { AddSourceCard } from './add-source-card';
+import { DuplicatesHelp } from './duplicates-help';
+import { SourceStats } from './source-stats';
 import { SourcesNotice, useFailureNotice, type Notice } from './sources-notice';
 
 /** Settings > Lead sources (Owner and Admin only: the Settings frame keeps everyone else out). */
@@ -64,6 +66,7 @@ export function SourcesView() {
               </Button>
             </div>
           )}
+          <DuplicatesHelp />
           <ul className="flex flex-col gap-3">
             {sources.data.map((source) => (
               <SourceRow key={source.id} source={source} onNotice={setNotice} />
@@ -173,6 +176,8 @@ function SourceRow({
                 : t('status.off')}
         </span>
       </p>
+
+      <SourceStats source={source} />
 
       {mode === 'delete' ? (
         <div

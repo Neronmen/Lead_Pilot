@@ -33,6 +33,12 @@ const values = {
   days: 3,
   prefix: 'lp_ab12.',
   what: 'API key',
+  received: 8,
+  created: 3,
+  merged: 1,
+  rejected: 4,
+  replayed: 1,
+  who: 'Ann Lee',
 };
 
 describe.each([

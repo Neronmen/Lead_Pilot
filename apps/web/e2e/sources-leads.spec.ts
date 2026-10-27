@@ -94,6 +94,16 @@ test.describe('Lead sources', () => {
     await page.goto(`${APP}/settings/sources`);
     await expect(page.getByText('Working · 487 leads in the last 30 days')).toBeVisible();
     await expect(page.getByText(/Quiet · no leads for 20 days/)).toBeVisible();
+    // The numbers add up, and repeated sends are labelled apart.
+    await expect(
+      page.getByText('Last 30 days: 560 submissions = 487 new + 61 merged + 12 rejected'),
+    ).toBeVisible();
+    await expect(
+      page.getByText(/throwaway email address \(7\), phone number not valid \(3\)/),
+    ).toBeVisible();
+    await expect(page.getByText(/4 repeated sends were answered again/)).toBeVisible();
+    await page.getByText(en.sources.help.title).click();
+    await expect(page.getByText(/never merged by mistake/)).toBeVisible();
     await page.getByRole('button', { name: t.add }).click();
     await expect(page.getByRole('radio')).toHaveCount(2);
     await expect(page.getByText(/website form|spreadsheet/i)).toHaveCount(0);
@@ -235,6 +245,12 @@ test.describe('Leads list', () => {
       t.freeBadge,
     );
     await expect(page.getByRole('row').filter({ hasText: 'Ann Lee' })).toContainText('New');
+    await expect(page.getByRole('row').filter({ hasText: 'Ann Lee' })).toContainText(
+      'Sent 3 times',
+    );
+    await expect(page.getByRole('row').filter({ hasText: 'sam@gmail.com' })).toContainText(
+      t.possibleDuplicate,
+    );
     await context.close();
   });
 

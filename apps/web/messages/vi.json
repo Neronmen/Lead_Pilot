@@ -279,7 +279,11 @@
       "ROUTED": "Đã giao",
       "FAILED": "Lỗi"
     },
-    "count": "Đang hiển thị {count, plural, other {# khách tiềm năng}}"
+    "count": "Đang hiển thị {count, plural, other {# khách tiềm năng}}",
+    "submitted": "Đã gửi {count} lần",
+    "possibleDuplicate": "Có thể trùng",
+    "possibleDuplicateOf": "Cùng số điện thoại với {who} nhưng khác email, nên chưa được gộp.",
+    "unknownLead": "một khách tiềm năng trước đó"
   },
   "settingsTeam": {
     "title": "Đội ngũ",
@@ -424,6 +428,41 @@
       "changed": "Dữ liệu đã thay đổi khi bạn đang xem. Hãy tải lại để xem bản mới nhất.",
       "reload": "Tải lại",
       "dismiss": "Đóng"
+    },
+    "stats": {
+      "line": "30 ngày qua: {received, plural, other {# lượt gửi}} = {created} mới + {merged} đã gộp + {rejected} bị từ chối",
+      "replayed": "{replayed, plural, other {# lượt gửi lặp lại}} được trả lời lại bằng kết quả đầu tiên (không tính ở trên).",
+      "noneYet": "Chưa có lượt gửi nào trong 30 ngày qua.",
+      "topReasons": "Lý do bị từ chối phổ biến nhất: {list}",
+      "reasons": {
+        "invalid_email": "địa chỉ email có vẻ sai",
+        "disposable_email": "email dùng một lần",
+        "invalid_phone": "số điện thoại không hợp lệ",
+        "invalid_text": "tên hoặc công ty có ký tự lạ",
+        "invalid_type": "một trường có kiểu giá trị sai",
+        "invalid_domain": "địa chỉ website không hợp lệ",
+        "invalid_country": "mã quốc gia không rõ",
+        "too_many_fields": "quá nhiều trường bổ sung",
+        "field_name_too_long": "tên trường bổ sung quá dài",
+        "contact_required": "không có email hay số điện thoại",
+        "invalid_json": "không phải JSON hợp lệ",
+        "object_required": "không phải một đối tượng JSON",
+        "nul_character": "có ký tự điều khiển ẩn",
+        "invalid_unicode": "lỗi mã hóa văn bản",
+        "reserved_field": "tên trường dành riêng",
+        "too_deep": "dữ liệu lồng quá sâu",
+        "invalid_idempotency_key": "Idempotency-Key không hợp lệ",
+        "unsupported_media_type": "không gửi dưới dạng JSON",
+        "idempotency_key_reused": "Idempotency-Key bị dùng lại với dữ liệu khác",
+        "rate_limited": "gửi quá nhanh",
+        "other": "lý do khác"
+      }
+    },
+    "help": {
+      "title": "Cách xử lý khách tiềm năng trùng lặp",
+      "email": "Cùng địa chỉ email: thông tin mới được gộp vào khách tiềm năng đã có. Mọi lượt gửi đều được giữ trong dòng thời gian của khách đó.",
+      "phone": "Không có email nhưng cùng số điện thoại: gộp vào khách tiềm năng đó.",
+      "separate": "Email mới nhưng số điện thoại đã có: giữ thành một khách tiềm năng riêng và đánh dấu “Có thể trùng”, để không bao giờ gộp nhầm hai người khác nhau."
     }
   },
   "settingsAdvanced": {

@@ -279,7 +279,11 @@
       "ROUTED": "Routed",
       "FAILED": "Failed"
     },
-    "count": "{count, plural, one {# lead} other {# leads}} shown"
+    "count": "{count, plural, one {# lead} other {# leads}} shown",
+    "submitted": "Sent {count} times",
+    "possibleDuplicate": "Possible duplicate",
+    "possibleDuplicateOf": "Same phone number as {who}, but a different email, so it was not merged.",
+    "unknownLead": "an earlier lead"
   },
   "settingsTeam": {
     "title": "Team",
@@ -424,6 +428,41 @@
       "changed": "Something changed while you were looking. Reload to see the latest.",
       "reload": "Reload",
       "dismiss": "Dismiss"
+    },
+    "stats": {
+      "line": "Last 30 days: {received, plural, one {# submission} other {# submissions}} = {created} new + {merged} merged + {rejected} rejected",
+      "replayed": "{replayed, plural, one {# repeated send was} other {# repeated sends were}} answered again with the first result (not counted above).",
+      "noneYet": "No submissions in the last 30 days.",
+      "topReasons": "Most common reasons for rejection: {list}",
+      "reasons": {
+        "invalid_email": "email address looks wrong",
+        "disposable_email": "throwaway email address",
+        "invalid_phone": "phone number not valid",
+        "invalid_text": "name or company has odd characters",
+        "invalid_type": "a field had the wrong kind of value",
+        "invalid_domain": "website address not valid",
+        "invalid_country": "unknown country code",
+        "too_many_fields": "too many extra fields",
+        "field_name_too_long": "an extra field name was too long",
+        "contact_required": "no email or phone number",
+        "invalid_json": "not valid JSON",
+        "object_required": "not a JSON object",
+        "nul_character": "hidden control characters",
+        "invalid_unicode": "broken text encoding",
+        "reserved_field": "reserved field name",
+        "too_deep": "data nested too deeply",
+        "invalid_idempotency_key": "invalid Idempotency-Key",
+        "unsupported_media_type": "not sent as JSON",
+        "idempotency_key_reused": "Idempotency-Key reused with different data",
+        "rate_limited": "sent too fast",
+        "other": "other"
+      }
+    },
+    "help": {
+      "title": "How duplicates are handled",
+      "email": "Same email address: the new details are merged into the existing lead. Every submission stays on that lead’s timeline.",
+      "phone": "No email, but the same phone number: merged into that lead.",
+      "separate": "A new email with a phone number we already have: kept as a separate lead and marked “Possible duplicate”, so two different people are never merged by mistake."
     }
   },
   "settingsAdvanced": {

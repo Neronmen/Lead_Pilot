@@ -263,6 +263,25 @@ function LeadRow({ lead, now }: { lead: LeadListItem; now: Date }) {
               {t('freeBadge')}
             </Badge>
           ) : null}
+          {lead.submissions > 1 ? (
+            <Badge variant="secondary" className="shrink-0">
+              {t('submitted', { count: lead.submissions })}
+            </Badge>
+          ) : null}
+          {lead.possibleDuplicateOf ? (
+            <Badge
+              variant="outline"
+              className="shrink-0 border-warm text-warm"
+              title={t('possibleDuplicateOf', {
+                who:
+                  lead.possibleDuplicateOf.name ??
+                  lead.possibleDuplicateOf.email ??
+                  t('unknownLead'),
+              })}
+            >
+              {t('possibleDuplicate')}
+            </Badge>
+          ) : null}
         </div>
       </td>
       <td className="max-w-[180px] px-3">
