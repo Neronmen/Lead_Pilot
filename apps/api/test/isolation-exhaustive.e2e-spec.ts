@@ -8,6 +8,7 @@ import type { Env } from '../src/config/env.schema';
 import { EMAIL_PROVIDER } from '../src/email/email.provider';
 import { MockEmailProvider } from '../src/email/mock-email.provider';
 import {
+  MEMBER_BY_ID,
   OWN,
   PUBLIC,
   registeredRoutes,
@@ -74,7 +75,13 @@ describe('Isolation matrix is exhaustive (e2e)', () => {
   });
 
   it('lists a route nobody classified, including inherited and unusual ones', () => {
-    const classified = new Set([...PUBLIC, ...OWN, ...WORKSPACE_COLLECTION, ...WORKSPACE_BY_ID]);
+    const classified = new Set([
+      ...PUBLIC,
+      ...OWN,
+      ...MEMBER_BY_ID,
+      ...WORKSPACE_COLLECTION,
+      ...WORKSPACE_BY_ID,
+    ]);
     const unclassified = registeredRoutes(app).filter((route) => !classified.has(route));
     expect(unclassified).toEqual([
       'DELETE /scratch/a,b',

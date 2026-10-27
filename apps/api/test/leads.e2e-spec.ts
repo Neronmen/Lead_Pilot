@@ -2,9 +2,11 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import { PrismaPg } from '@prisma/adapter-pg';
 import request from 'supertest';
 import { PrismaClient } from '../src/generated/prisma/client';
+import { PipelineService } from '../src/pipeline/pipeline.service';
+import { PipelineQueue } from '../src/queue/pipeline.queue';
 import { createTestApp } from './utils/create-test-app';
 import { INVITES_EMAIL_PREFIX, joinAs, ownerOf } from './utils/invites';
-import { workspaceOf } from './utils/workspace-data';
+import { membershipOf, workspaceOf } from './utils/workspace-data';
 
 /** The Leads list: filters, search, paging, who may read it. */
 describe('Leads list (e2e)', () => {
@@ -154,5 +156,227 @@ describe('Leads list (e2e)', () => {
       const res = await get(t.owner, q).expect(400);
       expect(res.body.error.code).toBe('VALIDATION_FAILED');
     }
+  });
+
+  describe("a lead's page, the review and the second look", () => {
+    const post = (who: { accessToken: string }, path: string, body?: object) =>
+      request(app.getHttpServer())
+        .post(path)
+        .set('authorization', `Bearer ${who.accessToken}`)
+        .send(body);
+    const scored = async (t: Awaited<ReturnType<typeof setup>>, data: object = {}) => {
+      const l = await t.lead({
+        email: `r-${Date.now()}-${Math.random().toString(16).slice(2, 6)}@acme.com`,
+        company: 'Acme',
+        ...data,
+      });
+      await app.get(PipelineService).run({ workspaceId: t.workspaceId, leadId: l.id });
+      return l;
+    };
+
+    it('shows the lead with its timeline, the AI reasons and the company; a member may read it', async () => {
+      const t = await setup();
+      const l = await scored(t, { domain: 'acme.com', country: 'VN' });
+      await prisma.leadEvent.create({
+        data: {
+          workspaceId: t.workspaceId,
+          leadId: l.id,
+          type: 'ingested',
+          payload: { rawPayload: { a: 1 } },
+        },
+      });
+      const detail = await request(app.getHttpServer())
+        .get(`/leads/${l.id}`)
+        .set('authorization', `Bearer ${t.member.accessToken}`)
+        .expect(200);
+      expect(detail.body).toMatchObject({
+        id: l.id,
+        domain: 'acme.com',
+        status: expect.stringMatching(/SCORED|NEEDS_REVIEW/),
+        latestScore: { provider: 'mock', ratedWithoutAi: false, reasons: expect.any(Array) },
+        company: { status: 'ok' },
+      });
+      expect(detail.body.latestScore.reasons.length).toBeGreaterThan(0);
+      const types = (detail.body.events as Array<{ type: string }>).map((e) => e.type);
+      expect(types).toEqual(expect.arrayContaining(['ingested', 'enriched', 'scored']));
+      expect(types.indexOf('ingested')).toBeLessThan(types.indexOf('enriched')); // newest first
+      const list = await get(t.member).expect(200);
+      expect(list.body.items[0]).toMatchObject({
+        tier: expect.any(String),
+        score: expect.any(Number),
+      });
+    });
+
+    it('a lead of another workspace is a 404 on the page and on review, and nothing changes', async () => {
+      const a = await setup();
+      const b = await setup();
+      const inB = await b.lead({
+        email: 'b@acme.com',
+        status: 'NEEDS_REVIEW',
+        tier: 'COLD',
+        score: 20,
+      });
+      const page = await request(app.getHttpServer())
+        .get(`/leads/${inB.id}`)
+        .set('authorization', `Bearer ${a.owner.accessToken}`)
+        .expect(404);
+      expect(page.body.error.code).toBe('NOT_FOUND');
+      await post(a.owner, `/leads/${inB.id}/review`, { action: 'override', tier: 'HOT' }).expect(
+        404,
+      );
+      await post(a.owner, `/leads/${inB.id}/review`, { action: 'approve' }).expect(404);
+      expect(await prisma.lead.findUniqueOrThrow({ where: { id: inB.id } })).toMatchObject({
+        tier: 'COLD',
+        status: 'NEEDS_REVIEW',
+      });
+      expect(await prisma.feedback.count({ where: { leadId: inB.id } })).toBe(0);
+      await request(app.getHttpServer())
+        .get('/leads/not-a-uuid')
+        .set('authorization', `Bearer ${a.owner.accessToken}`)
+        .expect(400);
+    });
+
+    it('approve clears the review flag once; a second approve is a 409 and adds no correction', async () => {
+      const t = await setup();
+      const l = await t.lead({
+        email: 'q@acme.com',
+        status: 'NEEDS_REVIEW',
+        tier: 'WARM',
+        score: 55,
+        confidence: 0.4,
+      });
+      await post(t.member, `/leads/${l.id}/review`, { action: 'approve' }).expect(204);
+      expect(await prisma.lead.findUniqueOrThrow({ where: { id: l.id } })).toMatchObject({
+        status: 'SCORED',
+        tier: 'WARM',
+      });
+      const second = await post(t.owner, `/leads/${l.id}/review`, { action: 'approve' }).expect(
+        409,
+      );
+      expect(second.body.error.code).toBe('CONFLICT');
+      const feedback = await prisma.feedback.findMany({ where: { leadId: l.id } });
+      expect(feedback).toHaveLength(1);
+      expect(feedback[0]).toMatchObject({
+        kind: 'approve',
+        previousTier: 'WARM',
+        newTier: 'WARM',
+        userId: (await membershipOf(prisma, t.member.email, t.workspaceId)).userId,
+      });
+    });
+
+    it('an override changes the tier, records who and why, and later automatic scoring cannot undo it', async () => {
+      const t = await setup();
+      const l = await scored(t, { country: 'VN' });
+      const before = await prisma.lead.findUniqueOrThrow({ where: { id: l.id } });
+      await post(t.member, `/leads/${l.id}/review`, {
+        action: 'override',
+        tier: 'JUNK',
+        score: 3,
+        note: 'A competitor, not a buyer',
+      }).expect(204);
+      expect(await prisma.lead.findUniqueOrThrow({ where: { id: l.id } })).toMatchObject({
+        tier: 'JUNK',
+        score: 3,
+        status: 'SCORED',
+      });
+      const [fb] = await prisma.feedback.findMany({ where: { leadId: l.id } });
+      expect(fb).toMatchObject({
+        kind: 'override',
+        previousTier: before.tier,
+        newTier: 'JUNK',
+        newScore: 3,
+        note: 'A competitor, not a buyer',
+        userId: (await membershipOf(prisma, t.member.email, t.workspaceId)).userId,
+      });
+      expect(fb!.scoreId).toBeTruthy();
+      const event = await prisma.leadEvent.findFirstOrThrow({
+        where: { leadId: l.id, type: 'reviewed' },
+      });
+      expect(event.actorUserId).toBe(
+        (await membershipOf(prisma, t.member.email, t.workspaceId)).userId,
+      );
+
+      // Another submission arrives and the AI rates it again: the person's rating stays.
+      await app.get(PipelineService).run({ workspaceId: t.workspaceId, leadId: l.id });
+      expect(await prisma.lead.findUniqueOrThrow({ where: { id: l.id } })).toMatchObject({
+        tier: 'JUNK',
+        score: 3,
+      });
+      expect(await prisma.score.count({ where: { leadId: l.id } })).toBe(2); // still recorded
+      const again = await prisma.leadEvent.findMany({
+        where: { leadId: l.id, type: 'scored' },
+        orderBy: { createdAt: 'desc' },
+      });
+      expect(again[0]!.payload).toMatchObject({ keptPersonsRating: true });
+    });
+
+    it.each([
+      [{}],
+      [{ action: 'maybe' }],
+      [{ action: 'override' }],
+      [{ action: 'override', tier: 'LUKEWARM' }],
+      [{ action: 'override', tier: 'HOT', score: 101 }],
+      [{ action: 'override', tier: 'HOT', note: '' }],
+      [{ action: 'override', tier: 'HOT', userId: '00000000-0000-4000-8000-000000000000' }],
+      [{ action: 'approve', tier: 'HOT' }],
+    ])('refuses the review body %j with 400', async (body) => {
+      const t = await setup();
+      const l = await t.lead({
+        email: 'v@acme.com',
+        status: 'NEEDS_REVIEW',
+        tier: 'COLD',
+        score: 10,
+      });
+      await post(t.owner, `/leads/${l.id}/review`, body).expect(400);
+      expect(await prisma.feedback.count({ where: { leadId: l.id } })).toBe(0);
+    });
+
+    it('rescore: only Owner and Admin, only this workspace, skips leads a person has rated', async () => {
+      const t = await setup();
+      const other = await setup();
+      const fresh = await t.lead({
+        email: 'n@acme.com',
+        status: 'SCORED',
+        tier: 'COLD',
+        score: 20,
+      });
+      const rated = await t.lead({
+        email: 'o@acme.com',
+        status: 'SCORED',
+        tier: 'COLD',
+        score: 20,
+      });
+      await post(t.owner, `/leads/${rated.id}/review`, { action: 'override', tier: 'HOT' }).expect(
+        204,
+      );
+      const foreign = await other.lead({
+        email: 'f@acme.com',
+        status: 'SCORED',
+        tier: 'COLD',
+        score: 20,
+      });
+      const routed = await t.lead({ email: 'p@acme.com', status: 'ROUTED' });
+
+      await post(t.member, '/leads/rescore', { scope: 'open' }).expect(403);
+      await post(t.owner, '/leads/rescore', { scope: 'nope' }).expect(400);
+      const res = await post(t.owner, '/leads/rescore', { scope: 'open' }).expect(200);
+      expect(res.body).toEqual({ queued: 1 });
+      const queue = app.get(PipelineQueue).queue;
+      expect(await queue.getJob(`${fresh.id}-score`)).toBeDefined();
+      expect(await queue.getJob(`${rated.id}-score`)).toBeUndefined();
+      expect(await queue.getJob(`${foreign.id}-score`)).toBeUndefined();
+      expect(await queue.getJob(`${routed.id}-score`)).toBeUndefined();
+    });
+
+    it('filters the list by tier', async () => {
+      const t = await setup();
+      await t.lead({ email: 'h@acme.com', tier: 'HOT', score: 90, status: 'SCORED' });
+      await t.lead({ email: 'c@acme.com', tier: 'COLD', score: 20, status: 'SCORED' });
+      const res = await get(t.owner, '?tier=HOT').expect(200);
+      expect((res.body.items as Array<{ email: string }>).map((l) => l.email)).toEqual([
+        'h@acme.com',
+      ]);
+      await get(t.owner, '?tier=hot').expect(400);
+    });
   });
 });

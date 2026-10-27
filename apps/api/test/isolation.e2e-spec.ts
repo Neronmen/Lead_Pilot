@@ -4,6 +4,7 @@ import request from 'supertest';
 import { PrismaClient } from '../src/generated/prisma/client';
 import { createTestApp } from './utils/create-test-app';
 import {
+  MEMBER_BY_ID,
   OWN,
   PUBLIC,
   registeredRoutes as routesOf,
@@ -70,6 +71,7 @@ describe('Tenant isolation matrix (e2e)', () => {
       return req.send({ emails: [inviteeAddress('matrix')], role: 'MEMBER' });
     if (route === 'PATCH /auth/me') return req.send({ locale: 'vi' });
     if (route === 'POST /sources') return req.send({ name: 'Matrix source', type: 'WEBHOOK' });
+    if (route === 'POST /leads/rescore') return req.send({ scope: 'open' });
     if (route === 'PUT /icp-rubric')
       return req.send({
         industries: ['Logistics'],
@@ -84,7 +86,13 @@ describe('Tenant isolation matrix (e2e)', () => {
   }
 
   it('has a decision for every route the app registers', () => {
-    const classified = new Set([...PUBLIC, ...OWN, ...WORKSPACE_COLLECTION, ...WORKSPACE_BY_ID]);
+    const classified = new Set([
+      ...PUBLIC,
+      ...OWN,
+      ...MEMBER_BY_ID,
+      ...WORKSPACE_COLLECTION,
+      ...WORKSPACE_BY_ID,
+    ]);
     const routes = routesOf(app);
     // A new route lands here: classify it above, and add its cross-workspace test.
     expect(routes.filter((route) => !classified.has(route))).toEqual([]);

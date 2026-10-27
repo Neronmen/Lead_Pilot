@@ -66,7 +66,11 @@ export const WORKSPACE_COLLECTION = new Set([
   'POST /sources',
   'GET /icp-rubric',
   'PUT /icp-rubric',
+  'POST /leads/rescore',
 ]);
+// Readable and usable by every member, by an id from the URL: a lead of another workspace
+// is a 404. Their cross-workspace tests are in leads.e2e-spec.ts.
+export const MEMBER_BY_ID = new Set(['GET /leads/:id', 'POST /leads/:id/review']);
 export const WORKSPACE_BY_ID = new Set([
   'POST /invites/:id/resend',
   'DELETE /invites/:id',

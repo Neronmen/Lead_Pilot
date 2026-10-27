@@ -11,11 +11,14 @@ export const leadStatusSchema = z.enum([
   'FAILED',
 ]);
 
+export const leadTierSchema = z.enum(['HOT', 'WARM', 'COLD', 'JUNK']);
+
 /** `GET /leads` query: all optional. `q` searches email, name, company and phone. */
 export const listLeadsQuerySchema = z.strictObject({
   q: z.string().trim().max(100).optional(),
   status: leadStatusSchema.optional(),
   sourceId: idSchema.optional(),
+  tier: leadTierSchema.optional(),
   /** "true": only free-mail leads; "false": only company addresses. */
   freeMail: z.enum(['true', 'false']).optional(),
   /** `nextCursor` of the previous page. */
@@ -33,6 +36,10 @@ export const leadListItemSchema = z.object({
   country: z.string().nullable(),
   isFreeMail: z.boolean(),
   status: leadStatusSchema,
+  /** Null until the lead has been scored. */
+  tier: leadTierSchema.nullable(),
+  score: z.number().int().nullable(),
+  confidence: z.number().nullable(),
   source: z.object({ id: idSchema, name: z.string(), type: sourceTypeSchema }),
   owner: z.object({ id: idSchema, name: z.string().nullable() }).nullable(),
   /** How many submissions this lead holds: more than 1 means later ones were merged into it. */
@@ -50,7 +57,76 @@ export const leadListSchema = z.object({
   nextCursor: idSchema.nullable(),
 });
 
+/** The AI's latest answer about a lead, as the detail page shows it. */
+export const leadScoreSchema = z.object({
+  id: idSchema,
+  /** "anthropic" | "openai" | "mock" | "rules". */
+  provider: z.string(),
+  model: z.string(),
+  /** True when the rules rated it, not the AI (budget reached, or the AI's answer was unusable). */
+  ratedWithoutAi: z.boolean(),
+  reasons: z.array(z.string()),
+  suggestedReply: z.string().nullable(),
+  costUsd: z.number(),
+  createdAt: timestampSchema,
+});
+
+export const leadEventSchema = z.object({
+  id: idSchema,
+  /** "ingested" | "merged" | "possible_duplicate" | "enriched" | "scored" | "reviewed". */
+  type: z.string(),
+  payload: z.record(z.string(), z.unknown()),
+  createdAt: timestampSchema,
+});
+
+/** `GET /leads/:id`. */
+export const leadDetailSchema = leadListItemSchema.extend({
+  domain: z.string().nullable(),
+  customFields: z.record(z.string(), z.unknown()),
+  /** What was read from the company's website; null when there is no domain or no lookup yet. */
+  company: z
+    .object({
+      status: z.enum(['ok', 'unreachable']),
+      title: z.string().nullable(),
+      description: z.string().nullable(),
+    })
+    .nullable(),
+  latestScore: leadScoreSchema.nullable(),
+  /** Newest first. */
+  events: z.array(leadEventSchema),
+});
+
+/**
+ * `POST /leads/:id/review`: a person checks the AI. "approve" keeps its rating and
+ * clears the review flag; "override" sets the tier (and optionally the score) and
+ * is kept as a correction the AI is later measured against. A person's rating is
+ * never replaced by a later automatic one.
+ */
+export const reviewLeadRequestSchema = z.discriminatedUnion('action', [
+  z.strictObject({ action: z.literal('approve') }),
+  z.strictObject({
+    action: z.literal('override'),
+    tier: leadTierSchema,
+    score: z.number().int().min(0).max(100).optional(),
+    note: z.string().trim().min(1).max(500).optional(),
+  }),
+]);
+
+/** `POST /leads/rescore` (Owner/Admin): ask the AI to look again. */
+export const rescoreRequestSchema = z.strictObject({
+  /** "without_ai": leads rated by the rules; "open": every lead not yet routed or failed. */
+  scope: z.enum(['without_ai', 'open']),
+});
+export const rescoreResponseSchema = z.object({ queued: z.number().int().nonnegative() });
+
 export type LeadStatus = z.infer<typeof leadStatusSchema>;
 export type ListLeadsQuery = z.infer<typeof listLeadsQuerySchema>;
 export type LeadListItem = z.infer<typeof leadListItemSchema>;
 export type LeadList = z.infer<typeof leadListSchema>;
+export type LeadTier = z.infer<typeof leadTierSchema>;
+export type LeadScore = z.infer<typeof leadScoreSchema>;
+export type LeadEvent = z.infer<typeof leadEventSchema>;
+export type LeadDetail = z.infer<typeof leadDetailSchema>;
+export type ReviewLeadRequest = z.infer<typeof reviewLeadRequestSchema>;
+export type RescoreRequest = z.infer<typeof rescoreRequestSchema>;
+export type RescoreResponse = z.infer<typeof rescoreResponseSchema>;

@@ -32,6 +32,12 @@ export class EnrichmentService {
     @Inject(ENRICHMENT_PROVIDER) private readonly provider: EnrichmentProvider,
   ) {}
 
+  /** What is already cached for a domain (even if stale), without looking anything up. */
+  async cached(domain: string): Promise<EnrichmentData | null> {
+    const hit = await this.prisma.enrichment.findUnique({ where: { domain } });
+    return hit ? (hit.data as unknown as EnrichmentData) : null;
+  }
+
   async forDomain(domain: string, now: Date = new Date()): Promise<Enriched> {
     const hit = await this.prisma.enrichment.findUnique({ where: { domain } });
     if (hit && hit.expiresAt > now && hit.provider === this.provider.name) {

@@ -208,6 +208,9 @@ export class ScoringService {
     const tier = r.output.isSpam ? 'junk' : r.output.tier;
     const review = r.fallback !== null || r.output.confidence < r.threshold;
     await db.$transaction(async (tx) => {
+      // A person's override is final: a later automatic score is recorded but changes nothing on the lead.
+      const locked =
+        (await tx.feedback.count({ where: { leadId: job.leadId, kind: 'override' } })) > 0;
       const score = await tx.score.create({
         data: {
           workspaceId: job.workspaceId,
@@ -229,12 +232,14 @@ export class ScoringService {
       });
       await tx.lead.update({
         where: { id: job.leadId },
-        data: {
-          score: r.output.score,
-          tier: DB_TIER[tier],
-          confidence: r.output.confidence,
-          status: review ? 'NEEDS_REVIEW' : 'SCORED',
-        },
+        data: locked
+          ? {}
+          : {
+              score: r.output.score,
+              tier: DB_TIER[tier],
+              confidence: r.output.confidence,
+              status: review ? 'NEEDS_REVIEW' : 'SCORED',
+            },
       });
       await tx.leadEvent.create({
         data: {
@@ -249,7 +254,8 @@ export class ScoringService {
             provider: r.provider,
             ratedWithoutAi: r.fallback !== null,
             ...(r.fallback ? { reason: r.fallback } : {}),
-            needsReview: review,
+            needsReview: review && !locked,
+            ...(locked ? { keptPersonsRating: true } : {}),
           },
         },
       });

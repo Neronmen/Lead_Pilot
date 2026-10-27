@@ -491,6 +491,9 @@ model Feedback {
   scoreId       String?   @db.Uuid
   /// Actor id with no FK, so history survives member removal (see header).
   userId        String    @db.Uuid
+  /// "approve" (the AI was right) or "override" (the person changed it). Only an override
+  /// stops later automatic scoring from changing the lead's rating.
+  kind          String    @default("override")
   previousTier  LeadTier?
   previousScore Int?
   newTier       LeadTier
