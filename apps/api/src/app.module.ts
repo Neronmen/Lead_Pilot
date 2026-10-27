@@ -9,6 +9,7 @@ import { EmailModule } from './email/email.module';
 import { InvitesModule } from './invites/invites.module';
 import { MembersModule } from './members/members.module';
 import { CryptoModule } from './crypto/crypto.module';
+import { LeadsModule } from './leads/leads.module';
 import { IngestModule } from './ingest/ingest.module';
 import { SourcesModule } from './sources/sources.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
@@ -42,6 +43,7 @@ const ROOT_ENV_FILE = resolve(__dirname, '../../../.env');
     CryptoModule,
     SourcesModule,
     IngestModule,
+    LeadsModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: GlobalExceptionFilter }],
 })

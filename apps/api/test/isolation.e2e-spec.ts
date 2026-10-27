@@ -272,6 +272,27 @@ describe('Tenant isolation matrix (e2e)', () => {
       }
     });
 
+    it('GET /leads shows only the callers own workspace, and a cursor from another workspace finds nothing', async () => {
+      const res = await http().get('/leads').set('authorization', bearer(b.owner)).expect(200);
+      const own = await prisma.lead.findMany({ where: { workspaceId: b.workspaceId } });
+      expect(own.length).toBeGreaterThan(0);
+      expect((res.body.items as Array<{ id: string }>).map((l) => l.id).sort()).toEqual(
+        own.map((l) => l.id).sort(),
+      );
+      const foreign = await prisma.lead.findFirstOrThrow({ where: { workspaceId: a.workspaceId } });
+      expect(JSON.stringify(res.body)).not.toContain(foreign.id);
+      const probe = await http()
+        .get(`/leads?cursor=${foreign.id}`)
+        .set('authorization', bearer(b.owner))
+        .expect(200);
+      expect(probe.body.items).toEqual([]);
+      const bySource = await http()
+        .get(`/leads?sourceId=${foreign.sourceId}`)
+        .set('authorization', bearer(b.owner))
+        .expect(200);
+      expect(bySource.body.items).toEqual([]);
+    });
+
     it('POST /sources creates in the callers workspace only', async () => {
       const res = await http()
         .post('/sources')

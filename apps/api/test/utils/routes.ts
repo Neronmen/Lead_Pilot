@@ -55,7 +55,9 @@ export const PUBLIC = new Set([
   // Signed in with a source's API key, not a user: its tests are in ingest.e2e-spec.ts.
   'POST /v1/ingest/:sourceId',
 ]);
-export const OWN = new Set(['GET /auth/me', 'PATCH /auth/me']);
+// Own account or own workspace, readable by every member (so no admin-only 403 check);
+// 'GET /leads' has its cross-workspace test in isolation.e2e-spec.ts.
+export const OWN = new Set(['GET /auth/me', 'PATCH /auth/me', 'GET /leads']);
 export const WORKSPACE_COLLECTION = new Set([
   'GET /invites',
   'POST /invites',
