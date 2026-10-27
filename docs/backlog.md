@@ -4,6 +4,7 @@ Items raised in reviews that belong to a later milestone. Each milestone plan st
 
 ## M1 – Auth & tenancy (do first)
 
+- Signup `EMAIL_TAKEN` (409) tells a visitor which email addresses already have an account (user enumeration). Accepted trade-off for M1, limited by the signup rate limit (10/min per IP); revisit it (for example answer the same for any address and email the real owner) before production.
 - Nothing left from the API steps. Web: the Login, Signup and Accept invite pages (step 9) and Settings > Team (step 10) are in the M1 plan.
 
 ## M2 – Ingestion

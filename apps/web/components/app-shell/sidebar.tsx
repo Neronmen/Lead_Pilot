@@ -120,7 +120,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                 className={cn(
                   'flex min-h-[38px] items-center gap-2.5 rounded-lg px-2.5 text-sm font-medium transition-colors',
                   current
-                    ? 'bg-accent-soft text-active-fg shadow-[inset_2px_0_0_var(--accent)]'
+                    ? 'bg-accent-soft text-active-fg shadow-[inset_2px_0_0_var(--primary)]'
                     : 'hover:bg-hover',
                 )}
               >

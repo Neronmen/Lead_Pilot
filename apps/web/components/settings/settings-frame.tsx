@@ -55,7 +55,7 @@ export function SettingsFrame({ children }: { children: ReactNode }) {
               className={cn(
                 'flex min-h-9 items-center rounded-lg px-2.5 text-sm transition-colors',
                 current
-                  ? 'bg-accent-soft font-medium text-active-fg shadow-[inset_2px_0_0_var(--accent)]'
+                  ? 'bg-accent-soft font-medium text-active-fg shadow-[inset_2px_0_0_var(--primary)]'
                   : 'hover:bg-hover',
               )}
             >

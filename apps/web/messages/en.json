@@ -59,6 +59,47 @@
     "body": "Ask your workspace owner or an admin if something needs changing. You can keep working on your leads as usual.",
     "back": "Back to my leads"
   },
+  "auth": {
+    "footer": "© {year} LeadPilot",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "login": {
+      "title": "Sign in to LeadPilot",
+      "sub": "Welcome back. Use your work email.",
+      "email": "Work email",
+      "password": "Password",
+      "submit": "Sign in",
+      "submitting": "Signing in",
+      "newHere": "New to LeadPilot?",
+      "create": "Create a workspace"
+    },
+    "aside": {
+      "eyebrow": "LIVE PIPELINE",
+      "pitch": "Every lead scored and routed before it cools down.",
+      "gate": "AI SCORE",
+      "sources": "SOURCES",
+      "chips": {
+        "web": "Website form",
+        "zapier": "Zapier",
+        "csv": "CSV",
+        "linkedin": "LinkedIn"
+      },
+      "hot": "Hot",
+      "warm": "Warm",
+      "cold": "Cold",
+      "sample": {
+        "name": "Lukas Becker",
+        "role": "Head of Operations · Brightlane Logistics",
+        "score": "88",
+        "assigned": "Assigned to",
+        "assignedValue": "Mia Johnson · EMEA",
+        "actions": "Actions",
+        "actionsValue": "Slack #hot-leads · HubSpot",
+        "scored": "Scored in",
+        "scoredValue": "1.4s"
+      }
+    }
+  },
   "emailHint": {
     "didYouMean": "Did you mean {suggestion}?",
     "apply": "Use {suggestion}"

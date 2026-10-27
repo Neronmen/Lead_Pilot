@@ -40,6 +40,9 @@ const DYNAMIC: Record<string, string[]> = {
   'shell.roles.${me.role}': ROLES.map((r) => `shell.roles.${r}`),
   'shell.nav.${id}': ['leads', 'settings'].map((id) => `shell.nav.${id}`),
   'settings.nav.${id}': ['team'].map((id) => `settings.nav.${id}`),
+  'auth.aside.chips.${chip}': ['web', 'zapier', 'csv', 'linkedin'].map(
+    (chip) => `auth.aside.chips.${chip}`,
+  ),
 };
 
 interface Use {
@@ -74,6 +77,10 @@ const scanned = [
   'components/state-views.tsx',
   'components/brand',
   'app/(app)',
+  'components/auth',
+  'app/login',
+  'app/signup',
+  'app/invite',
 ];
 
 const all = sources(root)

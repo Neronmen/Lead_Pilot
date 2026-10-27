@@ -93,10 +93,16 @@ describe('formErrors edge cases', () => {
   });
 
   it('copes with a missing limit or an unknown origin', () => {
+    // No limit given: an empty box, so "required" (not "at least 0 characters").
     expect(issueMessageRef({ path: 'a', code: 'too_small' })).toEqual({
-      key: 'validation.too_small.string',
-      values: { minimum: 0 },
+      key: 'validation.invalid_type',
     });
+    expect(
+      issueMessageRef({ path: 'a', code: 'too_small', origin: 'string', minimum: 1 }).key,
+    ).toBe('validation.invalid_type');
+    expect(
+      issueMessageRef({ path: 'a', code: 'too_small', origin: 'string', minimum: 2 }).key,
+    ).toBe('validation.too_small.string');
     expect(issueMessageRef({ path: 'a', code: 'too_big', origin: 'set' }).key).toBe(
       'validation.too_big.string',
     );

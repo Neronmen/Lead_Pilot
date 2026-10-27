@@ -14,7 +14,7 @@ function entries(messages: Dict, prefix = ''): [string, string][] {
   );
 }
 
-const values = { count: 3, minimum: 3, maximum: 3, suggestion: 'gmail.com' };
+const values = { count: 3, minimum: 3, maximum: 3, suggestion: 'gmail.com', year: 2026 };
 
 describe.each([
   ['en', en],

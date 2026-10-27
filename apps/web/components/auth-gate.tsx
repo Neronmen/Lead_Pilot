@@ -4,6 +4,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, type ReactNode } from 'react';
 import { useSession } from '@/lib/auth/auth-provider';
 import { loginUrl, safeNext } from '@/lib/auth/safe-next';
+import { isSigningIn } from '@/lib/auth/sign-in-flow';
 import { SessionLoading, SessionUnavailable } from './session-screens';
 
 /**
@@ -56,10 +57,13 @@ function RedirectIfSignedInInner({ children }: { children: ReactNode }) {
   const next = useSearchParams().get('next');
 
   useEffect(() => {
-    if (status === 'authenticated') router.replace(safeNext(next));
+    // While a form on this page is signing someone in, it navigates by itself
+    // when it has finished (see lib/auth/sign-in-flow.ts).
+    if (status === 'authenticated' && !isSigningIn()) router.replace(safeNext(next));
   }, [status, router, next]);
 
   // Loading is not blocked: the form can show at once, and a signed-in person
   // is moved on as soon as the check finishes.
-  return status === 'authenticated' ? <SessionLoading /> : children;
+  // (The form on screen keeps showing while it is the one signing in.)
+  return status === 'authenticated' && !isSigningIn() ? <SessionLoading /> : children;
 }

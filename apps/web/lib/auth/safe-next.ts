@@ -26,6 +26,15 @@ export function safeNext(raw: string | null | undefined): string {
   }
 }
 
+/**
+ * `path` (such as "/signup") carrying the checked `next` along, so moving
+ * between the sign-in pages does not lose where the person was going.
+ */
+export function pathWithNext(path: string, next: string | null | undefined): string {
+  const safe = safeNext(next);
+  return safe === DEFAULT_LANDING ? path : `${path}?next=${encodeURIComponent(safe)}`;
+}
+
 /** The sign-in address that comes back to `path` afterwards. */
 export function loginUrl(path: string): string {
   const next = safeNext(path);

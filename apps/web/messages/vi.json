@@ -59,6 +59,47 @@
     "body": "Hãy nhờ chủ sở hữu hoặc một quản trị viên của không gian làm việc nếu cần thay đổi. Bạn vẫn xử lý lead như bình thường.",
     "back": "Về lead của tôi"
   },
+  "auth": {
+    "footer": "© {year} LeadPilot",
+    "showPassword": "Hiện mật khẩu",
+    "hidePassword": "Ẩn mật khẩu",
+    "login": {
+      "title": "Đăng nhập LeadPilot",
+      "sub": "Chào mừng bạn quay lại. Hãy dùng email công việc.",
+      "email": "Email công việc",
+      "password": "Mật khẩu",
+      "submit": "Đăng nhập",
+      "submitting": "Đang đăng nhập",
+      "newHere": "Mới dùng LeadPilot?",
+      "create": "Tạo không gian làm việc"
+    },
+    "aside": {
+      "eyebrow": "LUỒNG LEAD TRỰC TIẾP",
+      "pitch": "Mọi lead được chấm điểm và phân bổ trước khi kịp nguội.",
+      "gate": "AI CHẤM ĐIỂM",
+      "sources": "NGUỒN",
+      "chips": {
+        "web": "Form website",
+        "zapier": "Zapier",
+        "csv": "CSV",
+        "linkedin": "LinkedIn"
+      },
+      "hot": "Nóng",
+      "warm": "Ấm",
+      "cold": "Lạnh",
+      "sample": {
+        "name": "Lukas Becker",
+        "role": "Trưởng phòng Vận hành · Brightlane Logistics",
+        "score": "88",
+        "assigned": "Giao cho",
+        "assignedValue": "Mia Johnson · EMEA",
+        "actions": "Tác vụ",
+        "actionsValue": "Slack #hot-leads · HubSpot",
+        "scored": "Chấm điểm trong",
+        "scoredValue": "1,4 giây"
+      }
+    }
+  },
   "emailHint": {
     "didYouMean": "Có phải bạn muốn gõ {suggestion}?",
     "apply": "Dùng {suggestion}"

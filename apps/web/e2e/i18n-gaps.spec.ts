@@ -16,7 +16,20 @@ const flat = (tree: Tree, prefix = ''): Array<[string, string]> =>
   );
 
 // Same in both languages on purpose: the language's own name and the brand.
-const SAME_IN_BOTH = new Set(['language.en', 'shell.brand', 'shell.menuTitle']);
+const SAME_IN_BOTH = new Set([
+  'language.en',
+  'shell.brand',
+  'shell.menuTitle',
+  // Product and tool names, a person's name and sample data are the same in any language.
+  'auth.footer',
+  'auth.aside.chips.zapier',
+  'auth.aside.chips.csv',
+  'auth.aside.chips.linkedin',
+  'auth.aside.sample.name',
+  'auth.aside.sample.score',
+  'auth.aside.sample.assignedValue',
+  'auth.aside.sample.actionsValue',
+]);
 
 test('every Vietnamese message differs from the English one (nothing left untranslated)', () => {
   const english = new Map(flat(en as Tree));

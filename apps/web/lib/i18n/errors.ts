@@ -29,6 +29,10 @@ const origin = (value: string | undefined): Origin =>
 export function issueMessageRef(issue: ValidationIssue): MessageRef {
   switch (issue.code) {
     case 'too_small':
+      // An empty text box (this applies to every string field with a minimum of 1): "at least 1 character" reads oddly, so say it is required.
+      if (origin(issue.origin) === 'string' && (issue.minimum ?? 0) <= 1) {
+        return { key: 'validation.invalid_type' };
+      }
       return {
         key: `validation.too_small.${origin(issue.origin)}`,
         values: { minimum: issue.minimum ?? 0 },
@@ -78,18 +82,24 @@ export function formErrors(error: unknown): FormErrors {
 
   if (error.code === ErrorCode.VALIDATION_FAILED) {
     const parsed = z.array(validationIssueSchema).safeParse(error.details);
-    if (parsed.success) {
-      // No prototype: a field named `constructor` must not collide with Object's members.
-      const fields: Record<string, MessageRef> = Object.create(null);
-      let general = false;
-      for (const issue of parsed.data) {
-        // A problem with the whole body (an unexpected key) has no field.
-        if (!issue.path) general = true;
-        else if (!(issue.path in fields)) fields[issue.path] = issueMessageRef(issue);
-      }
-      const only = Object.keys(fields).length > 0 && !general;
-      return { form: only ? null : errorMessageRef(error.code), fields };
-    }
+    if (parsed.success) return issuesToFormErrors(parsed.data);
   }
   return { form: errorMessageRef(error.code), fields: {} };
+}
+
+/**
+ * Field problems from a list of validation issues, whether they came from the
+ * API or from checking the form in the browser with the shared schema first.
+ */
+export function issuesToFormErrors(issues: readonly ValidationIssue[]): FormErrors {
+  // No prototype: a field named `constructor` must not collide with Object's members.
+  const fields: Record<string, MessageRef> = Object.create(null);
+  let general = false;
+  for (const issue of issues) {
+    // A problem with the whole body (an unexpected key) has no field.
+    if (!issue.path) general = true;
+    else if (!(issue.path in fields)) fields[issue.path] = issueMessageRef(issue);
+  }
+  const only = Object.keys(fields).length > 0 && !general;
+  return { form: only ? null : errorMessageRef(ErrorCode.VALIDATION_FAILED), fields };
 }

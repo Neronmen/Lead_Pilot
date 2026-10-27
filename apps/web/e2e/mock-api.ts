@@ -23,10 +23,15 @@ export class MockApi {
   overlaps = 0;
   logoutCalls = 0;
   patches: unknown[] = [];
+  /** Every API call, in order, so a test can check what was (and was not) sent. Fake values only. */
+  requests: { method: string; path: string; body: unknown }[] = [];
+  /** Per-test answers by "METHOD /path"; returning null falls back to the default. */
+  answers = new Map<string, (body: unknown) => { status: number; body?: unknown } | null>();
   private running = 0;
   private readonly name: string | null;
   private readonly delay: number;
-  private locale: 'en' | 'vi' | null = null;
+  /** The language saved on the account (null: follow the workspace). */
+  locale: 'en' | 'vi' | null = null;
 
   constructor(options: MockOptions = {}) {
     this.role = options.role ?? 'OWNER';
@@ -70,6 +75,38 @@ export class MockApi {
     const path = new URL(request.url()).pathname;
 
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
+
+    let sent: unknown;
+    try {
+      sent = request.postDataJSON();
+    } catch {
+      sent = undefined;
+    }
+    this.requests.push({ method: request.method(), path, body: sent });
+    const answer = this.answers.get(`${request.method()} ${path}`)?.(sent);
+    if (answer) {
+      return answer.status === 204
+        ? route.fulfill({ status: 204, headers: cors })
+        : json(answer.status, answer.body);
+    }
+
+    const session = (status = 200) => {
+      this.refresh = 'ok'; // the refresh cookie now exists
+      return json(status, { accessToken: `token-${this.requests.length}`, expiresIn: 900 });
+    };
+    if (path === '/auth/login') return session();
+    if (path === '/auth/signup') return session(201);
+    if (path === '/auth/invites/accept') return session();
+    if (path === '/auth/invites/preview') {
+      return json(200, {
+        workspaceName: 'Northstar Growth',
+        inviterName: 'Mia Johnson',
+        role: 'MEMBER',
+        email: 'ethan.brooks@northstargrowth.com',
+        expiresAt: new Date(Date.now() + 6 * 24 * 3600 * 1000).toISOString(),
+        accountExists: false,
+      });
+    }
 
     if (path === '/auth/refresh') {
       this.refreshCalls++;
