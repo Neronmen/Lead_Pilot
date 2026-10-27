@@ -33,6 +33,7 @@ describe('TENANT_MODELS', () => {
         'Feedback',
         'IcpRubric',
         'IdempotencyKey',
+        'IngestAttempt',
         'Integration',
         'Invite',
         'Lead',
