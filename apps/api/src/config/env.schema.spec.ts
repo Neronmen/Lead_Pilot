@@ -22,6 +22,7 @@ describe('validateEnv', () => {
       QUEUE_WORKERS: 'on',
       ENRICHMENT_PROVIDER: 'mock',
       LLM_PROVIDER: 'auto',
+      AI_DEFAULT_MONTHLY_LIMIT_USD: 5,
       QUEUE_PREFIX: 'bull',
       AUTH_RATE_LIMIT_PER_MINUTE: 10,
       AUTH_REFRESH_RATE_LIMIT_PER_MINUTE: 60,

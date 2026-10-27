@@ -26,6 +26,29 @@ export function safeJson(value: unknown): string {
   return JSON.stringify(value).replace(/</g, '\\u003c');
 }
 
+const MAX_FIELDS = 20;
+const MAX_VALUE = 500;
+const MAX_TOTAL = 4_000;
+
+/**
+ * The sender's own extra fields, cut down: at most 20 fields, 500 characters each and 4,000 in
+ * all. Without a cap one 250 KB submission would be sent to the AI (and paid for) in full.
+ */
+export function boundedFields(fields: Record<string, unknown>): Record<string, string> {
+  const out: Record<string, string> = {};
+  let total = 0;
+  for (const [key, value] of Object.entries(fields).slice(0, MAX_FIELDS)) {
+    const text = (typeof value === 'string' ? value : (JSON.stringify(value) ?? '')).slice(
+      0,
+      MAX_VALUE,
+    );
+    if (total + key.length + text.length > MAX_TOTAL) break;
+    total += key.length + text.length;
+    out[key.slice(0, 64)] = text;
+  }
+  return out;
+}
+
 /** The message sent to the AI for one lead. The ideal customer is ours; the lead and the website are untrusted. */
 export function buildUserMessage(input: ScoringInput): string {
   const { lead, rubric, company } = input;
@@ -42,7 +65,7 @@ export function buildUserMessage(input: ScoringInput): string {
       company: lead.company,
       website: lead.domain,
       country: lead.country,
-      other: lead.customFields,
+      other: boundedFields(lead.customFields),
     }),
     '</lead_data>',
     '<company_website>',

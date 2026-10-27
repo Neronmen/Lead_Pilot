@@ -1,17 +1,19 @@
 import { Logger } from '@nestjs/common';
 import type Redis from 'ioredis';
-import type { WindowStore } from '../ingest/rate-limiter';
+import { MemoryWindowStore, type WindowStore } from '../ingest/rate-limiter';
 
 /**
  * Rate-limit counters in Redis, so every API instance counts together. A window
  * is one key: INCR makes it, and PEXPIRE (set on the first hit only) ends it.
  *
- * If Redis is unreachable the limiter lets the request through and logs once:
- * a limiter that takes the API down with Redis would be worse than none.
+ * If Redis is unreachable it keeps counting in this process's memory and logs once:
+ * the limit still holds (per instance), and the API does not go down with Redis.
  */
 export class RedisWindowStore implements WindowStore {
   private readonly logger = new Logger(RedisWindowStore.name);
   private failing = false;
+  /** Counts per process while Redis is unreachable: a brute-force limit never turns into "no limit". */
+  private readonly fallback = new MemoryWindowStore();
 
   constructor(
     private readonly redis: Redis,
@@ -29,7 +31,7 @@ export class RedisWindowStore implements WindowStore {
       if (ttl < 0) await this.redis.pexpire(redisKey, windowMs);
       return { count, resetInMs: ttl < 0 ? windowMs : ttl };
     } catch (error) {
-      return this.failOpen(error);
+      return this.failOver(error, () => this.fallback.hit(key, windowMs));
     }
   }
 
@@ -40,7 +42,7 @@ export class RedisWindowStore implements WindowStore {
       this.recovered();
       return { count: Number(count ?? 0), resetInMs: Math.max(0, ttl) };
     } catch (error) {
-      return this.failOpen(error);
+      return this.failOver(error, () => this.fallback.peek(key));
     }
   }
 
@@ -49,14 +51,17 @@ export class RedisWindowStore implements WindowStore {
     if (keys.length > 0) await this.redis.del(...keys);
   }
 
-  private failOpen(error: unknown): { count: number; resetInMs: number } {
+  private failOver(
+    error: unknown,
+    memory: () => Promise<{ count: number; resetInMs: number }>,
+  ): Promise<{ count: number; resetInMs: number }> {
     if (!this.failing) {
       this.failing = true;
       this.logger.warn(
-        `Rate limiter cannot reach Redis, letting requests through: ${String(error)}`,
+        `Rate limiter cannot reach Redis, counting in memory for now: ${String(error)}`,
       );
     }
-    return { count: 0, resetInMs: 0 };
+    return memory();
   }
 
   private recovered(): void {

@@ -130,7 +130,7 @@ export class ReviewService {
       feedback: { none: { kind: 'override' } },
       ...(body.scope === 'without_ai'
         ? { status: 'NEEDS_REVIEW', scores: { some: { isFallback: true } } }
-        : { status: { in: ['NEW', 'NEEDS_REVIEW', 'SCORED', 'FAILED'] } }),
+        : { status: { in: ['NEW', 'PROCESSING', 'NEEDS_REVIEW', 'SCORED', 'FAILED'] } }),
     };
     const leads = await db.lead.findMany({
       where,

@@ -55,9 +55,11 @@ export class WebsiteMetaProvider implements EnrichmentProvider {
 
   async enrich(domain: string): Promise<EnrichmentData> {
     if (!DOMAIN.test(domain)) return unreachable();
+    // One clock for both tries: a slow site cannot take 2 x 8 seconds of a worker.
+    const deadline = Date.now() + TOTAL_TIMEOUT_MS;
     for (const scheme of ['https', 'http']) {
       try {
-        const html = await this.fetchPage(new URL(`${scheme}://${domain}/`));
+        const html = await this.fetchPage(new URL(`${scheme}://${domain}/`), deadline);
         return { status: 'ok', ...extractPageMeta(html) };
       } catch {
         // Try the next scheme; a refusal, a timeout and a refused connection all end as "unreachable".
@@ -67,8 +69,7 @@ export class WebsiteMetaProvider implements EnrichmentProvider {
   }
 
   /** GET a page as text, following up to 3 checked redirects. Throws on anything unsafe. */
-  async fetchPage(start: URL): Promise<string> {
-    const deadline = Date.now() + TOTAL_TIMEOUT_MS;
+  async fetchPage(start: URL, deadline: number = Date.now() + TOTAL_TIMEOUT_MS): Promise<string> {
     let url = start;
     for (let hop = 0; hop <= MAX_REDIRECTS; hop += 1) {
       const response = await this.request(url, deadline - Date.now());
@@ -90,14 +91,26 @@ export class WebsiteMetaProvider implements EnrichmentProvider {
   private async request(url: URL, timeoutMs: number): Promise<{ redirect?: string; body: string }> {
     this.check(url);
     if (timeoutMs <= 0) throw new Refused('timeout');
-    const addresses = await this.resolve(url.hostname);
+    const addresses = await Promise.race([
+      this.resolve(url.hostname),
+      new Promise<never>((_, reject) => {
+        const timer = setTimeout(() => reject(new Refused('timeout')), timeoutMs);
+        timer.unref();
+      }),
+    ]);
     if (addresses.length === 0 || !addresses.every((address) => this.allowAddress(address))) {
       throw new Refused('address is not public');
     }
     const address = addresses[0]!;
     const client = url.protocol === 'https:' ? https : http;
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolveResult, reject) => {
+      // An idle timeout alone lets a server send one byte every few seconds for ever: this is the total.
+      const total = setTimeout(() => request.destroy(new Refused('timeout')), timeoutMs);
+      const resolve = (value: { redirect?: string; body: string }) => {
+        clearTimeout(total);
+        resolveResult(value);
+      };
       const request = client.request(
         url,
         {
@@ -156,7 +169,10 @@ export class WebsiteMetaProvider implements EnrichmentProvider {
         },
       );
       request.setTimeout(timeoutMs, () => request.destroy(new Refused('timeout')));
-      request.on('error', reject);
+      request.on('error', (error) => {
+        clearTimeout(total);
+        reject(error);
+      });
       request.end();
     });
   }

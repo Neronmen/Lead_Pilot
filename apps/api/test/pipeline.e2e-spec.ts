@@ -112,4 +112,24 @@ describe('Pipeline queue (e2e)', () => {
     expect(found!.attemptsMade).toBeGreaterThanOrEqual(1);
     await found!.remove();
   });
+
+  it('a lead whose job failed for good can be queued again (a failed job must not block "look again")', async () => {
+    const q = app.get(PipelineQueue);
+    const job = { workspaceId: crypto.randomUUID(), leadId: crypto.randomUUID() };
+    let calls = 0;
+    app.get(PipelineService).register(async (j) => {
+      if (j.leadId !== job.leadId) return;
+      calls += 1;
+      if (calls === 1) throw new Error('first run fails');
+    });
+    // One try only, so the first failure is final (the real jobs have 5).
+    await queue().add('process-lead', job, { jobId: `${job.leadId}-score`, attempts: 1 });
+    for (let i = 0; i < 60 && calls === 0; i += 1) await sleep(100);
+    await sleep(300);
+    expect(await (await queue().getJob(`${job.leadId}-score`))!.isFailed()).toBe(true);
+
+    await q.enqueueLead(job); // used to be ignored: the failed job still held the id
+    for (let i = 0; i < 60 && calls < 2; i += 1) await sleep(100);
+    expect(calls).toBe(2);
+  });
 });

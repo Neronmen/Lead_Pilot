@@ -3,7 +3,7 @@ import { chooseLlm } from './llm.factory';
 import { AnthropicLlmProvider, OpenAiLlmProvider } from './http-llm.providers';
 import { costUsd, LlmError } from './llm.provider';
 import { MockLlmProvider } from './mock-llm.provider';
-import { buildUserMessage, safeJson } from './prompt';
+import { boundedFields, buildUserMessage, safeJson } from './prompt';
 import { ruleScore, type ScoringInput, tierOf } from './rules';
 import { extractJson, monthStart } from './scoring.util';
 
@@ -109,6 +109,29 @@ describe('the prompt keeps outside data inside its block', () => {
   });
 });
 
+describe('boundedFields (what a sender can make us pay for)', () => {
+  it('cuts the extra fields to 20 fields, 500 characters each and 4,000 in all', () => {
+    const many = Object.fromEntries(
+      Array.from({ length: 100 }, (_, i) => [`k${i}`, 'x'.repeat(100)]),
+    );
+    expect(Object.keys(boundedFields(many))).toHaveLength(20);
+    const long = boundedFields({ note: 'y'.repeat(250_000), nested: { a: 'z'.repeat(9000) } });
+    expect(long.note).toHaveLength(500);
+    expect(long.nested!.length).toBeLessThanOrEqual(500);
+    const total = Object.entries(
+      boundedFields(
+        Object.fromEntries(Array.from({ length: 20 }, (_, i) => [`key${i}`, 'v'.repeat(500)])),
+      ),
+    ).reduce((n, [k, v]) => n + k.length + v.length, 0);
+    expect(total).toBeLessThanOrEqual(4000);
+    // The whole prompt for a 250 KB submission stays small.
+    expect(
+      buildUserMessage(input({ lead: lead({ customFields: { note: 'y'.repeat(250_000) } }) }))
+        .length,
+    ).toBeLessThan(5000);
+  });
+});
+
 describe('extractJson and money', () => {
   it('finds the JSON object inside a code fence or chatter, and refuses text without one', () => {
     expect(extractJson('```json\n{"a":1}\n```')).toEqual({ a: 1 });
@@ -120,7 +143,10 @@ describe('extractJson and money', () => {
   it('prices tokens per million, and counts an unknown model as free', () => {
     expect(costUsd('gpt-4o-mini', 1_000_000, 1_000_000)).toBeCloseTo(0.75);
     expect(costUsd('claude-haiku-5-5', 1000, 500)).toBeCloseTo(0.0035);
-    expect(costUsd('mystery', 1_000_000, 1_000_000)).toBe(0);
+    // A model that is not in the table is priced high, never free: the budget must still work.
+    expect(costUsd('mystery', 1_000_000, 1_000_000)).toBe(90);
+    expect(costUsd('mock-1', 1_000_000, 1_000_000)).toBe(0);
+    expect(costUsd('rules-1', 1_000_000, 1_000_000)).toBe(0);
   });
 
   it('the cost month starts on the 1st (UTC)', () => {

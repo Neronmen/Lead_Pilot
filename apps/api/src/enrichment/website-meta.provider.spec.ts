@@ -40,6 +40,12 @@ describe('WebsiteMetaProvider (SSRF-safe fetch)', () => {
         case '/to-file':
           res.writeHead(302, { location: 'file:///etc/passwd' });
           return res.end();
+        case '/drip': {
+          res.writeHead(200, { 'content-type': 'text/html' });
+          const timer = setInterval(() => res.write('x'), 50); // one byte at a time, for ever
+          res.on('close', () => clearInterval(timer));
+          return;
+        }
         case '/json':
           res.writeHead(200, { 'content-type': 'application/json' });
           return res.end('{}');
@@ -119,6 +125,12 @@ describe('WebsiteMetaProvider (SSRF-safe fetch)', () => {
       expect((await strict.enrich(bad)).status).toBe('unreachable');
     }
     expect(hits).toEqual([]);
+  });
+
+  it('a server that drips one byte at a time cannot hold a worker: one overall deadline', async () => {
+    const started = Date.now();
+    await expect(provider().fetchPage(url('/drip'), Date.now() + 500)).rejects.toThrow('timeout');
+    expect(Date.now() - started).toBeLessThan(2500);
   });
 
   it('accepts HTML only, and stops reading a huge page at 256 KB', async () => {

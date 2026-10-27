@@ -115,6 +115,28 @@ docs/                  design notes, backlog, error-handling guide
 - Sending leads in (`POST /v1/ingest/:sourceId`: API key, optional HMAC signature, Idempotency-Key) and how duplicates are handled: [docs/dedup.md](docs/dedup.md). Lead sources and the API key / signing secret live in Settings > Lead sources and Advanced / Developer.
 - Multi-tenancy: every tenant query goes through `TenantPrisma.for(workspaceId)`, composite foreign keys keep related rows in one workspace, and `apps/api/test/isolation.e2e-spec.ts` fails if an endpoint is not classified and tested across workspaces.
 
+## Using a real AI model
+
+With no key the app rates leads with a free built-in mock, so the demo, the tests and CI cost nothing. To
+use a real model, put ONE key in `.env` (never commit it; the app never logs or returns it):
+
+| Variable | Effect |
+| --- | --- |
+| `ANTHROPIC_API_KEY` | `LLM_PROVIDER=auto` then uses Anthropic (default model `claude-haiku-5-5`). |
+| `OPENAI_API_KEY` | Used if no Anthropic key is set (default model `gpt-4o-mini`). |
+| `LLM_PROVIDER` | `auto` (default), `mock`, `anthropic` or `openai`. `mock` forces the free mock even if a key is set. |
+| `LLM_MODEL` | Optional. Use a model that is in the price table in `apps/api/src/scoring/llm.provider.ts`, or its cost is estimated high. |
+| `AI_DEFAULT_MONTHLY_LIMIT_USD` | Monthly spend allowed for a workspace that set no limit (default 5; `0` = none). Over it, leads are rated by simple rules and still saved. |
+
+**What it costs.** One lead is about 700 tokens in and 120 out. `pnpm eval` rates 50 leads, so one run is about
+**$0.07** with `claude-haiku-5-5` and about **$0.01** with `gpt-4o-mini` (twice that with `--candidate`, which runs a
+second prompt). These are estimates from the price table in the code, not a bill: check the provider's prices.
+
+**About the 94%.** `pnpm eval` prints 94% with no key. That is the **rules baseline** (the mock answers with the
+rule-based score) on a small hand-labelled demo set, **not an AI result**. The Anthropic and OpenAI adapters have
+only been tested with a fake `fetch`: run `pnpm eval` with your own key to get a real number, and replace the demo
+labels with the corrections people make in the Review queue when you have enough.
+
 ## Conventions worth knowing
 
 - **One error shape.** Every API error is `{ "error": { "code", "message", "details"? } }`, built in a single global filter. Unexpected errors never leak internals.

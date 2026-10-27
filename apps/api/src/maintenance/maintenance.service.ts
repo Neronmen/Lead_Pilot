@@ -9,6 +9,8 @@ export const RAW_PAYLOAD_RETENTION_DAYS = 90;
 export const INGEST_ATTEMPT_RETENTION_DAYS = 90;
 /** A lead still NEW after this long has probably lost its queue job. */
 export const STUCK_AFTER_MS = 5 * 60 * 1000;
+/** A lead still PROCESSING this long lost its worker (stalled jobs are retried by BullMQ first). */
+const PROCESSING_STUCK_AFTER_MS = 15 * 60 * 1000;
 const STUCK_BATCH = 200;
 
 export interface CleanupResult {
@@ -44,7 +46,13 @@ export class MaintenanceService {
     // The lead keeps its latest payload; the timeline keeps one per submission.
     const rawPayloadsPurged = await this.prisma.$executeRaw`
       UPDATE "Lead" SET "rawPayload" = '{}'::jsonb
-      WHERE "updatedAt" < ${payloadCutoff} AND "rawPayload" <> '{}'::jsonb`;
+      WHERE "rawPayload" <> '{}'::jsonb
+        AND NOT EXISTS (
+          SELECT 1 FROM "LeadEvent" e
+          WHERE e."leadId" = "Lead".id AND e."workspaceId" = "Lead"."workspaceId"
+            AND e."type" = 'ingested' AND e."createdAt" >= ${payloadCutoff}
+        )
+        AND "createdAt" < ${payloadCutoff}`;
     const eventPayloadsPurged = await this.prisma.$executeRaw`
       UPDATE "LeadEvent" SET "payload" = ("payload" - 'rawPayload') || '{"purged": true}'::jsonb
       WHERE "type" = 'ingested' AND "createdAt" < ${payloadCutoff} AND "payload" ? 'rawPayload'`;
@@ -55,7 +63,9 @@ export class MaintenanceService {
       where: { expiresAt: { lt: now } },
     });
     const refreshTokens = await this.prisma.refreshToken.deleteMany({
-      where: { OR: [{ revokedAt: { lt: tokenCutoff } }, { expiresAt: { lt: tokenCutoff } }] },
+      // Only tokens that are long expired: a revoked token must stay findable until then, because
+      // presenting one is how theft is detected (the whole login is then revoked).
+      where: { expiresAt: { lt: tokenCutoff } },
     });
 
     const result: CleanupResult = {
@@ -76,7 +86,15 @@ export class MaintenanceService {
    */
   async requeueStuckLeads(now: Date = new Date()): Promise<number> {
     const stuck = await this.prisma.lead.findMany({
-      where: { status: 'NEW', createdAt: { lt: new Date(now.getTime() - STUCK_AFTER_MS) } },
+      where: {
+        OR: [
+          { status: 'NEW', createdAt: { lt: new Date(now.getTime() - STUCK_AFTER_MS) } },
+          {
+            status: 'PROCESSING',
+            updatedAt: { lt: new Date(now.getTime() - PROCESSING_STUCK_AFTER_MS) },
+          },
+        ],
+      },
       select: { id: true, workspaceId: true },
       orderBy: { createdAt: 'asc' },
       take: STUCK_BATCH,

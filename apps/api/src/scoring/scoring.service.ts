@@ -1,5 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { type ScoreOutput, scoreOutputSchema } from '@leadpilot/shared';
+import type { Env } from '../config/env.schema';
 import { EnrichmentService } from '../enrichment/enrichment.service';
 import { Prisma } from '../generated/prisma/client';
 import { TenantPrisma } from '../prisma/tenant-prisma.service';
@@ -37,6 +39,7 @@ export class ScoringService {
     private readonly enrichment: EnrichmentService,
     private readonly prompts: PromptService,
     @Inject(LLM_PROVIDER) private readonly llm: LlmProvider,
+    private readonly config: ConfigService<Env, true>,
   ) {}
 
   async scoreLead(job: ProcessLeadJob, now: Date = new Date()): Promise<void> {
@@ -58,7 +61,10 @@ export class ScoringService {
       where: { createdAt: { gte: monthStart(now) } },
       _sum: { costUsd: true },
     });
-    const limit = workspace.aiMonthlyLimitUsd;
+    // A workspace with no limit of its own gets the default: unlimited is never the silent setting.
+    const fallbackLimit = this.config.get('AI_DEFAULT_MONTHLY_LIMIT_USD', { infer: true });
+    const limit =
+      workspace.aiMonthlyLimitUsd ?? (fallbackLimit > 0 ? new Prisma.Decimal(fallbackLimit) : null);
     if (limit !== null && (spent._sum.costUsd ?? new Prisma.Decimal(0)).gte(limit)) {
       fallback = 'limit';
     }
@@ -230,8 +236,10 @@ export class ScoringService {
           latencyMs: r.latencyMs,
         },
       });
-      await tx.lead.update({
-        where: { id: job.leadId },
+      // Conditional on "no override yet" in the SAME statement: an override that commits between the
+      // check above and this write still wins (the update then matches nothing).
+      await tx.lead.updateMany({
+        where: { id: job.leadId, feedback: { none: { kind: 'override' } } },
         data: locked
           ? {}
           : {

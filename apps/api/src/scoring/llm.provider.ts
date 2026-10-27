@@ -43,8 +43,12 @@ const PRICE_PER_MILLION: Record<string, { input: number; output: number }> = {
   'gpt-4o-mini': { input: 0.15, output: 0.6 },
 };
 
+/** Used for a model that is not listed: deliberately high, so the budget still works (and is never free by accident). */
+const UNLISTED_PRICE = { input: 15, output: 75 };
+
 export function costUsd(model: string, inputTokens: number, outputTokens: number): number {
-  const price = PRICE_PER_MILLION[model];
-  if (!price) return 0;
+  // The mock and the rules cost nothing; everything else costs at least the unlisted price.
+  if (model === 'mock-1' || model === 'rules-1') return 0;
+  const price = PRICE_PER_MILLION[model] ?? UNLISTED_PRICE;
   return (inputTokens * price.input + outputTokens * price.output) / 1_000_000;
 }

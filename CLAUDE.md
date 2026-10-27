@@ -17,6 +17,7 @@ Read `SPEC.md` for the product. This file is how we build it.
 - **No separate `tester` subagent.** Write the tests together with the code: per feature, the happy path plus ONE test per key security property (auth, tenancy, permissions, secrets, input reaching a database). No exhaustive permutations, no mutation testing, no re-running a suite to prove it is not flaky. Keep the cheap tests that caught real bugs (NUL bytes, spoofed `X-Forwarded-For`, chunked bodies).
 - **Locally run only the test files you changed**, plus lint and typecheck. CI runs the full suite.
 - **One `code-reviewer` pass per cluster of related steps** (e.g. all of ingest), not per step. Fix the blockers, then commit. UI-only milestones get one combined pass at the end (then tag).
+- **CI after every push.** After each push, check CI for THAT commit (GitHub check-runs API; no polling loops) before doing more work. If it is red, fix it first: never stack commits on a red CI. A push that adds a dependency or changes a lockfile or workspace file is the likeliest to break the install step, so check it first.
 - **Run only the Playwright specs you changed** while working (`pnpm exec playwright test <file>` in `apps/web`).
 - **One screenshot per screen** (per state that matters) when showing the user your work, not a full matrix.
 - **Plans are 20 lines at most.** Say the endpoints or files, the gaps, and the states; skip the rest.

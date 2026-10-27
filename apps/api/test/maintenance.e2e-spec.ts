@@ -63,7 +63,7 @@ describe('Maintenance jobs (e2e)', () => {
     const oldLead = await lead({});
     const freshLead = await lead({});
     // Back-date the old lead (updatedAt is set by Prisma, so write it with a raw timestamp via update).
-    await prisma.$executeRaw`UPDATE "Lead" SET "updatedAt" = ${old} WHERE id = ${oldLead.id}::uuid`;
+    await prisma.$executeRaw`UPDATE "Lead" SET "updatedAt" = ${old}, "createdAt" = ${old} WHERE id = ${oldLead.id}::uuid`;
     const event = (leadId: string, createdAt: Date) =>
       prisma.leadEvent.create({
         data: {
@@ -155,5 +155,74 @@ describe('Maintenance jobs (e2e)', () => {
     });
     expect(await queue.getJob(`${fresh.id}-score`)).toBeUndefined();
     await queue.getJob(`${stuck.id}-score`).then((job) => job?.remove());
+  });
+
+  it('keeps a raw payload while new submissions keep arriving, and re-queues a lead stuck in PROCESSING', async () => {
+    const t = await setup();
+    const old = new Date(Date.now() - 100 * DAY);
+    const make = (email: string, extra: object = {}) =>
+      prisma.lead.create({
+        data: {
+          workspaceId: t.workspaceId,
+          sourceId: t.sourceId,
+          email: `${email}-${randomBytes(3).toString('hex')}@acme-test.com`,
+          rawPayload: { note: 'keep me' },
+          createdAt: old,
+          ...extra,
+        },
+      });
+    const active = await make('active');
+    await prisma.leadEvent.create({
+      data: {
+        workspaceId: t.workspaceId,
+        leadId: active.id,
+        type: 'ingested',
+        payload: { rawPayload: { n: 1 } },
+      },
+    });
+    const stuck = await make('stuck', { status: 'PROCESSING', createdAt: new Date() });
+    await prisma.$executeRaw`UPDATE "Lead" SET "updatedAt" = ${new Date(Date.now() - 30 * 60_000)} WHERE id = ${stuck.id}::uuid`;
+
+    const maintenance = app.get(MaintenanceService);
+    await maintenance.cleanup();
+    expect((await prisma.lead.findUniqueOrThrow({ where: { id: active.id } })).rawPayload).toEqual({
+      note: 'keep me',
+    });
+
+    await maintenance.requeueStuckLeads();
+    expect(await app.get(PipelineQueue).queue.getJob(`${stuck.id}-score`)).toBeDefined();
+  });
+
+  it('keeps a revoked refresh token until it has expired (presenting it is how theft is detected)', async () => {
+    const t = await setup();
+    const membership = await prisma.membership.findFirstOrThrow({
+      where: { workspaceId: t.workspaceId },
+    });
+    const token = (hash: string, expiresAt: Date, revokedAt: Date | null) =>
+      prisma.refreshToken.create({
+        data: {
+          workspaceId: t.workspaceId,
+          userId: membership.userId,
+          tokenHash: `${hash}-${randomBytes(4).toString('hex')}`,
+          familyId: crypto.randomUUID(),
+          expiresAt,
+          revokedAt,
+        },
+      });
+    const revokedButLive = await token(
+      'live',
+      new Date(Date.now() + 10 * DAY),
+      new Date(Date.now() - 5 * DAY),
+    );
+    const longExpired = await token(
+      'dead',
+      new Date(Date.now() - 5 * DAY),
+      new Date(Date.now() - 6 * DAY),
+    );
+    await app.get(MaintenanceService).cleanup();
+    expect(
+      await prisma.refreshToken.findUnique({ where: { id: revokedButLive.id } }),
+    ).not.toBeNull();
+    expect(await prisma.refreshToken.findUnique({ where: { id: longExpired.id } })).toBeNull();
   });
 });

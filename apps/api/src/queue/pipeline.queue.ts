@@ -47,7 +47,12 @@ export class PipelineQueue implements OnApplicationShutdown {
    */
   async enqueueLead(job: ProcessLeadJob): Promise<void> {
     try {
-      await this.queue.add('process-lead', job, { jobId: `${job.leadId}-score` });
+      const jobId = `${job.leadId}-score`;
+      // BullMQ ignores an add() whose id still exists, a failed job (kept for a week) included:
+      // clear it, or "look again" and the recovery sweep would silently do nothing.
+      const existing = await this.queue.getJob(jobId);
+      if (existing && (await existing.isFailed())) await existing.remove();
+      await this.queue.add('process-lead', job, { jobId });
     } catch (error) {
       this.logger.warn(`Could not queue lead ${job.leadId}: ${(error as Error).message}`);
     }

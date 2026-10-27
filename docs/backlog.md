@@ -67,6 +67,8 @@ Items raised in reviews that belong to a later milestone. Each milestone plan st
 - Real Anthropic / OpenAI adapters are tested with a fake `fetch` only (no key was used). Run `pnpm eval` with a key before relying on them, and check the model names and prices.
 - `pnpm eval` uses a hand-made set of 50 labelled leads and a rule-based baseline (mock). Replace the labels with exported Review-queue corrections (`Feedback` rows) once there are enough.
 - The website fetch (`ENRICHMENT_PROVIDER=website`) reads only the homepage. Add a short robots.txt check and a per-host politeness delay before enabling it in production.
+- Approve is not tied to the rating the person saw: if a re-score lands between opening the Review queue and clicking Approve, the new rating is the one marked approved. Send the score id with the review and require it to match. Spend is also recorded only when a score is saved: the tokens of a call whose retry fails are lost, and concurrent workers can overshoot the budget by about one call each. Record usage per call.
+- A lead merged while its job is still running is not re-rated (same job id). A prompt-injected lead can still be rated Hot with high confidence and skip review: before M4 routing acts on Hot leads, consider forcing review when the text carries injection markers. Never auto-send `suggestedReply`.
 - Re-scoring after the ideal customer changes is a button ("also look again") on the Ideal customer form; a rubric version number on each score would show which leads were rated by an older rubric.
 
 ## M4 – Routing & actions
