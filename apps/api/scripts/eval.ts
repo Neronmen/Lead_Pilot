@@ -12,7 +12,7 @@
  * plumbing and the rule-based baseline. Real accuracy needs a real model and
  * real labels (the corrections people make on the Review queue are the source).
  */
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { scoreOutputSchema, type IcpRubric, type ScoreOutput } from '@leadpilot/shared';
 import { chooseLlm } from '../src/scoring/llm.factory';
@@ -39,6 +39,11 @@ interface RunResult {
   avgCostUsd: number;
   avgLatencyMs: number;
 }
+
+// The API reads the repo's .env through Nest; this script does not start Nest, so it reads the
+// same file itself (variables already set in the shell win). Without this it would silently use the mock.
+const envFile = resolve(__dirname, '../../../../.env');
+if (existsSync(envFile)) process.loadEnvFile(envFile);
 
 const root = resolve(__dirname, '../../../../evals');
 const rubric = JSON.parse(readFileSync(resolve(root, 'rubric.json'), 'utf8')) as IcpRubric;
@@ -113,6 +118,12 @@ async function main(): Promise<void> {
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     GEMINI_API_KEY: process.env.GEMINI_API_KEY,
   });
+  const wanted = process.env.LLM_PROVIDER ?? 'auto';
+  if (llm.name === 'mock' && wanted !== 'auto' && wanted !== 'mock') {
+    console.log(
+      `WARNING: LLM_PROVIDER=${wanted}, but its API key was not found (looked in the shell and in ${envFile}), so the free mock is used.`,
+    );
+  }
   console.log(
     `Scorer: ${llm.name} (${llm.model})${llm.name === 'mock' ? ' - the free built-in mock' : ''}`,
   );
