@@ -12,5 +12,6 @@ allowBuilds:
   '@scarf/scarf': false
   '@swc/core': false # prebuilt binaries ship as optional deps; next-intl uses it only for its optional message extractor
   argon2: false # ships prebuilt binaries; the script only compiles a fallback
+  msgpackr-extract: false # BullMQ's optional speed-up for msgpack: prebuilt binaries ship as optional deps, and without it BullMQ falls back to plain JavaScript
   prisma: true
   unrs-resolver: false
