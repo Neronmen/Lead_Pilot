@@ -22,6 +22,13 @@ Read `SPEC.md` for the product. This file is how we build it.
 - **One screenshot per screen** (per state that matters) when showing the user your work, not a full matrix.
 - **Plans are 20 lines at most.** Say the endpoints or files, the gaps, and the states; skip the rest.
 
+## Communication with the owner
+- Talk to the owner (reports, plans, questions, explanations, errors) in **simple Vietnamese**. They are a junior developer who reads English fine but prefers Vietnamese for explanations. Explain jargon in one short sentence the first time, or use a plain word instead.
+- Code, comments, commit messages, docs, README, test names and UI strings stay as they are (English in code and docs; EN + VI in the app).
+- Reports are **at most 8 lines**. Always end with two lines: **"Việc bạn cần làm:"** (the owner's steps, exact commands, or "không có") and **"Tôi đã làm:"** (one line).
+- When something needs the owner's decision, give a **recommended option first** and the reason in one line.
+- A command or file path for the owner to run goes in a code block, and says which terminal and folder.
+
 ## Stack & layout
 - pnpm workspaces + Turborepo. `apps/api` (NestJS), `apps/web` (Next.js App Router), `packages/shared` (zod schemas/types).
 - Database: PostgreSQL via Prisma. Queues: BullMQ + Redis. Validation: zod (shared), DTOs in Nest.

@@ -52,7 +52,12 @@ export const scoreOutputSchema = z.strictObject({
   isSpam: z.boolean(),
   confidence: z.number().min(0).max(1),
   reasons: z.array(z.string().trim().min(1).max(300)).min(1).max(8),
-  suggestedReply: z.string().trim().max(2000).optional(),
+  // Models often write "suggestedReply": null when they have nothing to suggest (Gemini did in 22 of
+  // 50 eval answers): that means "none", not a broken answer.
+  suggestedReply: z.preprocess(
+    (value) => (value === null ? undefined : value),
+    z.string().trim().max(2000).optional(),
+  ),
 });
 
 export type IcpRubric = z.infer<typeof icpRubricSchema>;

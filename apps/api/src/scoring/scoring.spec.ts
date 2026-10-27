@@ -34,6 +34,30 @@ const input = (over: Partial<ScoringInput> = {}): ScoringInput => ({
   ...over,
 });
 
+describe('the AI answer schema', () => {
+  const answer = { score: 50, tier: 'warm', isSpam: false, confidence: 0.7, reasons: ['ok'] };
+
+  it('accepts "suggestedReply": null as "no suggestion" (Gemini does this), and still refuses real mistakes', () => {
+    expect(
+      scoreOutputSchema.parse({ ...answer, suggestedReply: null }).suggestedReply,
+    ).toBeUndefined();
+    expect(scoreOutputSchema.parse(answer).suggestedReply).toBeUndefined();
+    expect(scoreOutputSchema.parse({ ...answer, suggestedReply: ' Hi ' }).suggestedReply).toBe(
+      'Hi',
+    );
+    for (const bad of [
+      { ...answer, suggestedReply: 5 },
+      { ...answer, tier: 'lukewarm' },
+      { ...answer, score: 101 },
+      { ...answer, confidence: null },
+      { ...answer, reasons: [] },
+      { ...answer, extra: 1 },
+    ]) {
+      expect(scoreOutputSchema.safeParse(bad).success).toBe(false);
+    }
+  });
+});
+
 describe('ruleScore', () => {
   it('scores a good fit high and always answers in the schema the AI must use', () => {
     const answer = ruleScore(input());
