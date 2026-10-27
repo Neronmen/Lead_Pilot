@@ -39,6 +39,10 @@ const values = {
   rejected: 4,
   replayed: 1,
   who: 'Ann Lee',
+  score: 82,
+  tier: 'Hot',
+  percent: 70,
+  domain: 'acme.com',
 };
 
 describe.each([

@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 // started, General, Lead sources...) joins in the milestone that builds each.
 const SECTIONS = [
   { id: 'sources', href: '/settings/sources' },
+  { id: 'ideal', href: '/settings/ideal-customer' },
   { id: 'team', href: '/settings/team' },
   { id: 'advanced', href: '/settings/advanced' },
 ] as const;

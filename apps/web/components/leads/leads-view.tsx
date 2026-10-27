@@ -1,6 +1,6 @@
 'use client';
 
-import type { LeadListItem, LeadStatus } from '@leadpilot/shared';
+import type { LeadListItem, LeadStatus, LeadTier } from '@leadpilot/shared';
 import { LoaderCircle, Plug, Search, SearchX, Users } from 'lucide-react';
 import { useFormatter, useNow, useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -13,12 +13,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { NativeSelect } from '@/components/ui/native-select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { TierBadge } from './tier-badge';
 import { hasFilters, NO_FILTERS, useLeads, type LeadFilters } from '@/lib/leads/use-leads';
 import { useSources } from '@/lib/sources/use-sources';
 import { cn } from '@/lib/utils';
 
 const STATUSES: LeadStatus[] = ['NEW', 'PROCESSING', 'NEEDS_REVIEW', 'SCORED', 'ROUTED', 'FAILED'];
 const SEARCH_DELAY_MS = 300;
+const TIERS: LeadTier[] = ['HOT', 'WARM', 'COLD', 'JUNK'];
 
 /**
  * The Leads list: newest first, 56 px rows, filters and search. Tier and score
@@ -26,6 +28,7 @@ const SEARCH_DELAY_MS = 300;
  */
 export function LeadsView() {
   const t = useTranslations('leads');
+  const tiers = useTranslations('tiers');
   const me = useCurrentMe();
   const admin = canManage(me.role);
   const [filters, setFilters] = useState<LeadFilters>(NO_FILTERS);
@@ -83,6 +86,21 @@ export function LeadsView() {
             {STATUSES.map((status) => (
               <option key={status} value={status}>
                 {t(`statusName.${status}`)}
+              </option>
+            ))}
+          </NativeSelect>
+        </Filter>
+        <Filter label={t('tier')}>
+          <NativeSelect
+            value={filters.tier}
+            onChange={(event) =>
+              setFilters({ ...filters, tier: event.target.value as LeadFilters['tier'] })
+            }
+          >
+            <option value="">{t('allTiers')}</option>
+            {TIERS.map((tier) => (
+              <option key={tier} value={tier}>
+                {tiers(tier)}
               </option>
             ))}
           </NativeSelect>
@@ -167,10 +185,11 @@ export function LeadsView() {
             aria-label={t('title')}
             className="overflow-x-auto rounded-xl border border-border bg-card"
           >
-            <table className="w-full min-w-[760px] border-collapse text-[13px]">
+            <table className="w-full min-w-[860px] border-collapse text-[13px]">
               <thead>
                 <tr className="text-left text-xs text-muted-foreground">
                   <Th first>{t('colLead')}</Th>
+                  <Th>{t('colRating')}</Th>
                   <Th>{t('colCompany')}</Th>
                   <Th>{t('colSource')}</Th>
                   <Th>{t('colStatus')}</Th>
@@ -241,15 +260,30 @@ function LeadRow({ lead, now }: { lead: LeadListItem; now: Date }) {
   return (
     <tr className="h-14 border-b border-border last:border-b-0 hover:bg-hover">
       <td className="max-w-[260px] px-[18px]">
-        <div className="truncate font-medium" title={lead.name ?? undefined}>
+        <Link
+          href={`/leads/${lead.id}`}
+          className="block truncate font-medium hover:underline focus-visible:underline"
+          title={lead.name ?? undefined}
+        >
           {lead.name ?? <span className="text-muted-foreground">{t('unnamed')}</span>}
-        </div>
+          <span className="sr-only"> {lead.email ?? lead.phone}</span>
+        </Link>
         <div
           className="truncate text-muted-foreground"
           title={lead.email ?? lead.phone ?? undefined}
         >
           {lead.email ?? lead.phone}
         </div>
+      </td>
+      <td className="px-3 whitespace-nowrap">
+        {lead.tier ? (
+          <span className="flex items-center gap-2">
+            <TierBadge tier={lead.tier} />
+            <span className="text-muted-foreground tabular-nums">{lead.score}</span>
+          </span>
+        ) : (
+          <span className="text-muted-foreground">{'–'}</span>
+        )}
       </td>
       <td className="max-w-[220px] px-3">
         <div className="flex items-center gap-2">

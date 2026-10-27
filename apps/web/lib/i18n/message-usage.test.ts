@@ -38,8 +38,8 @@ function has(messages: Dict, key: string): boolean {
 const ROLES = ['OWNER', 'ADMIN', 'MEMBER'];
 const DYNAMIC: Record<string, string[]> = {
   'shell.roles.${me.role}': ROLES.map((r) => `shell.roles.${r}`),
-  'shell.nav.${id}': ['leads', 'settings'].map((id) => `shell.nav.${id}`),
-  'settings.nav.${id}': ['sources', 'team', 'advanced'].map((id) => `settings.nav.${id}`),
+  'shell.nav.${id}': ['leads', 'review', 'settings'].map((id) => `shell.nav.${id}`),
+  'settings.nav.${id}': ['sources', 'ideal', 'team', 'advanced'].map((id) => `settings.nav.${id}`),
   'sources.kind.${source.type}': ['WEBHOOK', 'FORM', 'CSV'].map((t) => `sources.kind.${t}`),
   'sources.form.${value}': ['zapier', 'other'].map((v) => `sources.form.${v}`),
   'sources.form.${value}Hint': ['zapier', 'other'].map((v) => `sources.form.${v}Hint`),
@@ -197,10 +197,11 @@ describe('message keys used by the app shell exist in EN and VI', () => {
   it('sidebar nav ids and role values in the source match what this test enumerates', () => {
     const sidebar = readFileSync(join(root, 'components/app-shell/sidebar.tsx'), 'utf8');
     const ids = [...sidebar.matchAll(/id: '(\w+)',\s*href/g)].map((m) => m[1]);
-    expect(ids.sort()).toEqual(['leads', 'settings']);
+    expect(ids.sort()).toEqual(['leads', 'review', 'settings']);
     const settings = readFileSync(join(root, 'components/settings/settings-frame.tsx'), 'utf8');
     expect([...settings.matchAll(/id: '(\w+)',\s*href/g)].map((m) => m[1])).toEqual([
       'sources',
+      'ideal',
       'team',
       'advanced',
     ]);

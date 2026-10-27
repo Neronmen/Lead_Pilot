@@ -2,7 +2,14 @@
 
 import { meResponseSchema } from '@leadpilot/shared';
 import { useQueryClient } from '@tanstack/react-query';
-import { LogOut, MoreHorizontal, SlidersHorizontal, Users, type LucideIcon } from 'lucide-react';
+import {
+  ClipboardCheck,
+  LogOut,
+  MoreHorizontal,
+  SlidersHorizontal,
+  Users,
+  type LucideIcon,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -25,7 +32,7 @@ import { cn } from '@/lib/utils';
 import { canManage, useCurrentMe } from './me-context';
 
 interface NavItem {
-  id: 'leads' | 'settings';
+  id: 'leads' | 'review' | 'settings';
   href: string;
   /** Pages under this path keep the item highlighted. */
   match: string;
@@ -37,6 +44,7 @@ interface NavItem {
 // list in the milestone that builds them (SPEC §7).
 const NAV: NavItem[] = [
   { id: 'leads', href: '/leads', match: '/leads', icon: Users, adminOnly: false },
+  { id: 'review', href: '/review', match: '/review', icon: ClipboardCheck, adminOnly: false },
   {
     id: 'settings',
     href: '/settings/sources',

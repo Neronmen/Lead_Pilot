@@ -13,9 +13,9 @@ describe('leadsQuery', () => {
   });
 
   it('sends only the filters that are set, and the cursor', () => {
-    expect(leadsQuery({ q: '', status: 'NEW', sourceId: '', freeMail: 'true' }, 'abc')).toBe(
-      '?status=NEW&freeMail=true&cursor=abc',
-    );
+    expect(
+      leadsQuery({ q: '', status: 'NEW', tier: '', sourceId: '', freeMail: 'true' }, 'abc'),
+    ).toBe('?status=NEW&freeMail=true&cursor=abc');
   });
 });
 

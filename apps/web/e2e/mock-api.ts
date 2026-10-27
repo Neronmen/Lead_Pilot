@@ -54,6 +54,15 @@ export class MockApi {
   sources: MockSource[] = [];
   /** Leads, newest first. */
   leads: MockLead[] = [];
+  /** The saved ideal customer (null: never saved). */
+  rubric: {
+    industries: string[];
+    companySizes: string[];
+    countries: string[];
+    budgetSignals: string[];
+    disqualifiers: string[];
+    notes: string | null;
+  } | null = null;
   private running = 0;
   private readonly name: string | null;
   private readonly delay: number;
@@ -133,7 +142,10 @@ export class MockApi {
       company,
       country: null,
       isFreeMail: false,
-      status: 'NEW',
+      status: 'SCORED',
+      tier: 'WARM',
+      score: 60,
+      confidence: 0.8,
       source: {
         id: this.sources[sourceIndex]!.id,
         name: this.sources[sourceIndex]!.name,
@@ -146,18 +158,42 @@ export class MockApi {
       ...over,
     });
     this.leads = [
-      lead(1, 'Ann Lee', 'ann.lee@brightpath.io', 'Brightpath', 0, { submissions: 3 }),
-      lead(2, 'Nguyễn Văn An', 'an@acme.vn', 'Acme Vietnam', 0, { status: 'NEEDS_REVIEW' }),
+      lead(1, 'Ann Lee', 'ann.lee@brightpath.io', 'Brightpath', 0, {
+        submissions: 3,
+        tier: 'HOT',
+        score: 88,
+        confidence: 0.91,
+      }),
+      lead(2, 'Nguyễn Văn An', 'an@acme.vn', 'Acme Vietnam', 0, {
+        status: 'NEEDS_REVIEW',
+        tier: 'WARM',
+        score: 58,
+        confidence: 0.42,
+      }),
       lead(3, null, 'sam@gmail.com', null, 1, {
         isFreeMail: true,
+        status: 'NEEDS_REVIEW',
+        tier: 'COLD',
+        score: 30,
+        confidence: 0.35,
         possibleDuplicateOf: {
           id: 'eeeeeeee-0000-4000-8000-000000000001',
           name: 'Ann Lee',
           email: 'ann.lee@brightpath.io',
         },
       }),
-      lead(5, 'Priya Shah', 'priya@northwind.com', 'Northwind', 0, { status: 'ROUTED' }),
-      lead(8, 'Tom Becker', 'tom@becker.de', 'Becker GmbH', 1, { status: 'FAILED' }),
+      lead(5, 'Priya Shah', 'priya@northwind.com', 'Northwind', 0, {
+        status: 'ROUTED',
+        tier: 'HOT',
+        score: 92,
+        confidence: 0.95,
+      }),
+      lead(8, 'Tom Becker', 'tom@becker.de', 'Becker GmbH', 1, {
+        status: 'FAILED',
+        tier: null,
+        score: null,
+        confidence: null,
+      }),
     ];
   }
 
@@ -250,7 +286,7 @@ export class MockApi {
       'access-control-allow-origin': origin,
       'access-control-allow-credentials': 'true',
       'access-control-allow-headers': 'content-type,authorization,accept',
-      'access-control-allow-methods': 'GET,POST,PATCH,DELETE,OPTIONS',
+      'access-control-allow-methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
     };
     const json = (status: number, body: unknown) =>
       route.fulfill({ status, headers: cors, contentType: 'application/json', json: body });
@@ -312,10 +348,12 @@ export class MockApi {
     if (path === '/leads' && method === 'GET') {
       const params = new URL(request.url()).searchParams;
       const q = params.get('q')?.toLowerCase();
-      const rows = this.leads.filter(
+      const ordered = params.get('order') === 'oldest' ? [...this.leads].reverse() : this.leads;
+      const rows = ordered.filter(
         (l) =>
           (!q || [l.name, l.email, l.company].some((v) => v?.toLowerCase().includes(q))) &&
           (!params.get('status') || l.status === params.get('status')) &&
+          (!params.get('tier') || l.tier === params.get('tier')) &&
           (!params.get('sourceId') || l.source.id === params.get('sourceId')) &&
           (!params.get('freeMail') || String(l.isFreeMail) === params.get('freeMail')),
       );
@@ -326,6 +364,99 @@ export class MockApi {
       const items = rows.slice(start, start + limit);
       const more = start + limit < rows.length;
       return json(200, { items, nextCursor: more ? items[items.length - 1]!.id : null });
+    }
+    if (path === '/leads/rescore' && method === 'POST') {
+      return json(200, { queued: this.leads.filter((l) => l.status !== 'ROUTED').length });
+    }
+    const leadRoute = /^\/leads\/([0-9a-f-]{36})(\/review)?$/.exec(path);
+    if (leadRoute) {
+      const lead = this.leads.find((l) => l.id === leadRoute[1]);
+      if (!lead) return json(404, { error: { code: 'NOT_FOUND', message: 'x' } });
+      if (leadRoute[2] && method === 'POST') {
+        const body = sent as {
+          action: 'approve' | 'override';
+          tier?: MockLead['tier'];
+          score?: number;
+        };
+        if (body.action === 'approve' && lead.status !== 'NEEDS_REVIEW') {
+          return json(409, { error: { code: 'CONFLICT', message: 'x' } });
+        }
+        if (body.action === 'override') {
+          lead.tier = body.tier ?? lead.tier;
+          lead.score = body.score ?? lead.score;
+        }
+        if (lead.status === 'NEEDS_REVIEW') lead.status = 'SCORED';
+        return route.fulfill({ status: 204, headers: cors });
+      }
+      if (!leadRoute[2] && method === 'GET') {
+        const at = (minutes: number) => new Date(Date.now() - minutes * 60_000).toISOString();
+        return json(200, {
+          ...lead,
+          domain: lead.isFreeMail ? null : 'acme.com',
+          customFields: { budget: '5000' },
+          companyInfo: lead.isFreeMail
+            ? null
+            : {
+                status: 'ok',
+                title: 'Acme – logistics software',
+                description: 'Software for logistics teams.',
+              },
+          latestScore: lead.tier
+            ? {
+                id: 'ffffffff-0000-4000-8000-000000000001',
+                provider: 'mock',
+                model: 'mock-1',
+                ratedWithoutAi: false,
+                reasons: [
+                  'Uses a company email address.',
+                  'Names a company.',
+                  'Based in a country you target.',
+                ],
+                suggestedReply:
+                  'Hi, thanks for getting in touch. When is a good time for a short call?',
+                costUsd: 0.0021,
+                createdAt: at(30),
+              }
+            : null,
+          events: [
+            {
+              id: 'a0000000-0000-4000-8000-000000000003',
+              type: 'scored',
+              payload: { tier: lead.tier?.toLowerCase(), score: lead.score, ratedWithoutAi: false },
+              createdAt: at(29),
+            },
+            {
+              id: 'a0000000-0000-4000-8000-000000000002',
+              type: 'enriched',
+              payload: { domain: 'acme.com', status: 'ok' },
+              createdAt: at(30),
+            },
+            {
+              id: 'a0000000-0000-4000-8000-000000000001',
+              type: 'ingested',
+              payload: {},
+              createdAt: at(31),
+            },
+          ],
+        });
+      }
+    }
+    if (path === '/icp-rubric' && method === 'GET') {
+      return json(200, {
+        ...(this.rubric ?? {
+          industries: [],
+          companySizes: [],
+          countries: [],
+          budgetSignals: [],
+          disqualifiers: [],
+          notes: null,
+        }),
+        updatedAt: this.rubric ? new Date().toISOString() : null,
+      });
+    }
+    if (path === '/icp-rubric' && method === 'PUT') {
+      this.rubric = sent as NonNullable<typeof this.rubric>;
+      return json(200, { ...this.rubric, updatedAt: new Date().toISOString() });
     }
     if (path === '/sources' && method === 'GET') return json(200, this.sources);
     if (path === '/sources' && method === 'POST') {
@@ -469,7 +600,10 @@ export interface MockLead {
   company: string | null;
   country: string | null;
   isFreeMail: boolean;
-  status: 'NEW' | 'PROCESSING' | 'NEEDS_REVIEW' | 'ROUTED' | 'FAILED';
+  status: 'NEW' | 'PROCESSING' | 'NEEDS_REVIEW' | 'SCORED' | 'ROUTED' | 'FAILED';
+  tier: 'HOT' | 'WARM' | 'COLD' | 'JUNK' | null;
+  score: number | null;
+  confidence: number | null;
   source: { id: string; name: string; type: 'WEBHOOK' | 'FORM' | 'CSV' };
   owner: { id: string; name: string | null } | null;
   submissions: number;

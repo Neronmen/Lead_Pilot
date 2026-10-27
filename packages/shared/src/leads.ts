@@ -21,6 +21,8 @@ export const listLeadsQuerySchema = z.strictObject({
   tier: leadTierSchema.optional(),
   /** "true": only free-mail leads; "false": only company addresses. */
   freeMail: z.enum(['true', 'false']).optional(),
+  /** "oldest" is the Review queue (oldest waiting first); the default is newest first. */
+  order: z.enum(['newest', 'oldest']).default('newest'),
   /** `nextCursor` of the previous page. */
   cursor: idSchema.optional(),
   limit: z.coerce.number().int().min(1).max(100).default(25),
@@ -84,7 +86,7 @@ export const leadDetailSchema = leadListItemSchema.extend({
   domain: z.string().nullable(),
   customFields: z.record(z.string(), z.unknown()),
   /** What was read from the company's website; null when there is no domain or no lookup yet. */
-  company: z
+  companyInfo: z
     .object({
       status: z.enum(['ok', 'unreachable']),
       title: z.string().nullable(),

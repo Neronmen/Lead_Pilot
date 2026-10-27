@@ -194,7 +194,7 @@ describe('Leads list (e2e)', () => {
         domain: 'acme.com',
         status: expect.stringMatching(/SCORED|NEEDS_REVIEW/),
         latestScore: { provider: 'mock', ratedWithoutAi: false, reasons: expect.any(Array) },
-        company: { status: 'ok' },
+        companyInfo: { status: 'ok' },
       });
       expect(detail.body.latestScore.reasons.length).toBeGreaterThan(0);
       const types = (detail.body.events as Array<{ type: string }>).map((e) => e.type);
@@ -366,6 +366,25 @@ describe('Leads list (e2e)', () => {
       expect(await queue.getJob(`${rated.id}-score`)).toBeUndefined();
       expect(await queue.getJob(`${foreign.id}-score`)).toBeUndefined();
       expect(await queue.getJob(`${routed.id}-score`)).toBeUndefined();
+    });
+
+    it('lists oldest first for the review queue, paging in the same direction', async () => {
+      const t = await setup();
+      for (const n of ['a', 'b', 'c'])
+        await t.lead({ email: `${n}@acme.com`, status: 'NEEDS_REVIEW' });
+      const first = await get(t.owner, '?status=NEEDS_REVIEW&order=oldest&limit=2').expect(200);
+      expect((first.body.items as Array<{ email: string }>).map((l) => l.email)).toEqual([
+        'a@acme.com',
+        'b@acme.com',
+      ]);
+      const next = await get(
+        t.owner,
+        `?status=NEEDS_REVIEW&order=oldest&limit=2&cursor=${first.body.nextCursor}`,
+      ).expect(200);
+      expect((next.body.items as Array<{ email: string }>).map((l) => l.email)).toEqual([
+        'c@acme.com',
+      ]);
+      await get(t.owner, '?order=sideways').expect(400);
     });
 
     it('filters the list by tier', async () => {

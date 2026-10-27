@@ -80,10 +80,10 @@ export class LeadsService {
         { phone: search },
       ];
     }
-    // Ids are time-ordered (UUIDv7), so id order is newest first and a stable cursor.
+    // Ids are time-ordered (UUIDv7), so id order is date order and a stable cursor.
     const rows = await db.lead.findMany({
       where,
-      orderBy: { id: 'desc' },
+      orderBy: { id: query.order === 'oldest' ? 'asc' : 'desc' },
       take: query.limit + 1,
       ...(query.cursor ? { cursor: { id: query.cursor }, skip: 1 } : {}),
       include: LIST_INCLUDE,
@@ -125,7 +125,7 @@ export class LeadsService {
       ...toItem(row, submissions),
       domain: row.domain,
       customFields: (row.customFields ?? {}) as Record<string, unknown>,
-      company: company
+      companyInfo: company
         ? { status: company.status, title: company.title, description: company.description }
         : null,
       latestScore: score

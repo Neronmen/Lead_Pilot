@@ -33,6 +33,11 @@ const SAME_IN_BOTH = new Set([
   'auth.signup.languages.en',
   'auth.signup.languages.vi',
   'auth.invite.email',
+  // A number, a dash and two technical words that Vietnamese uses as they are.
+  'leadDetail.score',
+  'leadDetail.none',
+  'leadDetail.email',
+  'leadDetail.website',
 ]);
 
 test('every Vietnamese message differs from the English one (nothing left untranslated)', () => {

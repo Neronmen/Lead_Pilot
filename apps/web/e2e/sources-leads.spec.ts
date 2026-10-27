@@ -235,16 +235,19 @@ test.describe('Leads list', () => {
     expect(consoleProblems.filter((text) => text.includes('ENVIRONMENT_FALLBACK'))).toEqual([]);
     await expect(page.getByRole('columnheader')).toHaveText([
       t.colLead,
+      t.colRating,
       t.colCompany,
       t.colSource,
       t.colStatus,
       t.colAdded,
     ]);
-    await expect(page.getByText(/tier|score/i)).toHaveCount(0);
+    // Ratings show with their tier name (colour is never the only signal).
+    await expect(page.getByRole('row').filter({ hasText: 'Ann Lee' })).toContainText('Hot');
+    await expect(page.getByRole('row').filter({ hasText: 'Tom Becker' })).toContainText('Failed');
     await expect(page.getByRole('row').filter({ hasText: 'sam@gmail.com' })).toContainText(
       t.freeBadge,
     );
-    await expect(page.getByRole('row').filter({ hasText: 'Ann Lee' })).toContainText('New');
+    await expect(page.getByRole('row').filter({ hasText: 'Ann Lee' })).toContainText('Scored');
     await expect(page.getByRole('row').filter({ hasText: 'Ann Lee' })).toContainText(
       'Sent 3 times',
     );
@@ -264,7 +267,7 @@ test.describe('Leads list', () => {
     await expect(page.getByRole('row')).toHaveCount(6);
 
     await page.getByLabel(t.status).selectOption('NEEDS_REVIEW');
-    await expect(page.getByRole('row')).toHaveCount(2);
+    await expect(page.getByRole('row')).toHaveCount(3);
     await page.getByLabel(t.status).selectOption('');
     await page.getByLabel(t.email).selectOption('true');
     await expect(page.getByRole('row')).toHaveCount(2);
