@@ -34,7 +34,7 @@ describe('GeminiLlmProvider (fake fetch: nothing leaves the machine)', () => {
       contents: [{ role: 'user', parts: [{ text: 'usr' }] }],
       generationConfig: {
         temperature: 0,
-        maxOutputTokens: 800,
+        maxOutputTokens: 4096,
         responseMimeType: 'application/json',
       },
     });
@@ -50,6 +50,10 @@ describe('GeminiLlmProvider (fake fetch: nothing leaves the machine)', () => {
       () => ok({ candidates: [] }),
       () => ok({ candidates: [{ content: { parts: [] } }] }),
       () => ok({ promptFeedback: { blockReason: 'SAFETY' } }),
+      () =>
+        ok({
+          candidates: [{ finishReason: 'MAX_TOKENS', content: { parts: [{ text: '{"sc' }] } }],
+        }),
     ];
     for (const doFetch of failures) {
       const error = await make(doFetch)
@@ -58,6 +62,16 @@ describe('GeminiLlmProvider (fake fetch: nothing leaves the machine)', () => {
       expect(error).toBeInstanceOf(LlmError);
       expect(String((error as Error).message)).not.toMatch(/FAKE-gemini|html|bad key|SAFETY/);
     }
+  });
+
+  it('says WHY it stopped when the answer was cut off (a fixed word, never the answer)', async () => {
+    const provider = new GeminiLlmProvider(KEY, 'gemini-3.5-flash-lite', () =>
+      ok({
+        candidates: [{ finishReason: 'MAX_TOKENS', content: { parts: [{ text: '{"secret' }] } }],
+      }),
+    );
+    const error = await provider.complete({ system: 's', user: 'u' }).catch((e: unknown) => e);
+    expect((error as Error).message).toBe('The AI service stopped early (MAX_TOKENS)');
   });
 
   it('refuses a model name that could change the URL path', () => {

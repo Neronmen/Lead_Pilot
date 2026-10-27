@@ -142,15 +142,22 @@ export class GeminiLlmProvider implements LlmProvider {
         contents: [{ role: 'user', parts: [{ text: request.user }] }],
         generationConfig: {
           temperature: 0,
-          maxOutputTokens: 800,
+          // Newer Gemini models "think" first and the thinking counts against this limit: a small
+          // limit cut the JSON off in the middle. The answer itself is only ~150 tokens.
+          maxOutputTokens: 4096,
           responseMimeType: 'application/json',
         },
       },
     )) as {
-      candidates?: { content?: { parts?: { text?: string }[] } }[];
+      candidates?: { finishReason?: string; content?: { parts?: { text?: string }[] } }[];
       usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number };
     };
     const text = data.candidates?.[0]?.content?.parts?.map((part) => part.text ?? '').join('');
+    const finish = data.candidates?.[0]?.finishReason;
+    // A fixed list of words from Google, never the answer: safe to put in a message.
+    if (finish && /^[A-Z_]{3,40}$/.test(finish) && finish !== 'STOP') {
+      throw new LlmError(`The AI service stopped early (${finish})`);
+    }
     if (!text) throw new LlmError('The AI service sent no text');
     return {
       text,

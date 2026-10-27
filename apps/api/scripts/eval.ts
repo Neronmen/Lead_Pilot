@@ -36,6 +36,8 @@ interface RunResult {
   accuracy: number;
   matrix: Record<Tier, Record<Guess, number>>;
   invalid: number;
+  /** Why answers were unusable, most common first: an error message, "not JSON" or a schema problem. */
+  problems: [string, number][];
   avgCostUsd: number;
   avgLatencyMs: number;
 }
@@ -58,6 +60,8 @@ async function run(name: string, template: string, llm: LlmProvider): Promise<Ru
   ) as RunResult['matrix'];
   let correct = 0;
   let invalid = 0;
+  const problems = new Map<string, number>();
+  const note = (reason: string) => problems.set(reason, (problems.get(reason) ?? 0) + 1);
   let cost = 0;
   let latency = 0;
   for (const item of leads) {
@@ -71,8 +75,18 @@ async function run(name: string, template: string, llm: LlmProvider): Promise<Ru
       cost += costUsd(llm.model, answer.inputTokens, answer.outputTokens);
       const parsed = scoreOutputSchema.safeParse(extractJson(answer.text));
       if (parsed.success) guess = (parsed.data as ScoreOutput).isSpam ? 'junk' : parsed.data.tier;
-    } catch {
-      // An unusable answer counts as "invalid" (a miss), not as a crash of the run.
+      else
+        note(
+          `schema: ${parsed.error.issues[0]?.path.join('.') || 'answer'} (${parsed.error.issues[0]?.code})`,
+        );
+    } catch (error) {
+      // An unusable answer counts as "invalid" (a miss), not as a crash of the run. The reason is
+      // kept (messages hold a status code at most, never the key or the answer).
+      note(
+        error instanceof SyntaxError || (error as Error).message === 'no JSON object'
+          ? 'not valid JSON (cut off?)'
+          : String((error as Error).message).slice(0, 120),
+      );
     }
     latency += Date.now() - started;
     if (guess === 'invalid') invalid += 1;
@@ -84,6 +98,7 @@ async function run(name: string, template: string, llm: LlmProvider): Promise<Ru
     accuracy: correct / leads.length,
     matrix,
     invalid,
+    problems: [...problems.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5),
     avgCostUsd: cost / leads.length,
     avgLatencyMs: latency / leads.length,
   };
@@ -95,8 +110,11 @@ function print(result: RunResult): void {
     `  Accuracy (exact tier): ${(result.accuracy * 100).toFixed(1)}%  (${leads.length} leads)`,
   );
   console.log(`  Unusable answers: ${result.invalid}`);
+  for (const [reason, count] of result.problems) console.log(`    ${count} x ${reason}`);
   console.log(`  Average cost per lead: $${result.avgCostUsd.toFixed(5)}`);
-  console.log(`  Average latency: ${result.avgLatencyMs.toFixed(0)} ms`);
+  console.log(
+    `  Average latency: ${result.avgLatencyMs.toFixed(0)} ms (includes waiting for the pacing slot)`,
+  );
   console.log('\n  Rows: the label. Columns: what the scorer said.');
   console.log(`  ${'label'.padEnd(8)}${[...TIERS, 'invalid'].map((g) => g.padStart(9)).join('')}`);
   for (const tier of TIERS) {
