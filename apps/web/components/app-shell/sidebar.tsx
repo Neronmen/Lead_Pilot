@@ -39,7 +39,7 @@ const NAV: NavItem[] = [
   { id: 'leads', href: '/leads', match: '/leads', icon: Users, adminOnly: false },
   {
     id: 'settings',
-    href: '/settings/team',
+    href: '/settings/sources',
     match: '/settings',
     icon: SlidersHorizontal,
     adminOnly: true,

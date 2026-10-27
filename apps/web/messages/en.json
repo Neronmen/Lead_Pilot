@@ -51,7 +51,9 @@
     "title": "Settings",
     "navLabel": "Settings sections",
     "nav": {
-      "team": "Team"
+      "sources": "Lead sources",
+      "team": "Team",
+      "advanced": "Advanced / Developer"
     }
   },
   "noAccess": {
@@ -242,7 +244,42 @@
   "leads": {
     "title": "Leads",
     "emptyTitle": "No leads yet",
-    "emptyBody": "Leads will show up here as soon as they arrive."
+    "emptyBody": "Leads will show up here as soon as they arrive.",
+    "emptyAdminBody": "Connect a source and new leads show up here as they arrive.",
+    "connect": "Connect a source",
+    "loadTitle": "Couldn’t load your leads",
+    "loadBody": "Check your connection and try again.",
+    "retry": "Try again",
+    "search": "Search leads",
+    "searchPlaceholder": "Search name, email, company or phone",
+    "status": "Status",
+    "allStatuses": "All statuses",
+    "source": "Source",
+    "allSources": "All sources",
+    "email": "Email",
+    "anyEmail": "Any email",
+    "companyEmail": "Company emails",
+    "freeEmail": "Free email only",
+    "clear": "Clear filters",
+    "noMatchTitle": "No leads match",
+    "noMatchBody": "Try a different search or clear the filters.",
+    "colLead": "Lead",
+    "colCompany": "Company",
+    "colSource": "Source",
+    "colStatus": "Status",
+    "colAdded": "Added",
+    "unnamed": "No name",
+    "freeBadge": "Free email",
+    "loadMore": "Show more",
+    "loadingMore": "Loading…",
+    "statusName": {
+      "NEW": "New",
+      "PROCESSING": "Processing",
+      "NEEDS_REVIEW": "Needs review",
+      "ROUTED": "Routed",
+      "FAILED": "Failed"
+    },
+    "count": "{count, plural, one {# lead} other {# leads}} shown"
   },
   "settingsTeam": {
     "title": "Team",
@@ -318,5 +355,116 @@
       "dismiss": "Dismiss",
       "retry": "Try again"
     }
+  },
+  "settingsSources": {
+    "title": "Lead sources",
+    "sub": "Where your leads come from, and whether each source is working."
+  },
+  "sources": {
+    "add": "Add a source",
+    "cancel": "Cancel",
+    "loadTitle": "Couldn’t load your lead sources",
+    "loadBody": "Check your connection and try again.",
+    "retry": "Try again",
+    "empty": {
+      "title": "No lead sources yet",
+      "body": "Connect a tool that sends you leads, such as Zapier, Make or n8n. New leads appear in your list as soon as they arrive.",
+      "cta": "Connect a source"
+    },
+    "kind": {
+      "WEBHOOK": "Sends leads by webhook",
+      "FORM": "Website form",
+      "CSV": "Spreadsheet"
+    },
+    "status": {
+      "working": "Working · {count, plural, one {# lead} other {# leads}} in the last 30 days",
+      "quiet": "Quiet · no leads for {days, plural, one {# day} other {# days}}. Check that {name} is still connected.",
+      "waiting": "Waiting for the first lead",
+      "off": "Switched off · leads sent to it are refused"
+    },
+    "actions": {
+      "rename": "Rename",
+      "switchOff": "Switch off",
+      "switchOn": "Switch on",
+      "delete": "Delete",
+      "save": "Save",
+      "confirmDelete": "Delete {name}? Its connection stops working. This can’t be undone.",
+      "confirmYes": "Yes, delete",
+      "keep": "Keep it"
+    },
+    "name": "Name",
+    "renameLabel": "New name for {name}",
+    "form": {
+      "title": "Add a source",
+      "tool": "Which tool sends your leads?",
+      "zapier": "Zapier, Make or n8n",
+      "zapierHint": "Add a “send a webhook” step in your automation.",
+      "other": "Another tool",
+      "otherHint": "Anything that can send data to a web address. Set it up in Advanced / Developer.",
+      "name": "Name this source",
+      "namePlaceholder": "Zapier – demo requests",
+      "create": "Create source",
+      "creating": "Creating…",
+      "empty": "Give the source a name."
+    },
+    "ready": {
+      "title": "{name} is ready",
+      "body": "Copy the key now. For your safety it is shown only once.",
+      "urlLabel": "Address to send leads to",
+      "keyLabel": "Your API key",
+      "shown": "Shown once",
+      "done": "Done",
+      "steps": {
+        "zapier": "In Zapier, Make or n8n, add a step that sends a webhook (POST, JSON). Paste the address above, and add a header named Authorization with the value Bearer followed by your key.",
+        "other": "Send each lead as JSON to the address above, with the header Authorization: Bearer and your key. Examples are in Advanced / Developer."
+      },
+      "advanced": "Open Advanced / Developer"
+    },
+    "problem": {
+      "changed": "Something changed while you were looking. Reload to see the latest.",
+      "reload": "Reload",
+      "dismiss": "Dismiss"
+    }
+  },
+  "settingsAdvanced": {
+    "title": "Advanced / Developer",
+    "sub": "API keys, addresses and signing for developers. Most teams never need this page."
+  },
+  "advanced": {
+    "loadTitle": "Couldn’t load your sources",
+    "loadBody": "Check your connection and try again.",
+    "retry": "Try again",
+    "empty": {
+      "title": "No sources to show",
+      "body": "Add a lead source first. Its address and keys appear here.",
+      "cta": "Go to Lead sources"
+    },
+    "url": "Address",
+    "key": "API key",
+    "keyBody": "Starts with {prefix}. The full key is not stored, so it can’t be shown again.",
+    "newKey": "Make a new key",
+    "newKeyWarn": "The current key for {name} stops working right away. Anything still using it will be refused until you update it.",
+    "newKeyYes": "Replace key",
+    "newKeyShown": "New key. Copy it now: it is shown only once.",
+    "signing": "Request signing",
+    "signingOn": "On · requests must be signed with your secret and are refused if the signature is wrong or older than 5 minutes.",
+    "signingOff": "Off · anyone with the key can send leads. Turn signing on for extra protection.",
+    "signingEnable": "Turn on signing",
+    "signingDisable": "Turn off signing",
+    "signingDisableWarn": "Requests will no longer need a signature. The secret is deleted.",
+    "signingDisableYes": "Turn off",
+    "signingSecret": "Signing secret. Copy it now: it is shown only once.",
+    "cancel": "Cancel",
+    "working": "Working…",
+    "examples": "Examples",
+    "exampleBasic": "Send a lead",
+    "exampleSigned": "Send a signed lead (Node.js)",
+    "placeholderKey": "YOUR_API_KEY",
+    "placeholderSecret": "YOUR_SIGNING_SECRET"
+  },
+  "copy": {
+    "copy": "Copy",
+    "copied": "Copied",
+    "copyLabel": "Copy {what}"
   }
 }

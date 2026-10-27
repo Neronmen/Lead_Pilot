@@ -30,6 +30,9 @@ const values = {
   by: 'Mia',
   ago: '2 days ago',
   expires: 'in 5 days',
+  days: 3,
+  prefix: 'lp_ab12.',
+  what: 'API key',
 };
 
 describe.each([

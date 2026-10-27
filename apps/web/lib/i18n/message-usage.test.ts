@@ -39,7 +39,17 @@ const ROLES = ['OWNER', 'ADMIN', 'MEMBER'];
 const DYNAMIC: Record<string, string[]> = {
   'shell.roles.${me.role}': ROLES.map((r) => `shell.roles.${r}`),
   'shell.nav.${id}': ['leads', 'settings'].map((id) => `shell.nav.${id}`),
-  'settings.nav.${id}': ['team'].map((id) => `settings.nav.${id}`),
+  'settings.nav.${id}': ['sources', 'team', 'advanced'].map((id) => `settings.nav.${id}`),
+  'sources.kind.${source.type}': ['WEBHOOK', 'FORM', 'CSV'].map((t) => `sources.kind.${t}`),
+  'sources.form.${value}': ['zapier', 'other'].map((v) => `sources.form.${v}`),
+  'sources.form.${value}Hint': ['zapier', 'other'].map((v) => `sources.form.${v}Hint`),
+  'sources.ready.steps.${made.tool}': ['zapier', 'other'].map((v) => `sources.ready.steps.${v}`),
+  'leads.statusName.${status}': ['NEW', 'PROCESSING', 'NEEDS_REVIEW', 'ROUTED', 'FAILED'].map(
+    (s) => `leads.statusName.${s}`,
+  ),
+  'leads.statusName.${lead.status}': ['NEW', 'PROCESSING', 'NEEDS_REVIEW', 'ROUTED', 'FAILED'].map(
+    (s) => `leads.statusName.${s}`,
+  ),
   'auth.signup.aside.steps.${step}.title': ['s1', 's2', 's3', 's4'].map(
     (step) => `auth.signup.aside.steps.${step}.title`,
   ),
@@ -95,6 +105,8 @@ const scanned = [
   'app/(app)',
   'components/auth',
   'components/team',
+  'components/sources',
+  'components/leads',
   'app/login',
   'app/signup',
   'app/invite',
@@ -154,7 +166,11 @@ describe('message keys used by the app shell exist in EN and VI', () => {
     const ids = [...sidebar.matchAll(/id: '(\w+)',\s*href/g)].map((m) => m[1]);
     expect(ids.sort()).toEqual(['leads', 'settings']);
     const settings = readFileSync(join(root, 'components/settings/settings-frame.tsx'), 'utf8');
-    expect([...settings.matchAll(/id: '(\w+)',\s*href/g)].map((m) => m[1])).toEqual(['team']);
+    expect([...settings.matchAll(/id: '(\w+)',\s*href/g)].map((m) => m[1])).toEqual([
+      'sources',
+      'team',
+      'advanced',
+    ]);
   });
 });
 

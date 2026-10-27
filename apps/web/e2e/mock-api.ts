@@ -49,6 +49,10 @@ export class MockApi {
     expiresAt: string;
     createdAt: string;
   }[] = [];
+  /** Lead sources, changed by the Sources calls. */
+  sources: MockSource[] = [];
+  /** Leads, newest first. */
+  leads: MockLead[] = [];
   private running = 0;
   private readonly name: string | null;
   private readonly delay: number;
@@ -63,6 +67,68 @@ export class MockApi {
     this.refresh = options.refresh ?? 'ok';
     this.delay = options.refreshDelayMs ?? 0;
     this.resetTeam(options.alone === true);
+    this.resetSources();
+  }
+
+  /** Two sources (one working, one quiet) and a few leads, from the first source. */
+  private resetSources() {
+    const days = (d: number) => new Date(Date.now() - d * 86400_000).toISOString();
+    this.sources = [
+      {
+        id: 'dddddddd-0000-4000-8000-000000000001',
+        name: 'Zapier – website leads',
+        type: 'WEBHOOK',
+        enabled: true,
+        apiKeyPrefix: 'a1b2c3d4',
+        hmacEnabled: false,
+        createdAt: days(60),
+        leadsLast30Days: 487,
+        lastLeadAt: days(0),
+      },
+      {
+        id: 'dddddddd-0000-4000-8000-000000000002',
+        name: 'Livestorm',
+        type: 'WEBHOOK',
+        enabled: true,
+        apiKeyPrefix: 'e5f6a7b8',
+        hmacEnabled: true,
+        createdAt: days(90),
+        leadsLast30Days: 2,
+        lastLeadAt: days(20),
+      },
+    ];
+    const lead = (
+      n: number,
+      name: string | null,
+      email: string,
+      company: string | null,
+      sourceIndex: number,
+      over: Partial<MockLead> = {},
+    ): MockLead => ({
+      id: `eeeeeeee-0000-4000-8000-0000000000${String(90 - n).padStart(2, '0')}`,
+      name,
+      email,
+      phone: null,
+      company,
+      country: null,
+      isFreeMail: false,
+      status: 'NEW',
+      source: {
+        id: this.sources[sourceIndex]!.id,
+        name: this.sources[sourceIndex]!.name,
+        type: 'WEBHOOK',
+      },
+      owner: null,
+      createdAt: new Date(Date.now() - n * 3600_000).toISOString(),
+      ...over,
+    });
+    this.leads = [
+      lead(1, 'Ann Lee', 'ann.lee@brightpath.io', 'Brightpath', 0),
+      lead(2, 'Nguyễn Văn An', 'an@acme.vn', 'Acme Vietnam', 0, { status: 'NEEDS_REVIEW' }),
+      lead(3, null, 'sam@gmail.com', null, 1, { isFreeMail: true }),
+      lead(5, 'Priya Shah', 'priya@northwind.com', 'Northwind', 0, { status: 'ROUTED' }),
+      lead(8, 'Tom Becker', 'tom@becker.de', 'Becker GmbH', 1, { status: 'FAILED' }),
+    ];
   }
 
   /** Four people (or one) and two pending invites, from the viewer's side. */
@@ -154,7 +220,7 @@ export class MockApi {
       'access-control-allow-origin': origin,
       'access-control-allow-credentials': 'true',
       'access-control-allow-headers': 'content-type,authorization,accept',
-      'access-control-allow-methods': 'GET,POST,PATCH,OPTIONS',
+      'access-control-allow-methods': 'GET,POST,PATCH,DELETE,OPTIONS',
     };
     const json = (status: number, body: unknown) =>
       route.fulfill({ status, headers: cors, contentType: 'application/json', json: body });
@@ -213,6 +279,73 @@ export class MockApi {
       return route.fulfill({ status: 204, headers: cors });
     }
 
+    if (path === '/leads' && method === 'GET') {
+      const params = new URL(request.url()).searchParams;
+      const q = params.get('q')?.toLowerCase();
+      const rows = this.leads.filter(
+        (l) =>
+          (!q || [l.name, l.email, l.company].some((v) => v?.toLowerCase().includes(q))) &&
+          (!params.get('status') || l.status === params.get('status')) &&
+          (!params.get('sourceId') || l.source.id === params.get('sourceId')) &&
+          (!params.get('freeMail') || String(l.isFreeMail) === params.get('freeMail')),
+      );
+      const limit = Number(params.get('limit') ?? 25);
+      const start = params.get('cursor')
+        ? rows.findIndex((l) => l.id === params.get('cursor')) + 1
+        : 0;
+      const items = rows.slice(start, start + limit);
+      const more = start + limit < rows.length;
+      return json(200, { items, nextCursor: more ? items[items.length - 1]!.id : null });
+    }
+    if (path === '/sources' && method === 'GET') return json(200, this.sources);
+    if (path === '/sources' && method === 'POST') {
+      const { name, type } = sent as { name: string; type: MockSource['type'] };
+      const source: MockSource = {
+        id: crypto.randomUUID(),
+        name,
+        type,
+        enabled: true,
+        apiKeyPrefix: '0a1b2c3d',
+        hmacEnabled: false,
+        createdAt: new Date().toISOString(),
+        leadsLast30Days: 0,
+        lastLeadAt: null,
+      };
+      this.sources.push(source);
+      return json(201, {
+        source,
+        apiKey: 'lp_0a1b2c3d.FAKEfakeFAKEfakeFAKEfakeFAKEfakeFAKEfake123',
+      });
+    }
+    const src = /^\/sources\/([0-9a-f-]{36})(\/api-key|\/hmac-secret)?$/.exec(path);
+    if (src) {
+      const row = this.sources.find((x) => x.id === src[1]);
+      if (!row) return json(404, { error: { code: 'NOT_FOUND', message: 'x' } });
+      if (!src[2] && method === 'PATCH') {
+        Object.assign(row, sent);
+        return json(200, row);
+      }
+      if (!src[2] && method === 'DELETE') {
+        this.sources = this.sources.filter((x) => x.id !== row.id);
+        return route.fulfill({ status: 204, headers: cors });
+      }
+      if (src[2] === '/api-key' && method === 'POST') {
+        row.apiKeyPrefix = 'ffeeddcc';
+        return json(200, {
+          source: row,
+          apiKey: 'lp_ffeeddcc.NEWnewNEWnewNEWnewNEWnewNEWnewNEWnewNEW1234',
+        });
+      }
+      if (src[2] === '/hmac-secret' && method === 'POST') {
+        row.hmacEnabled = true;
+        return json(201, { secret: 'whsec_FAKEfakeFAKEfakeFAKEfakeFAKEfakeFAKEfake123' });
+      }
+      if (src[2] === '/hmac-secret' && method === 'DELETE') {
+        row.hmacEnabled = false;
+        return route.fulfill({ status: 204, headers: cors });
+      }
+    }
+
     const session = (status = 200) => {
       this.refresh = 'ok'; // the refresh cookie now exists
       return json(status, { accessToken: `token-${this.requests.length}`, expiresIn: 900 });
@@ -268,6 +401,32 @@ export class MockApi {
   async install(context: BrowserContext) {
     await context.route(`${API}/**`, (route) => this.handle(route));
   }
+}
+
+export interface MockSource {
+  id: string;
+  name: string;
+  type: 'WEBHOOK' | 'FORM' | 'CSV';
+  enabled: boolean;
+  apiKeyPrefix: string;
+  hmacEnabled: boolean;
+  createdAt: string;
+  leadsLast30Days: number;
+  lastLeadAt: string | null;
+}
+
+export interface MockLead {
+  id: string;
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  company: string | null;
+  country: string | null;
+  isFreeMail: boolean;
+  status: 'NEW' | 'PROCESSING' | 'NEEDS_REVIEW' | 'ROUTED' | 'FAILED';
+  source: { id: string; name: string; type: 'WEBHOOK' | 'FORM' | 'CSV' };
+  owner: { id: string; name: string | null } | null;
+  createdAt: string;
 }
 
 export type Theme = 'dark' | 'light';

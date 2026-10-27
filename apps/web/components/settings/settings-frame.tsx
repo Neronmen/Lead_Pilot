@@ -13,7 +13,11 @@ import { cn } from '@/lib/utils';
 
 // Only the Settings pages that exist. The rest of the design's list (Get
 // started, General, Lead sources...) joins in the milestone that builds each.
-const SECTIONS = [{ id: 'team', href: '/settings/team' }] as const;
+const SECTIONS = [
+  { id: 'sources', href: '/settings/sources' },
+  { id: 'team', href: '/settings/team' },
+  { id: 'advanced', href: '/settings/advanced' },
+] as const;
 
 /**
  * Settings layout: section list on the left, page on the right. A Member who
@@ -56,7 +60,9 @@ export function SettingsFrame({ children }: { children: ReactNode }) {
                 'flex min-h-9 items-center rounded-lg px-2.5 text-sm transition-colors',
                 current
                   ? 'bg-accent-soft font-medium text-active-fg shadow-[inset_2px_0_0_var(--primary)]'
-                  : 'hover:bg-hover',
+                  : id === 'advanced'
+                    ? 'text-muted-foreground hover:bg-hover'
+                    : 'hover:bg-hover',
               )}
             >
               {t(`settings.nav.${id}`)}

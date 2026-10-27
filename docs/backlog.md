@@ -54,6 +54,9 @@ Items raised in reviews that belong to a later milestone. Each milestone plan st
 - Country codes come from libphonenumber (includes non-ISO `AC`, `TA`, lacks `AQ`, `BV`); switch to an ISO 3166 list. Decide whether an invalid phone should reject the whole lead or only be flagged (today: rejected).
 - Merging by phone keeps the stored email and records the other one in the `merged` event (`otherEmail`); decide whether leads should hold several emails.
 
+- Website form and spreadsheet upload are hidden in Lead sources until M6. M6 needs a separate public form key limited to one source (with CORS and its own rate limit): the secret API key must never go into a page or snippet. "Email it to your developer" must never include a secret API key or signing secret.
+- Leads list: Tier and Score columns, saved views and a source filter for Members come with scoring (M3) and later; search is `contains` on email, name, company and phone (add `pg_trgm` indexes if it gets slow).
+
 ## M4 – Routing & actions
 
 - Build the "New Hot lead" alert email from the approved design (docs/design-notes.md, Emails; the plain-text version is on the canvas). The invite email's `EmailLayout` and copy pattern in `apps/api/src/email` are the model.
