@@ -31,14 +31,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void client.bootstrap();
   }, [client]);
 
-  // When the person is signed out (here or in another tab), forget their data.
-  useEffect(
-    () =>
-      client.subscribe(() => {
-        if (client.getState().status === 'unauthenticated') queryClient.clear();
-      }),
-    [client, queryClient],
-  );
+  // When a signed-in person is signed out (here or in another tab), forget their data.
+  // Only that change counts: on a page for visitors (Accept invite), the check at page
+  // load answers "not signed in" late, and clearing then would wipe the data the page
+  // has just fetched and leave it loading for ever.
+  useEffect(() => {
+    let was = client.getState().status;
+    return client.subscribe(() => {
+      const now = client.getState().status;
+      if (was === 'authenticated' && now === 'unauthenticated') queryClient.clear();
+      was = now;
+    });
+  }, [client, queryClient]);
 
   return <AuthContext.Provider value={client}>{children}</AuthContext.Provider>;
 }

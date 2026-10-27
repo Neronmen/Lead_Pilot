@@ -155,6 +155,36 @@
         "routed": "Sent to Mia Johnson and posted in #hot-leads, 1.4 seconds after the form was sent."
       },
       "passwordTooLong": "128 characters maximum."
+    },
+    "invite": {
+      "loading": "Loading your invitation",
+      "invitation": "Invitation",
+      "from": "from {name}",
+      "title": "Join {workspace}",
+      "joiningAs": "You’re joining as",
+      "roleHelp": {
+        "MEMBER": "Members work the leads assigned to them, check leads in the review queue and record outcomes.",
+        "ADMIN": "Admins change settings, lead sources and routing rules, and invite people."
+      },
+      "email": "Email",
+      "emailHint": "The invite is tied to this address.",
+      "name": "Full name",
+      "newPassword": "Choose a password",
+      "newPasswordPlaceholder": "At least 12 characters",
+      "existingPassword": "Your password",
+      "existingNote": "You already have a LeadPilot account with this email. Enter its password to join.",
+      "wrongPassword": "That password is not right.",
+      "attemptsNote": "After 5 wrong passwords this invite expires and you will need a new one.",
+      "accountAppeared": "An account with this email now exists. Enter its password to join.",
+      "submit": "Accept invite and continue",
+      "submitting": "Joining",
+      "expires": "Expires {when}",
+      "have": "Have an account?",
+      "signIn": "Sign in instead",
+      "invalidTitle": "This invite link no longer works",
+      "invalidBody": "It expired, was cancelled or was already used. Ask the person who invited you to send a new one.",
+      "invalidTooMany": "An invite also expires after 5 wrong passwords.",
+      "invalidSignIn": "Already a member? Sign in"
     }
   },
   "emailHint": {

@@ -32,6 +32,7 @@ const SAME_IN_BOTH = new Set([
   // Each language is always written in its own language.
   'auth.signup.languages.en',
   'auth.signup.languages.vi',
+  'auth.invite.email',
 ]);
 
 test('every Vietnamese message differs from the English one (nothing left untranslated)', () => {

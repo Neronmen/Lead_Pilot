@@ -155,6 +155,36 @@
         "routed": "Đã giao cho Mia Johnson và báo vào #hot-leads, 1,4 giây sau khi form được gửi."
       },
       "passwordTooLong": "Tối đa 128 ký tự."
+    },
+    "invite": {
+      "loading": "Đang tải lời mời của bạn",
+      "invitation": "Lời mời",
+      "from": "từ {name}",
+      "title": "Tham gia {workspace}",
+      "joiningAs": "Bạn tham gia với vai trò",
+      "roleHelp": {
+        "MEMBER": "Thành viên xử lý lead được giao, kiểm tra lead trong hàng chờ duyệt và ghi kết quả.",
+        "ADMIN": "Quản trị viên thay đổi cài đặt, nguồn lead, quy tắc phân bổ và mời người khác."
+      },
+      "email": "Email",
+      "emailHint": "Lời mời gắn với địa chỉ này.",
+      "name": "Họ và tên",
+      "newPassword": "Đặt mật khẩu",
+      "newPasswordPlaceholder": "Ít nhất 12 ký tự",
+      "existingPassword": "Mật khẩu của bạn",
+      "existingNote": "Bạn đã có tài khoản LeadPilot với email này. Hãy nhập mật khẩu của tài khoản đó để tham gia.",
+      "wrongPassword": "Mật khẩu chưa đúng.",
+      "attemptsNote": "Sau 5 lần nhập sai mật khẩu, lời mời sẽ hết hạn và bạn cần được mời lại.",
+      "accountAppeared": "Email này vừa có tài khoản. Hãy nhập mật khẩu của tài khoản đó để tham gia.",
+      "submit": "Chấp nhận lời mời và tiếp tục",
+      "submitting": "Đang tham gia",
+      "expires": "Hết hạn {when}",
+      "have": "Đã có tài khoản?",
+      "signIn": "Đăng nhập",
+      "invalidTitle": "Đường dẫn mời này không còn dùng được",
+      "invalidBody": "Lời mời đã hết hạn, bị hủy hoặc đã được dùng. Hãy nhờ người đã mời bạn gửi lời mời mới.",
+      "invalidTooMany": "Lời mời cũng hết hạn sau 5 lần nhập sai mật khẩu.",
+      "invalidSignIn": "Đã là thành viên? Đăng nhập"
     }
   },
   "emailHint": {

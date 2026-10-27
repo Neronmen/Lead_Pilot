@@ -292,6 +292,7 @@ export function createAuthClient(deps: AuthClientDeps) {
     request,
     login: (body: unknown) => startSession('/auth/login', body),
     signup: (body: unknown) => startSession('/auth/signup', body),
+    acceptInvite: (body: unknown) => startSession('/auth/invites/accept', body),
     logout,
     getState: () => state,
     subscribe(listener: () => void) {

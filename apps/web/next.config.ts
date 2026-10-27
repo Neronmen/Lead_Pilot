@@ -16,6 +16,19 @@ const nextConfig: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR ?? '.next',
   reactStrictMode: true,
   poweredByHeader: false,
+  async headers() {
+    return [
+      {
+        // The invite page is private: a browser never puts a fragment in a Referer, but
+        // belt and braces, send none, and keep the page out of caches.
+        source: '/invite',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'Cache-Control', value: 'no-store' },
+        ],
+      },
+    ];
+  },
 };
 
 export default withNextIntl(nextConfig);
