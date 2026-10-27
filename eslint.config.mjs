@@ -83,6 +83,10 @@ export default tseslint.config(
     //   the membership, the history row (given its workspace id by hand) and the
     //   first refresh token on the raw client, in one transaction. The write path
     //   is allowlisted on purpose: there is no workspace session to scope it with.
+    // - maintenance/maintenance.service.ts: retention clean-up and the stuck-lead
+    //   sweep run across every workspace with no request (so no workspace to scope
+    //   to), and one statement is raw SQL (strip raw payloads out of JSON). Every
+    //   statement only deletes, blanks or re-queues; none reads data out.
     // - ingest/ingest-auth.service.ts: finds a source by its API key prefix
     //   (globally unique) before the workspace is known; read-only, one lookup.
     files: [
@@ -93,6 +97,7 @@ export default tseslint.config(
       'apps/api/src/auth/jwt-auth.guard.ts',
       'apps/api/src/invites/invite-accept.service.ts',
       'apps/api/src/ingest/ingest-auth.service.ts',
+      'apps/api/src/maintenance/maintenance.service.ts',
     ],
     rules: { 'no-restricted-imports': 'off', 'no-restricted-syntax': 'off' },
   },
