@@ -49,6 +49,12 @@ export const envSchema = z
     // Where company info comes from: "mock" (made-up, no network: the demo and tests) or
     // "website" (reads the lead's company homepage, public internet addresses only).
     ENRICHMENT_PROVIDER: z.enum(['mock', 'website']).default('mock'),
+    // Which AI rates the leads. "auto": Anthropic if ANTHROPIC_API_KEY is set, else OpenAI if
+    // OPENAI_API_KEY is set, else the free built-in mock (no key needed: the demo works as is).
+    LLM_PROVIDER: z.enum(['auto', 'mock', 'anthropic', 'openai']).default('auto'),
+    LLM_MODEL: z.string().trim().min(1).max(100).optional(),
+    ANTHROPIC_API_KEY: z.string().trim().min(10).optional(),
+    OPENAI_API_KEY: z.string().trim().min(10).optional(),
     // Redis key prefix of the queues and rate-limit counters: tests use their own, so they never
     // touch a dev server's jobs or limits.
     QUEUE_PREFIX: z

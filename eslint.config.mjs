@@ -89,6 +89,8 @@ export default tseslint.config(
     //   statement only deletes, blanks or re-queues; none reads data out.
     // - enrichment/enrichment.service.ts: the company-info cache is one global table of
     //   public website metadata (no workspace, no lead data), which the scope cannot query.
+    // - scoring/prompt.service.ts: prompt versions are one global table (no workspace, no
+    //   lead data), which the scope cannot query.
     // - ingest/ingest-auth.service.ts: finds a source by its API key prefix
     //   (globally unique) before the workspace is known; read-only, one lookup.
     files: [
@@ -101,6 +103,7 @@ export default tseslint.config(
       'apps/api/src/ingest/ingest-auth.service.ts',
       'apps/api/src/maintenance/maintenance.service.ts',
       'apps/api/src/enrichment/enrichment.service.ts',
+      'apps/api/src/scoring/prompt.service.ts',
     ],
     rules: { 'no-restricted-imports': 'off', 'no-restricted-syntax': 'off' },
   },

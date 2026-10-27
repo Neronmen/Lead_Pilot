@@ -21,6 +21,7 @@ describe('validateEnv', () => {
       ENCRYPTION_KEY,
       QUEUE_WORKERS: 'on',
       ENRICHMENT_PROVIDER: 'mock',
+      LLM_PROVIDER: 'auto',
       QUEUE_PREFIX: 'bull',
       AUTH_RATE_LIMIT_PER_MINUTE: 10,
       AUTH_REFRESH_RATE_LIMIT_PER_MINUTE: 60,

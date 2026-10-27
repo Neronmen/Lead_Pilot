@@ -38,10 +38,18 @@ export class PipelineWorker implements OnApplicationBootstrap, OnApplicationShut
       concurrency: 5,
     });
     this.worker.on('error', (error) => this.logger.warn(`Worker error: ${error.message}`));
-    this.worker.on('failed', (job, error) =>
+    this.worker.on('failed', (job, error) => {
       // Ids only: a lead's details never go to the log at this level.
-      this.logger.warn(`Job ${job?.id} failed (attempt ${job?.attemptsMade}): ${error.message}`),
-    );
+      this.logger.warn(`Job ${job?.id} failed (attempt ${job?.attemptsMade}): ${error.message}`);
+      // The last try failed: hand the lead to the fallback instead of leaving it half-processed.
+      if (job && job.attemptsMade >= (job.opts.attempts ?? 1)) {
+        this.pipeline
+          .gaveUp(job.data)
+          .catch((fallbackError: Error) =>
+            this.logger.error(`Fallback for job ${job.id} failed: ${fallbackError.message}`),
+          );
+      }
+    });
   }
 
   async onApplicationShutdown(): Promise<void> {
