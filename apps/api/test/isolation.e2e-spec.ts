@@ -63,13 +63,22 @@ describe('Tenant isolation matrix (e2e)', () => {
   function call(route: string, id: string) {
     const [method, path] = route.split(' ') as [string, string];
     const url = path.replace(':id', id);
-    const req = http()[method.toLowerCase() as 'get' | 'post' | 'patch' | 'delete'](url);
+    const req = http()[method.toLowerCase() as 'get' | 'post' | 'patch' | 'delete' | 'put'](url);
     // Valid bodies, so a rejection is about access and not about validation.
     if (route === 'PATCH /members/:id') return req.send({ role: 'ADMIN' });
     if (route === 'POST /invites')
       return req.send({ emails: [inviteeAddress('matrix')], role: 'MEMBER' });
     if (route === 'PATCH /auth/me') return req.send({ locale: 'vi' });
     if (route === 'POST /sources') return req.send({ name: 'Matrix source', type: 'WEBHOOK' });
+    if (route === 'PUT /icp-rubric')
+      return req.send({
+        industries: ['Logistics'],
+        companySizes: [],
+        countries: ['VN'],
+        budgetSignals: [],
+        disqualifiers: [],
+        notes: null,
+      });
     if (route === 'PATCH /sources/:id') return req.send({ name: 'Renamed by someone else' });
     return req;
   }

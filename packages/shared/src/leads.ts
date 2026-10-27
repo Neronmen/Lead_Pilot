@@ -2,7 +2,14 @@ import { z } from 'zod';
 import { idSchema, timestampSchema } from './common.ts';
 import { sourceTypeSchema } from './sources.ts';
 
-export const leadStatusSchema = z.enum(['NEW', 'PROCESSING', 'NEEDS_REVIEW', 'ROUTED', 'FAILED']);
+export const leadStatusSchema = z.enum([
+  'NEW',
+  'PROCESSING',
+  'NEEDS_REVIEW',
+  'SCORED',
+  'ROUTED',
+  'FAILED',
+]);
 
 /** `GET /leads` query: all optional. `q` searches email, name, company and phone. */
 export const listLeadsQuerySchema = z.strictObject({

@@ -276,6 +276,7 @@
       "NEW": "Mới",
       "PROCESSING": "Đang xử lý",
       "NEEDS_REVIEW": "Cần xem lại",
+      "SCORED": "Đã chấm điểm",
       "ROUTED": "Đã giao",
       "FAILED": "Lỗi"
     },

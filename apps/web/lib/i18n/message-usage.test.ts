@@ -67,12 +67,22 @@ const DYNAMIC: Record<string, string[]> = {
     'rate_limited',
     'other',
   ].map((r) => `sources.stats.reasons.${r}`),
-  'leads.statusName.${status}': ['NEW', 'PROCESSING', 'NEEDS_REVIEW', 'ROUTED', 'FAILED'].map(
-    (s) => `leads.statusName.${s}`,
-  ),
-  'leads.statusName.${lead.status}': ['NEW', 'PROCESSING', 'NEEDS_REVIEW', 'ROUTED', 'FAILED'].map(
-    (s) => `leads.statusName.${s}`,
-  ),
+  'leads.statusName.${status}': [
+    'NEW',
+    'PROCESSING',
+    'NEEDS_REVIEW',
+    'SCORED',
+    'ROUTED',
+    'FAILED',
+  ].map((s) => `leads.statusName.${s}`),
+  'leads.statusName.${lead.status}': [
+    'NEW',
+    'PROCESSING',
+    'NEEDS_REVIEW',
+    'SCORED',
+    'ROUTED',
+    'FAILED',
+  ].map((s) => `leads.statusName.${s}`),
   'auth.signup.aside.steps.${step}.title': ['s1', 's2', 's3', 's4'].map(
     (step) => `auth.signup.aside.steps.${step}.title`,
   ),

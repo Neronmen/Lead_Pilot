@@ -276,6 +276,7 @@
       "NEW": "New",
       "PROCESSING": "Processing",
       "NEEDS_REVIEW": "Needs review",
+      "SCORED": "Scored",
       "ROUTED": "Routed",
       "FAILED": "Failed"
     },

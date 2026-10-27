@@ -5,3 +5,4 @@ export * from './health.ts';
 export * from './sources.ts';
 export * from './team.ts';
 export * from './leads.ts';
+export * from './scoring.ts';

@@ -17,7 +17,7 @@ import { hasFilters, NO_FILTERS, useLeads, type LeadFilters } from '@/lib/leads/
 import { useSources } from '@/lib/sources/use-sources';
 import { cn } from '@/lib/utils';
 
-const STATUSES: LeadStatus[] = ['NEW', 'PROCESSING', 'NEEDS_REVIEW', 'ROUTED', 'FAILED'];
+const STATUSES: LeadStatus[] = ['NEW', 'PROCESSING', 'NEEDS_REVIEW', 'SCORED', 'ROUTED', 'FAILED'];
 const SEARCH_DELAY_MS = 300;
 
 /**

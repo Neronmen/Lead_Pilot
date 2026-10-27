@@ -25,6 +25,7 @@ export const AuditAction = {
   SourceKeyRotated: 'source.key_rotated',
   SourceHmacEnabled: 'source.hmac_enabled',
   SourceHmacDisabled: 'source.hmac_disabled',
+  IdealCustomerUpdated: 'ideal_customer.updated',
 } as const;
 
 export interface AuditEntry {

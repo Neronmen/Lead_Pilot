@@ -68,6 +68,8 @@ enum LeadStatus {
   NEW
   PROCESSING
   NEEDS_REVIEW
+  /// Scored with enough confidence; waiting for routing rules (M4).
+  SCORED
   ROUTED
   FAILED
 }

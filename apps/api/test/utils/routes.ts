@@ -64,6 +64,8 @@ export const WORKSPACE_COLLECTION = new Set([
   'GET /members',
   'GET /sources',
   'POST /sources',
+  'GET /icp-rubric',
+  'PUT /icp-rubric',
 ]);
 export const WORKSPACE_BY_ID = new Set([
   'POST /invites/:id/resend',
