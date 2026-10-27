@@ -37,7 +37,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       <head>
         <script dangerouslySetInnerHTML={{ __html: EARLY_THEME_SCRIPT }} />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <NextIntlClientProvider>
           <ThemeProvider
             attribute="class"
