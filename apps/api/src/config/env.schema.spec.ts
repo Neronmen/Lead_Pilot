@@ -1,9 +1,12 @@
+import { randomBytes } from 'node:crypto';
 import { validateEnv } from './env.schema';
 
 const DATABASE_URL = 'postgresql://user:pass@localhost:5432/leadpilot';
 const JWT_ACCESS_SECRET = 'a-test-secret-that-is-at-least-32-chars';
+/** 32 bytes of base64, made for the tests only. */
+const ENCRYPTION_KEY = Buffer.alloc(32, 'test-key').toString('base64');
 /** The minimum a production config needs. */
-const base = { DATABASE_URL, JWT_ACCESS_SECRET };
+const base = { DATABASE_URL, JWT_ACCESS_SECRET, ENCRYPTION_KEY };
 
 describe('validateEnv', () => {
   it('applies defaults when optional variables are missing', () => {
@@ -15,6 +18,7 @@ describe('validateEnv', () => {
       DATABASE_URL,
       REDIS_URL: 'redis://localhost:6379',
       JWT_ACCESS_SECRET,
+      ENCRYPTION_KEY,
       AUTH_RATE_LIMIT_PER_MINUTE: 10,
       AUTH_REFRESH_RATE_LIMIT_PER_MINUTE: 60,
       INVITE_RATE_LIMIT_PER_MINUTE: 5,
@@ -137,5 +141,89 @@ describe('validateEnv', () => {
     expect(() => validateEnv({ ...base, AUTH_RATE_LIMIT_PER_MINUTE: '0' })).toThrow(
       /AUTH_RATE_LIMIT_PER_MINUTE/,
     );
+  });
+
+  describe('ENCRYPTION_KEY', () => {
+    const dev = { DATABASE_URL, NODE_ENV: 'development' };
+
+    it('is required in production', () => {
+      expect(() => validateEnv({ DATABASE_URL, JWT_ACCESS_SECRET })).toThrow(
+        /ENCRYPTION_KEY: is required in production/,
+      );
+      expect(() => validateEnv({ ...base, ENCRYPTION_KEY: '' })).toThrow(
+        /ENCRYPTION_KEY: is required/,
+      );
+    });
+
+    it('is optional outside production, where a dev-only key is used', () => {
+      for (const NODE_ENV of ['development', 'test']) {
+        const env = validateEnv({ DATABASE_URL, NODE_ENV });
+        expect(Buffer.from(env.ENCRYPTION_KEY, 'base64')).toHaveLength(32);
+      }
+    });
+
+    it('must be exactly 32 bytes of base64, in every environment (too short fails)', () => {
+      const bad = [
+        'short',
+        Buffer.alloc(16, 'a').toString('base64'),
+        Buffer.alloc(24, 'a').toString('base64'),
+        Buffer.alloc(33, 'a').toString('base64'),
+        Buffer.alloc(64, 'a').toString('base64'),
+        `${ENCRYPTION_KEY} `,
+        ENCRYPTION_KEY.replace('=', ''),
+        ENCRYPTION_KEY.slice(0, 40) + '!!!=',
+        'x'.repeat(44),
+      ];
+      for (const value of bad) {
+        expect(() => validateEnv({ ...base, ENCRYPTION_KEY: value })).toThrow(/ENCRYPTION_KEY/);
+        expect(() => validateEnv({ ...dev, ENCRYPTION_KEY: value })).toThrow(/ENCRYPTION_KEY/);
+      }
+    });
+
+    it('is required when NODE_ENV is unset (unset behaves like production)', () => {
+      expect(() => validateEnv({ DATABASE_URL, JWT_ACCESS_SECRET })).toThrow(/ENCRYPTION_KEY/);
+    });
+
+    it('refuses url-safe base64 and keys with the wrong padding', () => {
+      const urlSafe = Buffer.from(Array.from({ length: 32 }, () => 0xfb)).toString('base64url');
+      const standard = Buffer.from(Array.from({ length: 32 }, () => 0xfb)).toString('base64');
+      expect(standard).toMatch(/[+/]/);
+      expect(() => validateEnv({ ...base, ENCRYPTION_KEY: urlSafe })).toThrow(/ENCRYPTION_KEY/);
+      expect(validateEnv({ ...base, ENCRYPTION_KEY: standard }).ENCRYPTION_KEY).toBe(standard);
+      expect(() => validateEnv({ ...base, ENCRYPTION_KEY: `${standard}=` })).toThrow(
+        /ENCRYPTION_KEY/,
+      );
+    });
+
+    it('refuses a key that is only whitespace, and an all-zero key is at least 32 bytes long', () => {
+      expect(() => validateEnv({ ...dev, ENCRYPTION_KEY: '   ' })).toThrow(/ENCRYPTION_KEY/);
+      // Documented gap: an all-zero (weak) key has the right shape and is accepted.
+      const zeros = Buffer.alloc(32).toString('base64');
+      expect(validateEnv({ ...base, ENCRYPTION_KEY: zeros }).ENCRYPTION_KEY).toBe(zeros);
+    });
+
+    it('accepts a real generated key', () => {
+      const key = randomBytes(32).toString('base64');
+      expect(validateEnv({ ...base, ENCRYPTION_KEY: key }).ENCRYPTION_KEY).toBe(key);
+    });
+
+    it('refuses the development key in production', () => {
+      const devKey = validateEnv({ DATABASE_URL, NODE_ENV: 'development' }).ENCRYPTION_KEY;
+      expect(() => validateEnv({ ...base, ENCRYPTION_KEY: devKey })).toThrow(
+        /must not be the development key/,
+      );
+      expect(validateEnv({ ...dev, ENCRYPTION_KEY: devKey }).ENCRYPTION_KEY).toBe(devKey);
+    });
+
+    it('never puts the value in the error message', () => {
+      for (const value of ['short-secret-value', Buffer.alloc(16, 'z').toString('base64')]) {
+        try {
+          validateEnv({ ...base, ENCRYPTION_KEY: value });
+          throw new Error('should have thrown');
+        } catch (error) {
+          expect(String(error)).not.toContain(value);
+        }
+      }
+    });
   });
 });

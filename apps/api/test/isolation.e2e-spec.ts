@@ -69,6 +69,8 @@ describe('Tenant isolation matrix (e2e)', () => {
     if (route === 'POST /invites')
       return req.send({ emails: [inviteeAddress('matrix')], role: 'MEMBER' });
     if (route === 'PATCH /auth/me') return req.send({ locale: 'vi' });
+    if (route === 'POST /sources') return req.send({ name: 'Matrix source', type: 'WEBHOOK' });
+    if (route === 'PATCH /sources/:id') return req.send({ name: 'Renamed by someone else' });
     return req;
   }
 
@@ -103,7 +105,17 @@ describe('Tenant isolation matrix (e2e)', () => {
       await inviteAddress(app, owner, inviteEmail);
       const memberM = await membershipOf(prisma, member.email, workspaceId);
       await makeLead(prisma, workspaceId, { ownerId: memberM.userId });
+      const created = await http()
+        .post('/sources')
+        .set('authorization', bearer(owner))
+        .send({ name: `${label} source`, type: 'WEBHOOK' })
+        .expect(201);
+      await http()
+        .post(`/sources/${created.body.source.id}/hmac-secret`)
+        .set('authorization', bearer(owner))
+        .expect(201);
       return {
+        source: created.body.source as { id: string },
         owner,
         admin,
         member,
@@ -137,6 +149,10 @@ describe('Tenant isolation matrix (e2e)', () => {
           orderBy: { id: 'asc' },
           select: { id: true, ownerId: true },
         }),
+        sources: await prisma.source.findMany({
+          where: { workspaceId: a.workspaceId },
+          orderBy: { id: 'asc' },
+        }),
         audit: await prisma.auditLog.count({ where: { workspaceId: a.workspaceId } }),
       };
     }
@@ -149,6 +165,11 @@ describe('Tenant isolation matrix (e2e)', () => {
       'DELETE /invites/:id': (w) => w.invite.id,
       'PATCH /members/:id': (w) => w.memberM.id,
       'DELETE /members/:id': (w) => w.memberM.id,
+      'PATCH /sources/:id': (w) => w.source.id,
+      'DELETE /sources/:id': (w) => w.source.id,
+      'POST /sources/:id/api-key': (w) => w.source.id,
+      'POST /sources/:id/hmac-secret': (w) => w.source.id,
+      'DELETE /sources/:id/hmac-secret': (w) => w.source.id,
     };
     const idFor = (route: string, w: typeof a): string => {
       const pick = TARGET_ID[route];
@@ -233,6 +254,36 @@ describe('Tenant isolation matrix (e2e)', () => {
         .post('/invites')
         .set('authorization', bearer(b.owner))
         .send({ emails: [inviteeAddress('x')], role: 'MEMBER', workspaceId: a.workspaceId })
+        .expect(400);
+    });
+
+    it('GET /sources shows only the callers own workspace, and never a key or a secret', async () => {
+      const res = await http().get('/sources').set('authorization', bearer(b.owner)).expect(200);
+      const own = await prisma.source.findMany({ where: { workspaceId: b.workspaceId } });
+      expect((res.body as Array<{ id: string }>).map((s) => s.id).sort()).toEqual(
+        own.map((s) => s.id).sort(),
+      );
+      expect(own.map((s) => s.id)).toContain(b.source.id);
+      const text = JSON.stringify(res.body);
+      expect(text).not.toContain(a.source.id);
+      for (const row of await prisma.source.findMany({ where: { workspaceId: b.workspaceId } })) {
+        expect(text).not.toContain(row.apiKeyHash);
+        expect(text).not.toContain(row.hmacSecretEnc ?? 'no-secret');
+      }
+    });
+
+    it('POST /sources creates in the callers workspace only', async () => {
+      const res = await http()
+        .post('/sources')
+        .set('authorization', bearer(b.owner))
+        .send({ name: 'matrix-create', type: 'FORM' })
+        .expect(201);
+      const row = await prisma.source.findUniqueOrThrow({ where: { id: res.body.source.id } });
+      expect(row.workspaceId).toBe(b.workspaceId);
+      await http()
+        .post('/sources')
+        .set('authorization', bearer(b.owner))
+        .send({ name: 'x', type: 'FORM', workspaceId: a.workspaceId })
         .expect(400);
     });
 

@@ -54,10 +54,21 @@ export const PUBLIC = new Set([
   'POST /auth/invites/accept',
 ]);
 export const OWN = new Set(['GET /auth/me', 'PATCH /auth/me']);
-export const WORKSPACE_COLLECTION = new Set(['GET /invites', 'POST /invites', 'GET /members']);
+export const WORKSPACE_COLLECTION = new Set([
+  'GET /invites',
+  'POST /invites',
+  'GET /members',
+  'GET /sources',
+  'POST /sources',
+]);
 export const WORKSPACE_BY_ID = new Set([
   'POST /invites/:id/resend',
   'DELETE /invites/:id',
   'PATCH /members/:id',
   'DELETE /members/:id',
+  'PATCH /sources/:id',
+  'DELETE /sources/:id',
+  'POST /sources/:id/api-key',
+  'POST /sources/:id/hmac-secret',
+  'DELETE /sources/:id/hmac-secret',
 ]);

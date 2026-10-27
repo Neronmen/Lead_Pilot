@@ -19,6 +19,12 @@ export const AuditAction = {
   MemberJoined: 'member.joined',
   MemberRoleChanged: 'member.role_changed',
   MemberRemoved: 'member.removed',
+  SourceCreated: 'source.created',
+  SourceUpdated: 'source.updated',
+  SourceDeleted: 'source.deleted',
+  SourceKeyRotated: 'source.key_rotated',
+  SourceHmacEnabled: 'source.hmac_enabled',
+  SourceHmacDisabled: 'source.hmac_disabled',
 } as const;
 
 export interface AuditEntry {

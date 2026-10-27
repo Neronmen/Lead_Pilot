@@ -208,7 +208,9 @@
     "OWNER_IMMUTABLE": "The owner can’t be changed or removed.",
     "CANNOT_MODIFY_SELF": "You can’t change your own role or remove yourself.",
     "UNKNOWN": "Something unexpected happened. Try again.",
-    "NETWORK": "Can’t reach LeadPilot. Check your connection and try again."
+    "NETWORK": "Can’t reach LeadPilot. Check your connection and try again.",
+    "SOURCE_HAS_LEADS": "This source already has leads, so it cannot be deleted. Switch it off instead.",
+    "HMAC_ALREADY_ENABLED": "Signing is already on for this source. Switch it off first to get a new secret."
   },
   "validation": {
     "invalid_type": "This field is required.",

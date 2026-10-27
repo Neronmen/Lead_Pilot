@@ -28,6 +28,12 @@ export const ErrorCode = {
   OWNER_IMMUTABLE: 'OWNER_IMMUTABLE',
   /** Nobody can change their own role or remove themselves. */
   CANNOT_MODIFY_SELF: 'CANNOT_MODIFY_SELF',
+
+  // Lead sources (M2).
+  /** A source with leads cannot be deleted (the leads would lose their origin): switch it off instead. */
+  SOURCE_HAS_LEADS: 'SOURCE_HAS_LEADS',
+  /** The source already has a signing secret; it is shown once, so switch signing off first to get a new one. */
+  HMAC_ALREADY_ENABLED: 'HMAC_ALREADY_ENABLED',
 } as const;
 
 export type KnownErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

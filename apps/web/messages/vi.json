@@ -208,7 +208,9 @@
     "OWNER_IMMUTABLE": "Không thể thay đổi hoặc gỡ chủ sở hữu.",
     "CANNOT_MODIFY_SELF": "Bạn không thể đổi vai trò hoặc gỡ chính mình.",
     "UNKNOWN": "Có lỗi không mong muốn. Hãy thử lại.",
-    "NETWORK": "Không kết nối được LeadPilot. Hãy kiểm tra mạng và thử lại."
+    "NETWORK": "Không kết nối được LeadPilot. Hãy kiểm tra mạng và thử lại.",
+    "SOURCE_HAS_LEADS": "Nguồn này đã có lead nên không xóa được. Hãy tắt nguồn thay vì xóa.",
+    "HMAC_ALREADY_ENABLED": "Chữ ký đã được bật cho nguồn này. Hãy tắt chữ ký trước để lấy bí mật mới."
   },
   "validation": {
     "invalid_type": "Ô này là bắt buộc.",

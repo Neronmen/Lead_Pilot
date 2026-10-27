@@ -190,4 +190,45 @@ describe('Auth logging context (e2e)', () => {
       expect(lines.filter((line) => line.req?.id === 'hp-2').length).toBeGreaterThan(0);
     });
   });
+
+  describe('sources: keys and secrets never reach the log', () => {
+    it('create, rotate, enable signing and failed requests log no key, secret or hash', async () => {
+      const { token } = await signedIn();
+      lines.length = 0;
+      const auth = `Bearer ${token}`;
+      const api = () => request(app.getHttpServer());
+      const made = await api()
+        .post('/sources')
+        .set('authorization', auth)
+        .send({ name: 'Logged', type: 'WEBHOOK' })
+        .expect(201);
+      const id = made.body.source.id as string;
+      const rotated = await api()
+        .post(`/sources/${id}/api-key`)
+        .set('authorization', auth)
+        .expect(200);
+      const hmac = await api()
+        .post(`/sources/${id}/hmac-secret`)
+        .set('authorization', auth)
+        .expect(201);
+      await api().post(`/sources/${id}/hmac-secret`).set('authorization', auth).expect(409);
+      await api()
+        .post('/sources')
+        .set('authorization', auth)
+        .send({ name: 'x', type: 'NOPE' })
+        .expect(400);
+      const row = await prisma.source.findUniqueOrThrow({ where: { id } });
+      const output = JSON.stringify(lines);
+      expect(lines.length).toBeGreaterThan(0);
+      for (const secret of [
+        (made.body.apiKey as string).split('.')[1]!,
+        (rotated.body.apiKey as string).split('.')[1]!,
+        (hmac.body.secret as string).slice(7),
+        row.apiKeyHash,
+        row.hmacSecretEnc!,
+      ]) {
+        expect(output).not.toContain(secret);
+      }
+    });
+  });
 });

@@ -50,6 +50,7 @@ Invite emails go to Mailpit (http://localhost:8025) because `.env.example` sets 
 | Variable | Default | Notes |
 |---|---|---|
 | `JWT_ACCESS_SECRET` | dev value | Required in production (32+ characters). The dev value is refused when `NODE_ENV=production`. |
+| `ENCRYPTION_KEY` | dev value | Required in production: 32 random bytes in base64 (generate: `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`). Encrypts signing secrets in the database. The dev value is public: it is refused in production, so never run a shared or staging server with `NODE_ENV=development`. Losing or changing the key makes stored signing secrets unreadable (switch signing off and on again). |
 | `AUTH_RATE_LIMIT_PER_MINUTE` | 10 | Sign-up, sign-in and accept-invite requests per IP |
 | `AUTH_REFRESH_RATE_LIMIT_PER_MINUTE` | 60 | Token refresh runs on every page load, so it has its own budget |
 | `INVITE_RATE_LIMIT_PER_MINUTE` / `_PER_DAY` | 5 / 30 | Invite and resend requests per workspace (each sends email) |

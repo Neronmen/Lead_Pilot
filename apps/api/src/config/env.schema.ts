@@ -7,6 +7,15 @@ import { z } from 'zod';
 /** Never used in production (see the refinements below). */
 const DEV_JWT_SECRET = 'leadpilot-dev-only-jwt-secret-not-for-production';
 
+/**
+ * Encrypts secrets stored in the database (AES-256-GCM, see CryptoService). Used
+ * only when unset in development and tests, so the zero-config demo works; refused
+ * in production.
+ */
+const DEV_ENCRYPTION_KEY = Buffer.alloc(32, 'leadpilot-dev-only-encryption-key').toString('base64');
+/** 32 bytes in standard base64 are exactly 43 characters and one `=`. */
+const ENCRYPTION_KEY_SHAPE = /^[A-Za-z0-9+/]{43}=$/;
+
 export const envSchema = z
   .object({
     // Safe default: an unset NODE_ENV behaves like production (JSON logs, no
@@ -31,6 +40,9 @@ export const envSchema = z
     // Signs the 15-minute access tokens (HS256). Required in production; in
     // development and tests a fixed dev value keeps the zero-config demo working.
     JWT_ACCESS_SECRET: z.string().min(32).optional(),
+    // 32 random bytes, base64 (generate: node -e "console.log(require('crypto').randomBytes(32).toString('base64'))").
+    // Required in production. Changing it makes every stored secret unreadable.
+    ENCRYPTION_KEY: z.string().optional(),
     // Requests per minute per IP on login, signup and accept invite.
     AUTH_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(1).default(10),
     // Refresh runs on every page load and tab, so it gets a larger budget.
@@ -72,7 +84,37 @@ export const envSchema = z
       });
     }
   })
-  .transform((env) => ({ ...env, JWT_ACCESS_SECRET: env.JWT_ACCESS_SECRET ?? DEV_JWT_SECRET }));
+  .superRefine((env, ctx) => {
+    // Messages never include the value (it is a secret).
+    if (env.ENCRYPTION_KEY === undefined || env.ENCRYPTION_KEY === '') {
+      if (env.NODE_ENV === 'production') {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['ENCRYPTION_KEY'],
+          message: 'is required in production',
+        });
+      }
+      return;
+    }
+    if (!ENCRYPTION_KEY_SHAPE.test(env.ENCRYPTION_KEY)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['ENCRYPTION_KEY'],
+        message: 'must be 32 random bytes in base64 (44 characters): too short or not base64',
+      });
+    } else if (env.NODE_ENV === 'production' && env.ENCRYPTION_KEY === DEV_ENCRYPTION_KEY) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['ENCRYPTION_KEY'],
+        message: 'must not be the development key in production',
+      });
+    }
+  })
+  .transform((env) => ({
+    ...env,
+    JWT_ACCESS_SECRET: env.JWT_ACCESS_SECRET ?? DEV_JWT_SECRET,
+    ENCRYPTION_KEY: env.ENCRYPTION_KEY ? env.ENCRYPTION_KEY : DEV_ENCRYPTION_KEY,
+  }));
 
 export type Env = z.output<typeof envSchema>;
 

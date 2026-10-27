@@ -34,6 +34,17 @@ Items raised in reviews that belong to a later milestone. Each milestone plan st
 
 - Removing a member unassigns every lead they own, closed (won, lost) ones too: the owner reference has no ON DELETE action. Closed leads lose their owner attribution, which reporting may want. Keep it when the lead timeline exists (a LeadEvent per lead on removal, or a `closedBy` field).
 
+## M2 – Ingest & sources (found while building)
+
+- Fuzzy dedup ("same company domain + similar name") was dropped from M2: it risks merging different people. Revisit with AI in M3.
+- Saved views on the Leads list, and rotating an HMAC secret without switching signing off first (today: off, then on).
+- `list` sources runs a second `groupBy` over all of a workspace's leads for `lastLeadAt`; fold it into one query or store `lastLeadAt` on the source if it gets slow.
+- No cap on sources per workspace and no rate limit on create/rotate: add a cap (about 50) and a throttle.
+- Ingest looks a key up by its globally unique prefix: that is an unscoped query, so it needs an allowlist entry in `eslint.config.mjs` with a stated reason. Compare against a dummy hash when the prefix is unknown so both failures take the same time.
+- `SourcesService.update` reads then writes without a lock: two PATCHes at once can write an audit `before` that is not the true previous state (data is correct).
+- Reject an all-zero `ENCRYPTION_KEY` in production, and log a warning at boot when the public dev key is in use outside tests.
+- Lead emails: lowercase before insert; validate country codes (step 3).
+
 ## M4 – Routing & actions
 
 - Build the "New Hot lead" alert email from the approved design (docs/design-notes.md, Emails; the plain-text version is on the canvas). The invite email's `EmailLayout` and copy pattern in `apps/api/src/email` are the model.
