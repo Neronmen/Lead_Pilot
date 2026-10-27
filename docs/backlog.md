@@ -4,9 +4,7 @@ Items raised in reviews that belong to a later milestone. Each milestone plan st
 
 ## M1 – Auth & tenancy (do first)
 
-- Web API client: `credentials: 'include'` for the refresh-token cookie.
-- Web auth client (step 8): refresh under a cross-tab lock (`navigator.locks.request('lp-refresh', ...)`). Reuse detection revokes the whole sign-in when two tabs refresh with the same token at once, so per-tab single-flight is not enough. A 429 on refresh means "retry later", not "signed out".
-- Web foundations (step 8): serve the email logo, a 56×56 PNG of the LeadPilot mark (cyan rounded square, paper-plane glyph, transparent background), at `apps/web/public/email/logo.png`. The invite email links to `${WEB_ORIGIN}/email/logo.png`; until the file exists the logo shows its alt text.
+- Nothing left from the API steps. Web: the Login, Signup and Accept invite pages (step 9) and Settings > Team (step 10) are in the M1 plan.
 
 ## M2 – Ingestion
 
