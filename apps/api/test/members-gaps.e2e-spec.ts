@@ -114,7 +114,8 @@ describe('Members: races, sessions, history and scale (e2e)', () => {
         const t = await team();
         const [changed, removed] = await Promise.all([
           patch(t.owner, t.memberM.id, { role: 'ADMIN' }),
-          remove(t.admin2, t.memberM.id),
+          // The owner removes them (an admin could not once they became an admin: the next test).
+          remove(t.owner, t.memberM.id),
         ]);
         expect(removed.status).toBe(204);
         expect([200, 404]).toContain(changed.status);
@@ -127,6 +128,30 @@ describe('Members: races, sessions, history and scale (e2e)', () => {
         expect(removedRow?.before).toMatchObject({
           role: changed.status === 200 ? 'ADMIN' : 'MEMBER',
         });
+      }
+    });
+
+    it('an admin removing a member while the owner promotes them: never an admin removed by an admin', async () => {
+      for (let i = 0; i < 6; i += 1) {
+        const t = await team();
+        const [promoted, removed] = await Promise.all([
+          patch(t.owner, t.memberM.id, { role: 'ADMIN' }),
+          remove(t.admin2, t.memberM.id),
+        ]);
+        // Either the removal won (204, then the promotion finds nobody: 404), or the
+        // promotion won and the admin may no longer remove them (403, they stay an admin).
+        const rows = await auditRows(prisma, t.workspaceId);
+        const stillThere = await prisma.membership.findUnique({ where: { id: t.memberM.id } });
+        if (removed.status === 204) {
+          expect(promoted.status).toBe(404);
+          expect(stillThere).toBeNull();
+          expect(rows.filter((row) => row.action === 'member.removed')).toHaveLength(1);
+        } else {
+          expect(removed.status).toBe(403);
+          expect(promoted.status).toBe(200);
+          expect(stillThere?.role).toBe('ADMIN');
+          expect(rows.filter((row) => row.action === 'member.removed')).toHaveLength(0);
+        }
       }
     });
 
