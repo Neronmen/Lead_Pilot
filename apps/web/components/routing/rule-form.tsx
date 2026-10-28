@@ -345,6 +345,26 @@ function ValueInput({
   const t = useTranslations('routing');
   const label = t('form.valueLabel', { n: index + 1 });
   const { field, op, value } = condition;
+  if (field === 'tier' && op === 'in') {
+    // "Is one of": a tick box for each rating, so Hot and Warm can both be chosen.
+    const chosen = new Set(value.split(',').map((part) => part.trim().toLowerCase()));
+    const toggle = (tier: string) => {
+      const next = new Set(chosen);
+      if (next.has(tier)) next.delete(tier);
+      else next.add(tier);
+      onChange(TIERS.filter((item) => next.has(item)).join(', '));
+    };
+    return (
+      <div role="group" aria-label={label} className="flex flex-wrap items-center gap-3">
+        {TIERS.map((tier) => (
+          <label key={tier} className="flex items-center gap-1.5 text-[13px]">
+            <input type="checkbox" checked={chosen.has(tier)} onChange={() => toggle(tier)} />
+            {tierLabel(tier)}
+          </label>
+        ))}
+      </div>
+    );
+  }
   if (field === 'tier' && op !== 'in') {
     return (
       <NativeSelect

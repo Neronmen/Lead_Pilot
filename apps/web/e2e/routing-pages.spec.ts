@@ -349,3 +349,24 @@ test.describe('What the rules did (Lead detail)', () => {
     await context.close();
   });
 });
+
+test('one condition can cover several ratings: "is one of" shows tick boxes (Hot and Warm)', async ({
+  browser,
+}) => {
+  const { context, api, page } = await open(browser);
+  await page.goto(`${APP}/settings/routing`);
+  await page.getByRole('button', { name: en.routing.empty.cta }).click();
+  await page.getByLabel(en.routing.form.name).fill('Hot and warm');
+  await page.getByRole('button', { name: en.routing.form.addCondition }).click();
+  await page.getByLabel(en.routing.form.opLabel.replace('{n}', '1')).selectOption('in');
+  const group = page.getByRole('group', { name: en.routing.form.valueLabel.replace('{n}', '1') });
+  await group.getByLabel(en.tiers.WARM).check();
+  await page.getByRole('button', { name: en.routing.form.save }).click();
+  await expect(page.getByText(/If tier is one of Hot, Warm/)).toBeVisible();
+  expect(
+    api.requests.find((r) => r.method === 'POST' && r.path === '/routing/rules')?.body,
+  ).toMatchObject({
+    conditions: { conditions: [{ field: 'tier', op: 'in', value: ['hot', 'warm'] }] },
+  });
+  await context.close();
+});
