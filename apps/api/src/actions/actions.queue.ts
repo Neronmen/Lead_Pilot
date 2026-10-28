@@ -32,25 +32,34 @@ export interface ActionExecutor {
 @Injectable()
 export class ActionsQueue implements OnApplicationBootstrap, OnApplicationShutdown {
   private readonly logger = new Logger(ActionsQueue.name);
-  readonly queue: Queue<ActionJob>;
+  private created?: Queue<ActionJob>;
   private worker?: Worker<ActionJob>;
   private executor?: ActionExecutor;
 
   constructor(
     @Inject(QUEUE_CONNECTION) private readonly connection: Redis,
     private readonly config: ConfigService<Env, true>,
-  ) {
-    this.queue = new Queue<ActionJob>(ACTIONS_QUEUE, {
-      connection,
-      prefix: config.get('QUEUE_PREFIX', { infer: true }),
-      defaultJobOptions: {
-        attempts: 5,
-        backoff: { type: 'exponential', delay: 10_000 },
-        removeOnComplete: true,
-        removeOnFail: { age: 7 * 24 * 60 * 60 },
-      },
-    });
-    this.queue.on('error', (error) => this.logger.warn(`Queue error: ${error.message}`));
+  ) {}
+
+  /**
+   * Created on first use, not at start-up: an app that never queues an action (or whose Redis is
+   * down while it shuts down) opens no extra connection that could fail with nobody listening.
+   */
+  get queue(): Queue<ActionJob> {
+    if (!this.created) {
+      this.created = new Queue<ActionJob>(ACTIONS_QUEUE, {
+        connection: this.connection,
+        prefix: this.config.get('QUEUE_PREFIX', { infer: true }),
+        defaultJobOptions: {
+          attempts: 5,
+          backoff: { type: 'exponential', delay: 10_000 },
+          removeOnComplete: true,
+          removeOnFail: { age: 7 * 24 * 60 * 60 },
+        },
+      });
+      this.created.on('error', (error) => this.logger.warn(`Queue error: ${error.message}`));
+    }
+    return this.created;
   }
 
   /** The service that runs a job registers itself here (avoids a circular import with the queue). */
@@ -101,6 +110,6 @@ export class ActionsQueue implements OnApplicationBootstrap, OnApplicationShutdo
 
   async onApplicationShutdown(): Promise<void> {
     await this.worker?.close().catch(() => undefined);
-    await this.queue.close().catch(() => undefined);
+    await this.created?.close().catch(() => undefined);
   }
 }
