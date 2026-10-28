@@ -84,7 +84,7 @@ describe('rule form draft', () => {
     expect(hasInnerGroups({ match: 'all', conditions: [] })).toBe(false);
   });
 
-  it('shows an upper-case tier from the API in the form's lower-case list', () => {
+  it('shows an upper-case tier from the API in the lower-case list of the form', () => {
     const draft = ruleToDraft({
       id: 'x',
       name: 'r',
@@ -93,7 +93,10 @@ describe('rule form draft', () => {
       updatedAt: '',
       enabled: true,
       alwaysRun: false,
-      conditions: { match: 'all', conditions: [{ field: 'tier', op: 'in', value: ['WARM', 'HOT'] }] },
+      conditions: {
+        match: 'all',
+        conditions: [{ field: 'tier', op: 'in', value: ['WARM', 'HOT'] }],
+      },
       actions: [{ type: 'tag', tag: 'x' }],
     });
     expect(draft.conditions[0]?.value).toBe('warm, hot');
