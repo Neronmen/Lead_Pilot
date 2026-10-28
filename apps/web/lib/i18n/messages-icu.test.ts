@@ -46,6 +46,12 @@ const values = {
   sends: 'name, email',
   missing: 'company, message',
   outcome: 'Won',
+  n: 1,
+  field: 'Tier',
+  op: 'is',
+  value: 'Hot',
+  conditions: 'tier is Hot',
+  actions: 'email the owner',
 };
 
 describe.each([

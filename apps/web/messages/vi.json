@@ -54,7 +54,9 @@
       "sources": "Nguồn khách tiềm năng",
       "team": "Đội ngũ",
       "advanced": "Nâng cao / Nhà phát triển",
-      "ideal": "Khách hàng lý tưởng"
+      "ideal": "Khách hàng lý tưởng",
+      "routing": "Quy tắc phân bổ",
+      "integrations": "Tích hợp"
     }
   },
   "noAccess": {
@@ -684,5 +686,253 @@
     "retry": "Thử lại",
     "open": "Mở khách tiềm năng",
     "reasonTitle": "Vì sao ở đây"
+  },
+  "settingsRouting": {
+    "title": "Quy tắc phân bổ",
+    "sub": "Quyết định ai nhận từng khách tiềm năng và ai được báo. Quy tắc đầu tiên khớp sẽ quyết định."
+  },
+  "settingsIntegrations": {
+    "title": "Tích hợp",
+    "sub": "Kết nối các công cụ mà quy tắc có thể gửi khách tiềm năng tới."
+  },
+  "routing": {
+    "loading": "Đang tải quy tắc",
+    "loadTitle": "Không tải được quy tắc",
+    "loadBody": "Máy chủ không phản hồi. Không có gì bị mất. Hãy thử lại sau giây lát.",
+    "retry": "Thử lại",
+    "add": "Thêm quy tắc",
+    "orderHelp": "Quy tắc được kiểm tra từ trên xuống. Quy tắc đầu tiên khớp sẽ quyết định, trừ các quy tắc “Luôn chạy”.",
+    "empty": {
+      "title": "Chưa có quy tắc nào",
+      "body": "Không có quy tắc thì khách tiềm năng vẫn được xếp hạng nhưng không ai được giao hay được báo. Hãy thêm quy tắc để gửi khách Nóng cho đội của bạn.",
+      "cta": "Thêm quy tắc đầu tiên"
+    },
+    "groupsNote": "Quy tắc này dùng nhóm lồng trong nhóm mà trình chỉnh sửa chưa hiển thị được. Bạn vẫn có thể bật/tắt, di chuyển hoặc xóa nó.",
+    "off": "Tắt",
+    "alwaysRuns": "Luôn chạy",
+    "deleteAsk": "Xóa “{name}”?",
+    "deleteYes": "Xóa quy tắc",
+    "moveUp": "Chuyển “{name}” lên",
+    "moveDown": "Chuyển “{name}” xuống",
+    "edit": "Sửa",
+    "switchOff": "Tắt",
+    "switchOn": "Bật",
+    "delete": "Xóa",
+    "somebody": "một người",
+    "aSource": "một nguồn",
+    "aTool": "một công cụ",
+    "yes": "Có",
+    "no": "Không",
+    "cond": "{field} {op} {value}",
+    "field": {
+      "score": "Điểm",
+      "tier": "Hạng",
+      "country": "Quốc gia",
+      "source": "Nguồn",
+      "industry": "Ngành",
+      "isFreeMail": "Email miễn phí",
+      "custom": "Trường tùy chỉnh"
+    },
+    "op": {
+      "is": "là",
+      "is_not": "không phải",
+      "at_least": "ít nhất là",
+      "at_most": "nhiều nhất là",
+      "in": "là một trong",
+      "contains": "chứa"
+    },
+    "joinAll": " và ",
+    "joinAny": " hoặc ",
+    "everyLead": "mọi khách tiềm năng",
+    "sentence": "Nếu {conditions} → {actions}",
+    "act": {
+      "assign": "giao cho {name}",
+      "assign_team": "giao cho người kế tiếp trong đội",
+      "tag": "gắn nhãn “{name}”",
+      "email_owner": "gửi email cho người phụ trách",
+      "email_admins": "gửi email cho quản trị viên",
+      "slack": "gửi tới {name} trên Slack",
+      "telegram": "gửi tới {name} trên Telegram",
+      "webhook": "gửi tới {name}",
+      "hubspot": "thêm vào HubSpot ({name})"
+    },
+    "kind": {
+      "assign": "Giao cho một người",
+      "assign_team": "Giao cho một đội",
+      "tag": "Gắn nhãn",
+      "email_owner": "Gửi email cho người phụ trách",
+      "email_admins": "Gửi email cho quản trị viên",
+      "slack": "Gửi tới Slack",
+      "telegram": "Gửi tới Telegram",
+      "webhook": "Gửi tới công cụ khác",
+      "hubspot": "Thêm vào HubSpot"
+    },
+    "form": {
+      "label": "Quy tắc",
+      "name": "Tên quy tắc",
+      "ifTitle": "Nếu",
+      "noConditions": "Không có điều kiện: quy tắc áp dụng cho mọi khách tiềm năng.",
+      "matchLabel": "Quy tắc áp dụng khi",
+      "matchAll": "tất cả điều kiện đúng",
+      "matchAny": "một trong các điều kiện đúng",
+      "fieldLabel": "Điều kiện {n}: xem gì",
+      "keyLabel": "Điều kiện {n}: tên trường tùy chỉnh",
+      "keyPlaceholder": "Tên trường",
+      "opLabel": "Điều kiện {n}: phép so sánh",
+      "valueLabel": "Điều kiện {n}: giá trị",
+      "listPlaceholder": "Cách nhau bằng dấu phẩy",
+      "removeCondition": "Xóa điều kiện {n}",
+      "addCondition": "Thêm điều kiện",
+      "thenTitle": "Thì",
+      "actionLabel": "Hành động {n}: làm gì",
+      "personLabel": "Hành động {n}: người",
+      "tagLabel": "Hành động {n}: nhãn",
+      "toolLabel": "Hành động {n}: công cụ",
+      "choose": "Chọn…",
+      "teamNote": "Một đội được đặt qua API",
+      "removeAction": "Xóa hành động {n}",
+      "addAction": "Thêm hành động",
+      "alwaysRun": "Luôn chạy",
+      "alwaysRunHelp": "Chạy với mọi khách tiềm năng khớp, kể cả khi quy tắc khác đã quyết định, và không chặn các quy tắc khác.",
+      "enabled": "Đang bật",
+      "save": "Lưu quy tắc",
+      "cancel": "Hủy",
+      "incomplete": {
+        "name": "Hãy đặt tên cho quy tắc.",
+        "conditions": "Có điều kiện chưa xong: hãy kiểm tra giá trị của nó.",
+        "actions": "Hãy thêm ít nhất một hành động và hoàn thành từng hành động (chọn người, công cụ hoặc viết nhãn)."
+      }
+    },
+    "test": {
+      "open": "Thử với khách tiềm năng mẫu",
+      "title": "Thử với khách tiềm năng mẫu",
+      "sub": "Mô tả một khách tiềm năng để xem quy tắc nào quyết định và vì sao. Không có gì được giao, gửi hay lưu.",
+      "close": "Đóng",
+      "score": "Điểm",
+      "tier": "Hạng",
+      "country": "Quốc gia (2 chữ cái)",
+      "source": "Nguồn",
+      "anySource": "Nguồn bất kỳ",
+      "freeMail": "Email miễn phí",
+      "run": "Thử",
+      "decides": "“{name}” quyết định.",
+      "noRule": "Không quy tắc nào khớp khách tiềm năng này, nên sẽ không có gì xảy ra.",
+      "skipped": {
+        "disabled": "Đang tắt",
+        "earlier_rule_decided": "Bỏ qua: một quy tắc trước đã quyết định"
+      },
+      "verdictDecides": "Quyết định",
+      "verdictAlso": "Cũng chạy",
+      "verdictNo": "Không khớp",
+      "passed": "khớp",
+      "failed": "không khớp",
+      "lead": "khách này: {value}",
+      "unknown": "chưa biết"
+    }
+  },
+  "integrations": {
+    "loading": "Đang tải các tích hợp",
+    "loadTitle": "Không tải được các tích hợp",
+    "loadBody": "Máy chủ không phản hồi. Không có gì bị mất. Hãy thử lại sau giây lát.",
+    "retry": "Thử lại",
+    "email": {
+      "title": "Email",
+      "body": "Cảnh báo khách Nóng được gửi qua email từ LeadPilot. Không cần kết nối gì.",
+      "always": "Luôn bật"
+    },
+    "type": {
+      "SLACK": {
+        "title": "Slack",
+        "body": "Đăng khách tiềm năng mới vào một kênh."
+      },
+      "TELEGRAM": {
+        "title": "Telegram",
+        "body": "Gửi khách tiềm năng mới tới một cuộc trò chuyện với bot của bạn."
+      },
+      "WEBHOOK": {
+        "title": "Gửi tới công cụ khác",
+        "body": "Gửi từng khách tiềm năng, có chữ ký, tới Zapier, Make, n8n hoặc máy chủ của bạn."
+      },
+      "HUBSPOT": {
+        "title": "HubSpot",
+        "body": "Thêm khách tiềm năng vào HubSpot dưới dạng liên hệ."
+      }
+    },
+    "hint": {
+      "SLACK": "Trong Slack, hãy tạo một “Incoming Webhook” rồi dán địa chỉ của nó vào đây. Địa chỉ bắt đầu bằng https://hooks.slack.com.",
+      "TELEGRAM": "Mã token bạn nhận từ @BotFather. Nó được lưu mã hóa và không bao giờ hiện lại.",
+      "WEBHOOK": "Một địa chỉ https công khai. LeadPilot từ chối địa chỉ nằm trong mạng riêng.",
+      "HUBSPOT": "Token của ứng dụng riêng trong tài khoản HubSpot. Nó được lưu mã hóa và không bao giờ hiện lại."
+    },
+    "field": {
+      "name": "Tên",
+      "slackUrl": "Địa chỉ webhook của Slack",
+      "botToken": "Token của bot",
+      "chatId": "Mã cuộc trò chuyện",
+      "webhookUrl": "Địa chỉ để gửi tới",
+      "hubspotToken": "Token ứng dụng riêng"
+    },
+    "connect": "Kết nối",
+    "connectSubmit": "Kết nối",
+    "cancel": "Hủy",
+    "none": "Chưa kết nối.",
+    "missing": "Hãy điền đủ mọi ô.",
+    "status": {
+      "connected": "Đã kết nối",
+      "needs_attention": "Cần chú ý",
+      "paused": "Đang tắt"
+    },
+    "testedAt": "Đã thử {when}",
+    "neverTested": "Chưa thử",
+    "sendTest": "Gửi tin nhắn thử",
+    "testOk": "Đã gửi tin nhắn thử.",
+    "switchOff": "Tắt",
+    "switchOn": "Bật",
+    "disconnect": "Ngắt kết nối",
+    "disconnectAsk": "Ngắt kết nối “{name}”?",
+    "disconnectYes": "Ngắt kết nối",
+    "problem": {
+      "refused": "Công cụ từ chối kết nối. Hãy kết nối lại bằng khóa hoặc địa chỉ mới.",
+      "notFound": "Không tìm thấy địa chỉ này. Hãy kiểm tra và kết nối lại.",
+      "server": "Công cụ đang gặp sự cố ở phía họ. LeadPilot sẽ thử lại.",
+      "timeout": "Công cụ không trả lời kịp.",
+      "network": "LeadPilot không kết nối được tới công cụ.",
+      "redirect": "Địa chỉ này chuyển người dùng sang nơi khác mà LeadPilot không đi theo. Hãy dùng địa chỉ cuối cùng.",
+      "address": "Địa chỉ này không được phép. Hãy dùng địa chỉ https công khai.",
+      "config": "Không đọc được kết nối đã lưu. Hãy ngắt kết nối rồi kết nối lại.",
+      "recipient": "Không có ai để gửi email: khách tiềm năng này chưa có người phụ trách.",
+      "emailFailed": "Không gửi được email.",
+      "off": "Công cụ đang tắt.",
+      "memberGone": "Người được giao không còn trong không gian làm việc.",
+      "other": "Đã có lỗi. Hãy thử lại."
+    },
+    "secret": {
+      "title": "Hãy sao chép khóa ký ngay bây giờ",
+      "body": "Công cụ của bạn dùng nó để kiểm tra tin nhắn thật sự đến từ LeadPilot. Nó chỉ hiện một lần.",
+      "label": "Khóa ký",
+      "done": "Tôi đã sao chép"
+    }
+  },
+  "leadActions": {
+    "title": "Các quy tắc đã làm gì",
+    "loadError": "Không tải được các hành động.",
+    "retry": "Thử lại",
+    "type": {
+      "assign": "Đã giao người phụ trách",
+      "tag": "Đã gắn nhãn",
+      "email": "Đã gửi email cảnh báo khách Nóng",
+      "slack": "Đã gửi tới Slack",
+      "telegram": "Đã gửi tới Telegram",
+      "webhook": "Đã gửi tới công cụ khác",
+      "hubspot": "Đã thêm vào HubSpot"
+    },
+    "status": {
+      "PENDING": "Đang chờ",
+      "RUNNING": "Đang chạy",
+      "SUCCEEDED": "Xong",
+      "FAILED": "Lỗi, sẽ thử lại",
+      "DEAD": "Lỗi"
+    },
+    "retryFailed": "Không thử lại được. Hãy thử lại sau giây lát."
   }
 }

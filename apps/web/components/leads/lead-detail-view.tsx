@@ -6,6 +6,7 @@ import { useFormatter, useNow, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
 import { canManage, useCurrentMe } from '@/components/app-shell/me-context';
+import { LeadActions } from './lead-actions';
 import { ErrorState, StateView } from '@/components/state-views';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -132,6 +133,7 @@ function Detail({ lead }: { lead: LeadDetail }) {
 
       <Disagree lead={lead} />
       <OutcomeCard lead={lead} />
+      {canManage(me.role) ? <LeadActions leadId={lead.id} /> : null}
       <Activity events={lead.events} />
 
       {canManage(me.role) && score ? (

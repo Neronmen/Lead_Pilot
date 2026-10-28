@@ -54,7 +54,9 @@
       "sources": "Lead sources",
       "team": "Team",
       "advanced": "Advanced / Developer",
-      "ideal": "Ideal customer"
+      "ideal": "Ideal customer",
+      "routing": "Routing rules",
+      "integrations": "Integrations"
     }
   },
   "noAccess": {
@@ -684,5 +686,253 @@
     "retry": "Try again",
     "open": "Open lead",
     "reasonTitle": "Why it is here"
+  },
+  "settingsRouting": {
+    "title": "Routing rules",
+    "sub": "Decide who gets each lead and who is told about it. The first rule that matches decides."
+  },
+  "settingsIntegrations": {
+    "title": "Integrations",
+    "sub": "Connect the tools your rules can send leads to."
+  },
+  "routing": {
+    "loading": "Loading rules",
+    "loadTitle": "Couldn’t load the rules",
+    "loadBody": "The server didn’t respond. Nothing has been lost. Try again in a moment.",
+    "retry": "Try again",
+    "add": "Add a rule",
+    "orderHelp": "Rules are checked from the top. The first one that matches decides, except rules marked “Always runs”.",
+    "empty": {
+      "title": "No rules yet",
+      "body": "Without rules, leads are rated but nobody is assigned or told. Add a rule to send Hot leads to your team.",
+      "cta": "Add your first rule"
+    },
+    "groupsNote": "This rule uses groups inside groups, which the editor can’t show yet. You can still switch it on or off, move it or delete it.",
+    "off": "Off",
+    "alwaysRuns": "Always runs",
+    "deleteAsk": "Delete “{name}”?",
+    "deleteYes": "Delete rule",
+    "moveUp": "Move “{name}” up",
+    "moveDown": "Move “{name}” down",
+    "edit": "Edit",
+    "switchOff": "Switch off",
+    "switchOn": "Switch on",
+    "delete": "Delete",
+    "somebody": "a person",
+    "aSource": "a source",
+    "aTool": "a tool",
+    "yes": "Yes",
+    "no": "No",
+    "cond": "{field} {op} {value}",
+    "field": {
+      "score": "Score",
+      "tier": "Tier",
+      "country": "Country",
+      "source": "Source",
+      "industry": "Industry",
+      "isFreeMail": "Free email",
+      "custom": "Custom field"
+    },
+    "op": {
+      "is": "is",
+      "is_not": "is not",
+      "at_least": "is at least",
+      "at_most": "is at most",
+      "in": "is one of",
+      "contains": "contains"
+    },
+    "joinAll": " and ",
+    "joinAny": " or ",
+    "everyLead": "every lead",
+    "sentence": "If {conditions} → {actions}",
+    "act": {
+      "assign": "assign to {name}",
+      "assign_team": "assign to the next person in a team",
+      "tag": "add the tag “{name}”",
+      "email_owner": "email the owner",
+      "email_admins": "email the admins",
+      "slack": "send to {name} on Slack",
+      "telegram": "send to {name} on Telegram",
+      "webhook": "send to {name}",
+      "hubspot": "add to HubSpot ({name})"
+    },
+    "kind": {
+      "assign": "Assign to a person",
+      "assign_team": "Assign to a team",
+      "tag": "Add a tag",
+      "email_owner": "Email the owner",
+      "email_admins": "Email the admins",
+      "slack": "Send to Slack",
+      "telegram": "Send to Telegram",
+      "webhook": "Send to another tool",
+      "hubspot": "Add to HubSpot"
+    },
+    "form": {
+      "label": "Rule",
+      "name": "Rule name",
+      "ifTitle": "If",
+      "noConditions": "No conditions: the rule applies to every lead.",
+      "matchLabel": "The rule applies when",
+      "matchAll": "all of these are true",
+      "matchAny": "any of these is true",
+      "fieldLabel": "Condition {n}: what to look at",
+      "keyLabel": "Condition {n}: custom field name",
+      "keyPlaceholder": "Field name",
+      "opLabel": "Condition {n}: comparison",
+      "valueLabel": "Condition {n}: value",
+      "listPlaceholder": "Separate with commas",
+      "removeCondition": "Remove condition {n}",
+      "addCondition": "Add a condition",
+      "thenTitle": "Then",
+      "actionLabel": "Action {n}: what to do",
+      "personLabel": "Action {n}: person",
+      "tagLabel": "Action {n}: tag",
+      "toolLabel": "Action {n}: tool",
+      "choose": "Choose…",
+      "teamNote": "A team set through the API",
+      "removeAction": "Remove action {n}",
+      "addAction": "Add an action",
+      "alwaysRun": "Always runs",
+      "alwaysRunHelp": "Runs for every lead it matches, even after another rule has decided, and never stops the others.",
+      "enabled": "Switched on",
+      "save": "Save rule",
+      "cancel": "Cancel",
+      "incomplete": {
+        "name": "Give the rule a name.",
+        "conditions": "A condition is not finished: check its value.",
+        "actions": "Add at least one action, and finish each one (choose a person, a tool, or write a tag)."
+      }
+    },
+    "test": {
+      "open": "Test with a sample lead",
+      "title": "Test with a sample lead",
+      "sub": "Describe a lead to see which rule decides and why. Nothing is assigned, sent or saved.",
+      "close": "Close",
+      "score": "Score",
+      "tier": "Tier",
+      "country": "Country (2 letters)",
+      "source": "Source",
+      "anySource": "Any source",
+      "freeMail": "Free email",
+      "run": "Test",
+      "decides": "“{name}” decides.",
+      "noRule": "No rule matches this lead, so nothing would happen.",
+      "skipped": {
+        "disabled": "Switched off",
+        "earlier_rule_decided": "Skipped: an earlier rule decided"
+      },
+      "verdictDecides": "Decides",
+      "verdictAlso": "Also runs",
+      "verdictNo": "Does not match",
+      "passed": "matches",
+      "failed": "does not match",
+      "lead": "this lead: {value}",
+      "unknown": "unknown"
+    }
+  },
+  "integrations": {
+    "loading": "Loading integrations",
+    "loadTitle": "Couldn’t load the integrations",
+    "loadBody": "The server didn’t respond. Nothing has been lost. Try again in a moment.",
+    "retry": "Try again",
+    "email": {
+      "title": "Email",
+      "body": "Hot lead alerts are sent by email from LeadPilot. Nothing to connect.",
+      "always": "Always on"
+    },
+    "type": {
+      "SLACK": {
+        "title": "Slack",
+        "body": "Post new leads to a channel."
+      },
+      "TELEGRAM": {
+        "title": "Telegram",
+        "body": "Send new leads to a chat with your bot."
+      },
+      "WEBHOOK": {
+        "title": "Send to another tool",
+        "body": "Send each lead, signed, to Zapier, Make, n8n or your own server."
+      },
+      "HUBSPOT": {
+        "title": "HubSpot",
+        "body": "Add leads to HubSpot as contacts."
+      }
+    },
+    "hint": {
+      "SLACK": "In Slack, create an “Incoming Webhook” and paste its address here. It starts with https://hooks.slack.com.",
+      "TELEGRAM": "The token you got from @BotFather. It is stored encrypted and never shown again.",
+      "WEBHOOK": "A public https address. LeadPilot refuses addresses inside a private network.",
+      "HUBSPOT": "A private app token from your HubSpot account. It is stored encrypted and never shown again."
+    },
+    "field": {
+      "name": "Name",
+      "slackUrl": "Slack webhook address",
+      "botToken": "Bot token",
+      "chatId": "Chat id",
+      "webhookUrl": "Address to send to",
+      "hubspotToken": "Private app token"
+    },
+    "connect": "Connect",
+    "connectSubmit": "Connect",
+    "cancel": "Cancel",
+    "none": "Not connected yet.",
+    "missing": "Fill in every field.",
+    "status": {
+      "connected": "Connected",
+      "needs_attention": "Needs attention",
+      "paused": "Switched off"
+    },
+    "testedAt": "Tested {when}",
+    "neverTested": "Not tested yet",
+    "sendTest": "Send test message",
+    "testOk": "The test message was sent.",
+    "switchOff": "Switch off",
+    "switchOn": "Switch on",
+    "disconnect": "Disconnect",
+    "disconnectAsk": "Disconnect “{name}”?",
+    "disconnectYes": "Disconnect",
+    "problem": {
+      "refused": "The tool refused the connection. Reconnect it with a new key or address.",
+      "notFound": "The address was not found. Check it and reconnect.",
+      "server": "The tool had a problem on its side. LeadPilot will try again.",
+      "timeout": "The tool did not answer in time.",
+      "network": "LeadPilot could not reach the tool.",
+      "redirect": "The address sends people somewhere else, which LeadPilot does not follow. Use the final address.",
+      "address": "This address is not allowed. Use a public https address.",
+      "config": "The saved connection is no longer readable. Disconnect it and connect again.",
+      "recipient": "There was nobody to email: the lead has no owner yet.",
+      "emailFailed": "The email could not be sent.",
+      "off": "The tool is switched off.",
+      "memberGone": "The person to assign is no longer in the workspace.",
+      "other": "Something went wrong. Try again."
+    },
+    "secret": {
+      "title": "Copy the signing secret now",
+      "body": "Your tool uses it to check that a message really came from LeadPilot. It is shown only once.",
+      "label": "Signing secret",
+      "done": "I’ve copied it"
+    }
+  },
+  "leadActions": {
+    "title": "What the rules did",
+    "loadError": "Couldn’t load the actions.",
+    "retry": "Retry",
+    "type": {
+      "assign": "Assigned an owner",
+      "tag": "Added a tag",
+      "email": "Emailed the Hot lead alert",
+      "slack": "Sent to Slack",
+      "telegram": "Sent to Telegram",
+      "webhook": "Sent to another tool",
+      "hubspot": "Added to HubSpot"
+    },
+    "status": {
+      "PENDING": "Waiting",
+      "RUNNING": "Running",
+      "SUCCEEDED": "Done",
+      "FAILED": "Failed, will retry",
+      "DEAD": "Failed"
+    },
+    "retryFailed": "Couldn’t retry. Try again in a moment."
   }
 }

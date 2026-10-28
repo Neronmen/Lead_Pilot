@@ -5,6 +5,51 @@ export const APP = 'http://localhost:3100';
 
 export type Role = 'OWNER' | 'ADMIN' | 'MEMBER';
 
+export interface MockRule {
+  id: string;
+  name: string;
+  order: number;
+  conditions: {
+    match: 'all' | 'any';
+    conditions: {
+      field: string;
+      key?: string;
+      op: string;
+      value: string | number | boolean | string[];
+    }[];
+  };
+  actions: Record<string, unknown>[];
+  enabled: boolean;
+  alwaysRun: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MockIntegration {
+  id: string;
+  type: 'SLACK' | 'TELEGRAM' | 'WEBHOOK' | 'HUBSPOT' | 'EMAIL';
+  name: string;
+  enabled: boolean;
+  status: 'connected' | 'needs_attention' | 'paused';
+  lastError: string | null;
+  lastTestedAt: string | null;
+  summary: string | null;
+  createdAt: string;
+}
+
+export interface MockAction {
+  id: string;
+  leadId: string;
+  ruleId: string | null;
+  integrationId: string | null;
+  type: string;
+  status: 'PENDING' | 'RUNNING' | 'SUCCEEDED' | 'FAILED' | 'DEAD';
+  attempts: number;
+  lastError: string | null;
+  createdAt: string;
+  finishedAt: string | null;
+}
+
 export interface MockOptions {
   role?: Role;
   name?: string | null;
@@ -54,6 +99,13 @@ export class MockApi {
   sources: MockSource[] = [];
   /** Leads, newest first. */
   leads: MockLead[] = [];
+  /** Routing rules in order, changed by the Routing calls. */
+  rules: MockRule[] = [];
+  /** Connected tools; `failTest` makes "Send test message" fail with that code. */
+  integrations: MockIntegration[] = [];
+  failTest: string | null = null;
+  /** What the rules did, per lead id. */
+  actions: Record<string, MockAction[]> = {};
   /** The saved ideal customer (null: never saved). */
   rubric: {
     industries: string[];
@@ -476,6 +528,112 @@ export class MockApi {
           ],
         });
       }
+    }
+    if (path === '/routing/rules' && method === 'GET') return json(200, this.rules);
+    if (path === '/routing/rules' && method === 'POST') {
+      const body = sent as Omit<MockRule, 'id' | 'order' | 'createdAt' | 'updatedAt'>;
+      const now = new Date().toISOString();
+      const rule: MockRule = {
+        ...body,
+        id: crypto.randomUUID(),
+        order: this.rules.length + 1,
+        createdAt: now,
+        updatedAt: now,
+      };
+      this.rules.push(rule);
+      return json(201, rule);
+    }
+    if (path === '/routing/rules/order' && method === 'PUT') {
+      const { ids } = sent as { ids: string[] };
+      this.rules = ids.map((id, i) => ({ ...this.rules.find((r) => r.id === id)!, order: i + 1 }));
+      return json(200, this.rules);
+    }
+    const ruleMatch = /^\/routing\/rules\/([0-9a-f-]{36})$/.exec(path);
+    if (ruleMatch) {
+      const rule = this.rules.find((r) => r.id === ruleMatch[1]);
+      if (!rule) return json(404, { error: { code: 'NOT_FOUND', message: 'Rule not found' } });
+      if (method === 'DELETE') {
+        this.rules = this.rules.filter((r) => r.id !== rule.id);
+        return route.fulfill({ status: 204, headers: cors });
+      }
+      if (method === 'PATCH') {
+        Object.assign(rule, sent, { updatedAt: new Date().toISOString() });
+        return json(200, rule);
+      }
+    }
+    if (path === '/routing/test' && method === 'POST') {
+      const lead = (sent as { lead: { tier: string | null; score: number | null } }).lead;
+      let decidingRuleId: string | null = null;
+      const verdicts = this.rules.map((rule) => {
+        const base = { ruleId: rule.id, name: rule.name, actions: rule.actions };
+        if (!rule.enabled) return { ...base, skipped: 'disabled', matched: false, checks: [] };
+        if (decidingRuleId && !rule.alwaysRun) {
+          return { ...base, skipped: 'earlier_rule_decided', matched: false, checks: [] };
+        }
+        const checks = rule.conditions.conditions.map((c) => ({
+          field: c.field,
+          op: c.op,
+          expected: c.value,
+          actual: c.field === 'tier' ? lead.tier : lead.score,
+          passed:
+            c.field === 'tier' && String(lead.tier).toLowerCase() === String(c.value).toLowerCase(),
+        }));
+        const matched = checks.every((c) => c.passed);
+        if (matched && !rule.alwaysRun) decidingRuleId = rule.id;
+        return { ...base, skipped: null, matched, checks };
+      });
+      return json(200, { decidingRuleId, verdicts, dryRun: true });
+    }
+    if (path === '/integrations' && method === 'GET') return json(200, this.integrations);
+    if (path === '/integrations' && method === 'POST') {
+      const body = sent as { type: MockIntegration['type']; name: string };
+      const row: MockIntegration = {
+        id: crypto.randomUUID(),
+        type: body.type,
+        name: body.name,
+        enabled: true,
+        status: 'connected',
+        lastError: null,
+        lastTestedAt: null,
+        summary: body.type === 'SLACK' ? 'hooks.slack.com' : null,
+        createdAt: new Date().toISOString(),
+      };
+      this.integrations.push(row);
+      const signingSecret = body.type === 'WEBHOOK' ? 'whsec_mock_signing_secret' : null;
+      return json(201, { ...row, signingSecret });
+    }
+    const intMatch = /^\/integrations\/([0-9a-f-]{36})(\/test)?$/.exec(path);
+    if (intMatch) {
+      const row = this.integrations.find((i) => i.id === intMatch[1]);
+      if (!row)
+        return json(404, { error: { code: 'NOT_FOUND', message: 'Integration not found' } });
+      if (intMatch[2] && method === 'POST') {
+        row.lastTestedAt = new Date().toISOString();
+        row.lastError = this.failTest;
+        row.status = this.failTest ? 'needs_attention' : 'connected';
+        return json(200, { ok: this.failTest === null, error: this.failTest });
+      }
+      if (method === 'DELETE') {
+        this.integrations = this.integrations.filter((i) => i.id !== row.id);
+        return route.fulfill({ status: 204, headers: cors });
+      }
+      if (method === 'PATCH') {
+        Object.assign(row, sent);
+        row.status = row.enabled ? 'connected' : 'paused';
+        return json(200, row);
+      }
+    }
+    if (path === '/actions' && method === 'GET') {
+      const leadId = new URL(request.url()).searchParams.get('leadId') ?? '';
+      return json(200, this.actions[leadId] ?? []);
+    }
+    const retryMatch = /^\/actions\/([0-9a-f-]{36})\/retry$/.exec(path);
+    if (retryMatch && method === 'POST') {
+      for (const list of Object.values(this.actions)) {
+        const run = list.find((a) => a.id === retryMatch[1]);
+        if (run) Object.assign(run, { status: 'PENDING', lastError: null });
+      }
+      return route.fulfill({ status: 204, headers: cors });
     }
     if (path === '/icp-rubric' && method === 'GET') {
       return json(200, {
