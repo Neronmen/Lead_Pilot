@@ -153,6 +153,9 @@ export async function deliverHubspot(
   return id.success ? { externalId: id.data.id } : {};
 }
 
+/** What "Send test message" posts to a chat: plain words, no made-up lead and no address. */
+const TEST_TEXT = 'LeadPilot test message. If you can read this, the connection works.';
+
 const TEST_LEAD: RoutedLead = {
   id: '00000000-0000-0000-0000-000000000000',
   name: 'Test message from LeadPilot',
@@ -174,12 +177,21 @@ export async function sendTest(
   config: unknown,
 ): Promise<void> {
   switch (type) {
-    case 'slack':
-      await deliverSlack(transport, config, TEST_LEAD);
+    case 'slack': {
+      const parsed = slackConfigSchema.safeParse(config);
+      if (!parsed.success) throw new ActionError('bad_config');
+      await transport.post({ url: parsed.data.webhookUrl, body: { text: TEST_TEXT } });
       return;
-    case 'telegram':
-      await deliverTelegram(transport, config, TEST_LEAD);
+    }
+    case 'telegram': {
+      const parsed = telegramConfigSchema.safeParse(config);
+      if (!parsed.success) throw new ActionError('bad_config');
+      await transport.post({
+        url: `https://api.telegram.org/bot${encodeURIComponent(parsed.data.botToken)}/sendMessage`,
+        body: { chat_id: parsed.data.chatId, text: TEST_TEXT },
+      });
       return;
+    }
     case 'webhook':
       await deliverWebhook(transport, config, TEST_LEAD);
       return;
