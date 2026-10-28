@@ -60,7 +60,7 @@ export const emptyDraft = (): RuleDraft => ({
   name: '',
   match: 'all',
   conditions: [],
-  actions: [{ kind: 'email_owner', target: '' }],
+  actions: [{ kind: 'email_admins', target: '' }],
   enabled: true,
   alwaysRun: false,
 });

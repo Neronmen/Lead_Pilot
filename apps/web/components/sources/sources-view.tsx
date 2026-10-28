@@ -3,6 +3,7 @@
 import type { Source } from '@leadpilot/shared';
 import { Plug, Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
 import { StateView, ErrorState } from '@/components/state-views';
 import { Button } from '@/components/ui/button';
@@ -67,6 +68,15 @@ export function SourcesView() {
               </Button>
             </div>
           )}
+          <p className="text-[13px] text-muted-foreground">
+            {t('keysHint')}{' '}
+            <Link
+              href="/settings/advanced"
+              className="text-accent-text underline underline-offset-2"
+            >
+              {t('keysLink')}
+            </Link>
+          </p>
           <DuplicatesHelp />
           <ul className="flex flex-col gap-3">
             {sources.data.map((source) => (

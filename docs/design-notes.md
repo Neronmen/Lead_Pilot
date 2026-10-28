@@ -203,3 +203,12 @@ Found in batch 4:
 19. A "rated without AI" marker on `Score` (for example `Score.method`: `ai` | `rules`), so leads rated after the AI cost limit was reached can be found and looked at again.
 20. `Integration.status` (`connected` | `needs_attention` | `paused`), `lastError` and `lastTestedAt`, for the Integrations states and "Send test message".
 21. `AuditLog.area` (`rules` | `sources` | `ideal_customer` | `integrations` | `team` | `general`), for the Change history filters. The before/after values SPEC §4.8 already asks for drive the "See before and after" view.
+
+## Scope decision (2026-10-28): filter and hand over, not a CRM
+
+The product's job is to filter leads with AI (junk out, tier and reasons in) and hand the good ones to the tools the customer already uses. It does not manage the customer's sales team. Deviation from SPEC §4.5 (assign owner, round-robin) and the Team screens:
+
+- **Hidden, code kept:** the Team page leaves the Settings menu (open it from Advanced / Developer); the rule editor no longer offers "assign to a person", "email the owner" or HubSpot for new actions (a rule that already has one keeps working and shows it); the HubSpot card appears only when one is connected; "unassigned" is no longer shown on Lead detail.
+- **Words:** lead status "Routed" reads "Handed off" (VI "Đã bàn giao"); the sign-in side panel talks about Slack, Telegram and email, not teams and CRMs.
+- **One buyer account (Owner)** is the story; Admin and Member roles and invites stay for a second person, but are not promoted.
+- **Next:** Overview (junk filtered, time to first rating, tiers) and Get started (connect a source, describe the ideal customer, choose where leads go). Change history waits until it is asked for.

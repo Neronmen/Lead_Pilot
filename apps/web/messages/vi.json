@@ -86,8 +86,8 @@
       "chips": {
         "web": "Form website",
         "zapier": "Zapier",
-        "csv": "CSV",
-        "linkedin": "LinkedIn"
+        "make": "Make",
+        "n8n": "n8n"
       },
       "hot": "Nóng",
       "warm": "Ấm",
@@ -96,17 +96,17 @@
         "name": "Lukas Becker",
         "role": "Trưởng phòng Vận hành · Brightlane Logistics",
         "score": "88",
-        "assigned": "Giao cho",
-        "assignedValue": "Mia Johnson · EMEA",
+        "assigned": "Gửi tới",
+        "assignedValue": "Slack #hot-leads",
         "actions": "Tác vụ",
-        "actionsValue": "Slack #hot-leads · HubSpot",
+        "actionsValue": "Email · Telegram",
         "scored": "Chấm điểm trong",
         "scoredValue": "1,4 giây"
       }
     },
     "signup": {
       "title": "Tạo không gian làm việc",
-      "sub": "Bạn sẽ là chủ sở hữu. Bạn có thể mời đội của mình sau khi thiết lập xong.",
+      "sub": "Bạn sẽ là chủ tài khoản.",
       "name": "Họ và tên",
       "workspace": "Tên không gian làm việc",
       "email": "Email công việc",
@@ -147,11 +147,11 @@
             "body": "Biết ngay khi có khách tiềm năng Nóng."
           },
           "s4": {
-            "title": "Mời đội của bạn",
-            "body": "Khách tiềm năng tự động đến đúng nhân viên sale."
+            "title": "Nhận khách tiềm năng ngay nơi bạn làm việc",
+            "body": "Khách Nóng được gửi tới Slack, Telegram hoặc email."
           }
         },
-        "youGet": "Đội của bạn sẽ thấy",
+        "youGet": "Bạn sẽ nhận được",
         "reasons": {
           "r1": "Logistics là một ngành mục tiêu của bạn",
           "r2": "Muốn xem demo và bắt đầu trong quý này",
@@ -284,7 +284,7 @@
       "PROCESSING": "Đang xử lý",
       "NEEDS_REVIEW": "Cần xem lại",
       "SCORED": "Đã chấm điểm",
-      "ROUTED": "Đã giao",
+      "ROUTED": "Đã bàn giao",
       "FAILED": "Lỗi"
     },
     "count": "Đang hiển thị {count, plural, other {# khách tiềm năng}}",
@@ -493,7 +493,9 @@
         "timeline": "thời gian",
         "jobTitle": "chức danh"
       }
-    }
+    },
+    "keysHint": "Cần địa chỉ hoặc khóa của một nguồn?",
+    "keysLink": "Mở Nâng cao / Nhà phát triển"
   },
   "settingsAdvanced": {
     "title": "Nâng cao / Nhà phát triển",
@@ -529,7 +531,9 @@
     "exampleBasic": "Gửi một khách tiềm năng",
     "exampleSigned": "Gửi một khách tiềm năng có chữ ký (Node.js)",
     "placeholderKey": "KHOA_API_CUA_BAN",
-    "placeholderSecret": "BI_MAT_KY_CUA_BAN"
+    "placeholderSecret": "BI_MAT_KY_CUA_BAN",
+    "teamHint": "Muốn một đồng nghiệp xem cùng các khách tiềm năng này?",
+    "teamLink": "Mời người"
   },
   "copy": {
     "copy": "Sao chép",

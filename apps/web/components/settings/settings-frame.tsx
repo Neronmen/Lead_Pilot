@@ -18,7 +18,6 @@ const SECTIONS = [
   { id: 'routing', href: '/settings/routing' },
   { id: 'integrations', href: '/settings/integrations' },
   { id: 'ideal', href: '/settings/ideal-customer' },
-  { id: 'team', href: '/settings/team' },
   { id: 'advanced', href: '/settings/advanced' },
 ] as const;
 

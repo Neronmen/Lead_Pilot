@@ -1,6 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 
-const CHIPS = ['web', 'zapier', 'csv', 'linkedin'] as const;
+const CHIPS = ['web', 'zapier', 'make', 'n8n'] as const;
 
 /**
  * Login's right column, as a still frame of the design's "live pipeline"

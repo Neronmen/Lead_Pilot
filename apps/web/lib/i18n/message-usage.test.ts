@@ -40,7 +40,7 @@ const DYNAMIC: Record<string, string[]> = {
   'shell.roles.${me.role}': ROLES.map((r) => `shell.roles.${r}`),
   'shell.nav.${id}': ['leads', 'review', 'settings'].map((id) => `shell.nav.${id}`),
 
-  'settings.nav.${id}': ['sources', 'routing', 'integrations', 'ideal', 'team', 'advanced'].map(
+  'settings.nav.${id}': ['sources', 'routing', 'integrations', 'ideal', 'advanced'].map(
     (id) => `settings.nav.${id}`,
   ),
   'routing.field.${c.field}': [
@@ -221,7 +221,7 @@ const DYNAMIC: Record<string, string[]> = {
     (status) => `team.results.${status}`,
   ),
   'team.roleHelp.${value}': ['OWNER', 'ADMIN', 'MEMBER'].map((value) => `team.roleHelp.${value}`),
-  'auth.aside.chips.${chip}': ['web', 'zapier', 'csv', 'linkedin'].map(
+  'auth.aside.chips.${chip}': ['web', 'zapier', 'make', 'n8n'].map(
     (chip) => `auth.aside.chips.${chip}`,
   ),
 };
@@ -328,7 +328,6 @@ describe('message keys used by the app shell exist in EN and VI', () => {
       'routing',
       'integrations',
       'ideal',
-      'team',
       'advanced',
     ]);
   });

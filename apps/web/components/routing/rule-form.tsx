@@ -31,7 +31,10 @@ import type { CreateRoutingRuleRequest } from '@leadpilot/shared';
 
 const TIERS = ['hot', 'warm', 'cold', 'junk'] as const;
 const INTEGRATION_KINDS = ['slack', 'telegram', 'webhook', 'hubspot'] as const;
-const BASE_KINDS: ActionKind[] = ['assign', 'tag', 'email_owner', 'email_admins'];
+// What a new action can be. LeadPilot hands leads over to the tools a company already uses, so it
+// offers no "assign to a person" and no HubSpot; a rule that already has one keeps working and shows it.
+const BASE_KINDS: ActionKind[] = ['tag', 'email_admins'];
+const OFFERED_TOOLS = ['slack', 'telegram', 'webhook'];
 
 /**
  * The "If … then …" editor. Everything is a plain input; the same shared schema the API uses decides
@@ -90,10 +93,12 @@ export function RuleForm({
 
   const kindsAvailable = (current: ActionKind): ActionKind[] => [
     ...BASE_KINDS,
-    ...INTEGRATION_KINDS.filter(
-      (kind) => integrations.data?.some((i) => i.type === kind.toUpperCase()) || kind === current,
+    ...INTEGRATION_KINDS.filter((kind) =>
+      OFFERED_TOOLS.includes(kind)
+        ? integrations.data?.some((i) => i.type === kind.toUpperCase()) || kind === current
+        : kind === current,
     ),
-    ...(current === 'assign_team' ? (['assign_team'] as const) : []),
+    ...(['assign', 'assign_team', 'email_owner'] as const).filter((kind) => kind === current),
   ];
 
   return (

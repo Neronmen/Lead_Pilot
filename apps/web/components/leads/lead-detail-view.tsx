@@ -76,11 +76,11 @@ function Detail({ lead }: { lead: LeadDetail }) {
           ) : null}
           <Badge variant="outline">{status(lead.status)}</Badge>
           {lead.infoLevel ? <InfoBadge level={lead.infoLevel} /> : null}
-          <span className="text-muted-foreground">
-            {lead.owner
-              ? t('ownerIs', { name: lead.owner.name ?? t('unknownOwner') })
-              : t('unassigned')}
-          </span>
+          {lead.owner ? (
+            <span className="text-muted-foreground">
+              {t('ownerIs', { name: lead.owner.name ?? t('unknownOwner') })}
+            </span>
+          ) : null}
         </div>
       </header>
 

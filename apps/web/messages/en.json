@@ -86,8 +86,8 @@
       "chips": {
         "web": "Website form",
         "zapier": "Zapier",
-        "csv": "CSV",
-        "linkedin": "LinkedIn"
+        "make": "Make",
+        "n8n": "n8n"
       },
       "hot": "Hot",
       "warm": "Warm",
@@ -96,17 +96,17 @@
         "name": "Lukas Becker",
         "role": "Head of Operations · Brightlane Logistics",
         "score": "88",
-        "assigned": "Assigned to",
-        "assignedValue": "Mia Johnson · EMEA",
+        "assigned": "Sent to",
+        "assignedValue": "Slack #hot-leads",
         "actions": "Actions",
-        "actionsValue": "Slack #hot-leads · HubSpot",
+        "actionsValue": "Email · Telegram",
         "scored": "Scored in",
         "scoredValue": "1.4s"
       }
     },
     "signup": {
       "title": "Create your workspace",
-      "sub": "You’ll be the owner. You can invite your team once it’s set up.",
+      "sub": "You’ll be the account owner.",
       "name": "Full name",
       "workspace": "Workspace name",
       "email": "Work email",
@@ -147,11 +147,11 @@
             "body": "Hear about Hot leads the moment they arrive."
           },
           "s4": {
-            "title": "Invite your team",
-            "body": "Leads go to the right rep automatically."
+            "title": "Get leads where you work",
+            "body": "Hot leads are sent to Slack, Telegram or email."
           }
         },
-        "youGet": "What your team will see",
+        "youGet": "What you’ll get",
         "reasons": {
           "r1": "Logistics is one of your target industries",
           "r2": "Asked for a demo and wants to start this quarter",
@@ -284,7 +284,7 @@
       "PROCESSING": "Processing",
       "NEEDS_REVIEW": "Needs review",
       "SCORED": "Scored",
-      "ROUTED": "Routed",
+      "ROUTED": "Handed off",
       "FAILED": "Failed"
     },
     "count": "{count, plural, one {# lead} other {# leads}} shown",
@@ -493,7 +493,9 @@
         "timeline": "timeline",
         "jobTitle": "job title"
       }
-    }
+    },
+    "keysHint": "Need the address or key of a source?",
+    "keysLink": "Open Advanced / Developer"
   },
   "settingsAdvanced": {
     "title": "Advanced / Developer",
@@ -529,7 +531,9 @@
     "exampleBasic": "Send a lead",
     "exampleSigned": "Send a signed lead (Node.js)",
     "placeholderKey": "YOUR_API_KEY",
-    "placeholderSecret": "YOUR_SIGNING_SECRET"
+    "placeholderSecret": "YOUR_SIGNING_SECRET",
+    "teamHint": "Want a colleague to see the same leads?",
+    "teamLink": "Invite people"
   },
   "copy": {
     "copy": "Copy",

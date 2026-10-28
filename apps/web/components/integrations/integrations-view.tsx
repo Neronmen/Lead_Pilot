@@ -87,7 +87,9 @@ export function IntegrationsView() {
         </div>
         <Badge variant="outline">{t('email.always')}</Badge>
       </section>
-      {TYPES.map((type) => (
+      {TYPES.filter(
+        (type) => type !== 'HUBSPOT' || integrations.data.some((row) => row.type === 'HUBSPOT'),
+      ).map((type) => (
         <TypeSection
           key={type}
           type={type}

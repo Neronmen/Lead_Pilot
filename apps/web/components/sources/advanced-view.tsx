@@ -64,6 +64,12 @@ export function AdvancedView() {
       {sources.data.map((source) => (
         <SourceDeveloperCard key={source.id} source={source} onNotice={setNotice} />
       ))}
+      <p className="text-[13px] text-muted-foreground">
+        {t('teamHint')}{' '}
+        <Link href="/settings/team" className="text-accent-text underline underline-offset-2">
+          {t('teamLink')}
+        </Link>
+      </p>
     </div>
   );
 }
