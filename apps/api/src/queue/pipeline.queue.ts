@@ -22,23 +22,36 @@ export interface ProcessLeadJob {
 @Injectable()
 export class PipelineQueue implements OnApplicationShutdown {
   private readonly logger = new Logger(PipelineQueue.name);
-  readonly queue: Queue<ProcessLeadJob>;
+  private created?: Queue<ProcessLeadJob>;
 
-  constructor(@Inject(QUEUE_CONNECTION) connection: Redis, config: ConfigService<Env, true>) {
-    this.queue = new Queue<ProcessLeadJob>(PIPELINE_QUEUE, {
-      connection,
-      prefix: config.get('QUEUE_PREFIX', { infer: true }),
-      defaultJobOptions: {
-        attempts: 5,
-        // 5 s, 10 s, 20 s, 40 s between tries.
-        backoff: { type: 'exponential', delay: 5_000 },
-        removeOnComplete: true,
-        // Keep failures for a week so they can be looked at.
-        removeOnFail: { age: 7 * 24 * 60 * 60 },
-      },
-    });
-    // Without a listener a connection error would crash the process.
-    this.queue.on('error', (error) => this.logger.warn(`Queue error: ${error.message}`));
+  constructor(
+    @Inject(QUEUE_CONNECTION) private readonly connection: Redis,
+    private readonly config: ConfigService<Env, true>,
+  ) {}
+
+  /**
+   * Created on first use, not at start-up: an app that never queues a lead (or whose Redis is down
+   * while it shuts down) opens no extra connection that could report a late error with nobody
+   * listening.
+   */
+  get queue(): Queue<ProcessLeadJob> {
+    if (!this.created) {
+      this.created = new Queue<ProcessLeadJob>(PIPELINE_QUEUE, {
+        connection: this.connection,
+        prefix: this.config.get('QUEUE_PREFIX', { infer: true }),
+        defaultJobOptions: {
+          attempts: 5,
+          // 5 s, 10 s, 20 s, 40 s between tries.
+          backoff: { type: 'exponential', delay: 5_000 },
+          removeOnComplete: true,
+          // Keep failures for a week so they can be looked at.
+          removeOnFail: { age: 7 * 24 * 60 * 60 },
+        },
+      });
+      // Without a listener a connection error would crash the process.
+      this.created.on('error', (error) => this.logger.warn(`Queue error: ${error.message}`));
+    }
+    return this.created;
   }
 
   /**
@@ -59,6 +72,6 @@ export class PipelineQueue implements OnApplicationShutdown {
   }
 
   async onApplicationShutdown(): Promise<void> {
-    await this.queue.close().catch(() => undefined);
+    await this.created?.close().catch(() => undefined);
   }
 }

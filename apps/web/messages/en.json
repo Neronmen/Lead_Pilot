@@ -999,5 +999,55 @@
         "body": "Connect Slack, Telegram or a webhook, then add a rule."
       }
     }
+  },
+  "landing": {
+    "brand": "LeadPilot",
+    "signIn": "Sign in",
+    "hero": {
+      "title": "Only the leads worth a call, in the tools you already use.",
+      "sub": "LeadPilot reads every new lead, filters out spam and fake contacts, rates the rest Hot, Warm or Cold with the reasons, and sends the good ones to Slack, Telegram or email. Your team keeps working the way it does today.",
+      "create": "Create a workspace",
+      "demo": "Explore the demo workspace"
+    },
+    "how": {
+      "title": "How it works",
+      "arrive": {
+        "title": "Leads arrive",
+        "body": "From your website form, Zapier, Make or n8n. Each lead is cleaned and checked for duplicates."
+      },
+      "rate": {
+        "title": "The AI filters and rates",
+        "body": "Spam and fakes are filtered out. The rest get a rating and plain reasons. When the AI is unsure, a person checks it first."
+      },
+      "handover": {
+        "title": "Good leads are handed over",
+        "body": "Hot leads go to your Slack channel, Telegram chat or inbox within seconds. No new tool for your sales team to learn."
+      }
+    },
+    "sample": {
+      "title": "What you receive",
+      "body": "Not a raw list: a rating, the reasons for it and where it was sent. This is a made-up example.",
+      "cardLabel": "A sample rated lead",
+      "name": "Mia Tran",
+      "tier": "Hot",
+      "score": "90 out of 100",
+      "company": "Head of Logistics · Acme Logistics · United States",
+      "r1": "Asked for a demo and says the budget is approved.",
+      "r2": "A company email and a company in your target country.",
+      "r3": "Wants to start this quarter.",
+      "sentTo": "Sent to #hot-leads on Slack and emailed to the account owner."
+    },
+    "trust": {
+      "title": "Built to be trusted with your leads",
+      "t1": "Each company’s data is kept apart from every other company’s.",
+      "t2": "Leads arrive over signed, checked requests; repeats never create duplicates.",
+      "t3": "Tokens and secrets are stored encrypted and never shown again.",
+      "t4": "A spend limit keeps the AI cost under control, and the rules still rate leads without AI when it is reached."
+    },
+    "cta": {
+      "title": "Try it with your own leads",
+      "body": "Create a workspace, connect a source and send a sample lead in a few minutes."
+    },
+    "footer": "LeadPilot is a portfolio project. The demo uses made-up leads."
   }
 }

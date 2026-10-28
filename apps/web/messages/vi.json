@@ -999,5 +999,55 @@
         "body": "Kết nối Slack, Telegram hoặc webhook, rồi thêm một quy tắc."
       }
     }
+  },
+  "landing": {
+    "brand": "LeadPilot",
+    "signIn": "Đăng nhập",
+    "hero": {
+      "title": "Chỉ những khách tiềm năng đáng gọi, ngay trong công cụ bạn đang dùng.",
+      "sub": "LeadPilot đọc từng khách tiềm năng mới, lọc thư rác và liên hệ giả, xếp phần còn lại thành Nóng, Ấm hoặc Lạnh kèm lý do, rồi gửi khách tốt tới Slack, Telegram hoặc email. Đội của bạn vẫn làm việc như hiện nay.",
+      "create": "Tạo không gian làm việc",
+      "demo": "Khám phá không gian làm việc demo"
+    },
+    "how": {
+      "title": "Cách hoạt động",
+      "arrive": {
+        "title": "Khách tiềm năng đến",
+        "body": "Từ biểu mẫu trên website, Zapier, Make hoặc n8n. Mỗi khách được làm sạch và kiểm tra trùng lặp."
+      },
+      "rate": {
+        "title": "AI lọc và xếp hạng",
+        "body": "Thư rác và liên hệ giả bị lọc đi. Phần còn lại được xếp hạng kèm lý do dễ hiểu. Khi AI chưa chắc, sẽ có người kiểm tra trước."
+      },
+      "handover": {
+        "title": "Khách tốt được bàn giao",
+        "body": "Khách Nóng đến kênh Slack, cuộc trò chuyện Telegram hoặc hộp thư của bạn trong vài giây. Đội bán hàng không phải học thêm công cụ mới."
+      }
+    },
+    "sample": {
+      "title": "Bạn nhận được gì",
+      "body": "Không phải một danh sách thô: có xếp hạng, lý do và nơi đã gửi. Đây là ví dụ giả.",
+      "cardLabel": "Một khách tiềm năng mẫu đã xếp hạng",
+      "name": "Mia Tran",
+      "tier": "Nóng",
+      "score": "90 trên 100",
+      "company": "Trưởng bộ phận Logistics · Acme Logistics · Hoa Kỳ",
+      "r1": "Đã xin demo và nói rằng ngân sách đã được duyệt.",
+      "r2": "Dùng email công ty và công ty thuộc quốc gia mục tiêu của bạn.",
+      "r3": "Muốn bắt đầu trong quý này.",
+      "sentTo": "Đã gửi tới #hot-leads trên Slack và email cho chủ tài khoản."
+    },
+    "trust": {
+      "title": "Đủ an toàn để giao khách tiềm năng của bạn",
+      "t1": "Dữ liệu của mỗi công ty được tách biệt hoàn toàn với công ty khác.",
+      "t2": "Khách tiềm năng đến qua các yêu cầu có chữ ký, được kiểm tra; gửi lặp không tạo bản trùng.",
+      "t3": "Token và bí mật được lưu mã hóa và không bao giờ hiện lại.",
+      "t4": "Hạn mức chi tiêu giữ chi phí AI trong tầm kiểm soát, và khi chạm hạn mức vẫn xếp hạng được bằng quy tắc không cần AI."
+    },
+    "cta": {
+      "title": "Thử với khách tiềm năng của chính bạn",
+      "body": "Tạo không gian làm việc, kết nối một nguồn và gửi khách tiềm năng mẫu chỉ trong vài phút."
+    },
+    "footer": "LeadPilot là dự án portfolio. Bản demo dùng khách tiềm năng giả."
   }
 }

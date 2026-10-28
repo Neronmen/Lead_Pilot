@@ -1,17 +1,64 @@
 # LeadPilot
 
-AI lead qualification and routing for B2B teams. Leads arrive from forms, webhooks and CSV files; LeadPilot deduplicates them, enriches the company, scores them against your ideal customer profile with an LLM, and routes them to the right rep, with Slack, email, HubSpot or n8n actions. Multi-tenant from day one.
-
-> **Status:** M0 (foundation) and M1 (auth and tenancy) are done (tag `v0.1-m1`): sign-up, sign-in with rotating refresh tokens, workspaces and roles, email invites, the Team page (the owner manages admins, admins manage members), the app shell, and isolation tests for every endpoint. All pages come in English and Vietnamese, dark and light. M2 (lead ingestion) is next. See [SPEC.md](SPEC.md) for the roadmap.
+AI lead filtering and hand-over. Leads arrive from forms, Zapier, Make or n8n; LeadPilot cleans and de-duplicates them, rates each one Hot, Warm, Cold or Junk against your ideal customer with an LLM (and says why), and sends the good ones to the tools a team already uses: Slack, Telegram, email or any webhook. It does not replace a CRM or manage a sales team: it removes the junk and hands over the rest. Multi-tenant from day one, English and Vietnamese, dark and light.
 
 [![CI](https://github.com/Neronmen/Lead_Pilot/actions/workflows/ci.yml/badge.svg)](https://github.com/Neronmen/Lead_Pilot/actions/workflows/ci.yml)
+
+## Try it in five minutes
+
+Needs Node 24, pnpm 12 and Docker Desktop. No API key, no card: the demo uses a free built-in mock AI and nothing leaves your machine.
+
+```bash
+cp .env.example .env
+docker compose up -d
+pnpm install
+pnpm --filter api db:migrate
+pnpm --filter api seed      # a demo workspace with 40 made-up leads
+pnpm dev                    # web on :3000, API on :3001, mail in Mailpit on :8025
+```
+
+Open http://localhost:3000 and sign in with **demo@leadpilot-demo.com** / **demo-leadpilot-2026** (or set `NEXT_PUBLIC_DEMO_LOGIN=on` in `.env` for an "Explore the demo workspace" button). Then:
+
+1. **Overview**: leads received, junk filtered out, time to first rating, leads by rating.
+2. **Leads** and **Review queue**: ratings with plain reasons; leads the AI is unsure about wait for a person.
+3. **Settings > Routing rules**: "Test with a sample lead" shows which rule decides and why. **Integrations**: connect Slack (any `https://hooks.slack.com/...` address works in mock mode).
+4. **Settings > Lead sources**: "Send a sample lead", then watch it get rated and handed over (open the lead to see what the rules did; the alert email is in Mailpit).
+
+## How it works
+
+```mermaid
+flowchart LR
+  A[Form, Zapier,<br/>Make, n8n] -->|signed request<br/>API key + HMAC| B[Ingest<br/>clean, dedup,<br/>idempotent]
+  B --> Q[(Redis queue<br/>BullMQ)]
+  Q --> E[Company info<br/>enrichment]
+  E --> S[AI rating<br/>tier, score, reasons]
+  S -->|unsure or little info| R[Review queue<br/>a person checks]
+  S --> G[Routing rules]
+  R --> G
+  G --> X[Slack, Telegram,<br/>email, webhook]
+  S --> D[(PostgreSQL<br/>per-workspace data)]
+```
+
+- **Safe by default.** Every query on tenant data is scoped to a workspace in one place (`TenantPrisma`), with database-level composite keys behind it and a test that every endpoint refuses another workspace's ids. Secrets are encrypted (AES-256-GCM) and shown once. Outgoing calls only reach public https addresses.
+- **Honest AI.** Each rating records the prompt version, model, tokens and cost. A lead with little information is never rated Hot and goes to a person. A monthly spend limit falls back to simple rules. Prompts are measured with `pnpm eval` on a labelled set, tuned on one part and checked once on a held-out part (see [docs/pipeline.md](docs/pipeline.md)).
+- **Reliable hand-over.** Each action is a queued job: retried with growing waits, dead after the last try, visible and retryable from the lead page. Routing the same lead twice never sends twice.
+
+## What it deliberately does not do
+
+- It is not a CRM and does not assign work to a sales team: the customer hands leads over inside their own tools. (The data model keeps owners, teams and roles; the screens for them are hidden. See [docs/design-notes.md](docs/design-notes.md).)
+- No CSV import, embeddable form or change-history page yet (see [docs/backlog.md](docs/backlog.md)).
+- Real calls are off by default (`ACTIONS_MODE=mock`, `LLM_PROVIDER=auto` without a key): turn them on only with services that have a free tier.
+
+## Deploying
+
+See [docs/deploy.md](docs/deploy.md): environment, the one-process-per-app layout, free-tier hosting notes and the checklist before real use (HTTPS, `TRUST_PROXY`, `API_DOCS=off`, a real `ENCRYPTION_KEY`).
 
 ## Stack
 
 | Area | Choice |
 |---|---|
 | Monorepo | pnpm workspaces + Turborepo |
-| API (`apps/api`) | NestJS 12, Prisma 7 + PostgreSQL 18, Redis 8 (BullMQ from M3), zod, pino, Swagger |
+| API (`apps/api`) | NestJS 12, Prisma 7 + PostgreSQL 18, Redis 8 (BullMQ), zod, pino, Swagger |
 | Web (`apps/web`) | Next.js 16 (App Router), Tailwind CSS 4, shadcn/ui, TanStack Query, next-intl (EN/VI), next-themes (dark/light) |
 | Shared (`packages/shared`) | zod schemas and types used by both apps |
 | Tests | Jest + Supertest (unit and e2e against real Postgres/Redis), Vitest (web unit), Playwright + axe (web render and accessibility checks), Node test runner for `shared` |

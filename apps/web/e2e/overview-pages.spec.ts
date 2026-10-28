@@ -198,3 +198,35 @@ test.describe('Send a sample lead', () => {
     await context.close();
   });
 });
+
+for (const [theme, lang] of [
+  ['dark', 'en'],
+  ['light', 'vi'],
+] as const) {
+  test(`the front page renders correctly (${theme} / ${lang})`, async ({ browser }) => {
+    const { context, page } = await open(browser, 'OWNER', theme, lang);
+    const errors: string[] = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    await page.goto(`${APP}/`);
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+      messages[lang].landing.hero.title,
+    );
+    await expect(
+      page.getByRole('link', { name: messages[lang].landing.hero.create }).first(),
+    ).toHaveAttribute('href', '/signup');
+    await checkPage(page);
+    expect(errors).toEqual([]);
+    if (theme === 'dark') await shot(page, 'landing-dark');
+    await context.close();
+  });
+}
+
+test('the front page fits a phone without sideways scrolling', async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 375, height: 812 } });
+  await prepare(context, 'dark', 'en');
+  const page = await context.newPage();
+  await page.goto(`${APP}/`);
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await checkPage(page);
+  await context.close();
+});

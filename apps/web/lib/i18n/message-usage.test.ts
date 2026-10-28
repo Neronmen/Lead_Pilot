@@ -271,6 +271,7 @@ const scanned = [
   'components/overview',
   'components/integrations',
   'components/leads',
+  'app/page.tsx',
   'app/login',
   'app/signup',
   'app/invite',
