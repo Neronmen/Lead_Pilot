@@ -20,6 +20,8 @@ export const ErrorCode = {
   /** The account belongs to no workspace (all memberships removed). */
   AUTH_NO_WORKSPACE: 'AUTH_NO_WORKSPACE',
   EMAIL_TAKEN: 'EMAIL_TAKEN',
+  /** A password reset or verification link that is wrong, already used or expired. */
+  AUTH_TOKEN_INVALID: 'AUTH_TOKEN_INVALID',
 
   // Team (M1).
   /** Unknown, expired, cancelled or already used: one code for all of them. */

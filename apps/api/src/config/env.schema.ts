@@ -96,6 +96,11 @@ export const envSchema = z
       .optional()
       .transform((host) => (host ? host : undefined)),
     SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(1025),
+    // A real mail server needs a login and encryption. "none": Mailpit on this machine; "starttls": port 587
+    // (upgrades to TLS, refuses to send without it); "tls": port 465 (encrypted from the start).
+    SMTP_USER: z.string().optional(),
+    SMTP_PASS: z.string().optional(),
+    SMTP_SECURE: z.enum(['none', 'starttls', 'tls']).default('none'),
     EMAIL_FROM: z
       .string()
       .regex(

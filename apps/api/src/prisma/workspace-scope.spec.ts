@@ -16,7 +16,8 @@ describe('TENANT_MODELS', () => {
    * a workspaceId (and is then scoped automatically) or be added here after a
    * review that it holds no tenant data.
    */
-  const GLOBAL_MODELS = ['Workspace', 'User', 'PromptVersion', 'Enrichment'];
+  // UserToken (reset and verify links) belongs to a person, not a workspace, and holds no tenant data.
+  const GLOBAL_MODELS = ['Workspace', 'User', 'UserToken', 'PromptVersion', 'Enrichment'];
 
   it('classifies every model as tenant or reviewed-global', () => {
     const unclassified = Object.values(Prisma.ModelName).filter(

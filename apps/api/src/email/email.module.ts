@@ -22,6 +22,9 @@ import { SmtpEmailProvider } from './smtp-email.provider';
           host,
           port: config.get('SMTP_PORT', { infer: true }),
           from: config.get('EMAIL_FROM', { infer: true }),
+          user: config.get('SMTP_USER', { infer: true }),
+          pass: config.get('SMTP_PASS', { infer: true }),
+          secure: config.get('SMTP_SECURE', { infer: true }),
         });
       },
     },

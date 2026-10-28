@@ -79,7 +79,13 @@ const RELATIONS: RelationMap = {
     integrations: 'Integration',
     auditLogs: 'AuditLog',
   },
-  User: { memberships: 'Membership', refreshTokens: 'RefreshToken', invitesSent: 'Invite' },
+  User: {
+    memberships: 'Membership',
+    refreshTokens: 'RefreshToken',
+    tokens: 'UserToken',
+    invitesSent: 'Invite',
+  },
+  UserToken: { user: 'User' },
   Membership: {
     workspace: 'Workspace',
     user: 'User',

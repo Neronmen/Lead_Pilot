@@ -78,7 +78,8 @@
       "newHere": "Mới dùng LeadPilot?",
       "create": "Tạo không gian làm việc",
       "demo": "Khám phá không gian làm việc demo",
-      "demoHint": "Đăng nhập vào tài khoản demo công khai với khách tiềm năng giả."
+      "demoHint": "Đăng nhập vào tài khoản demo công khai với khách tiềm năng giả.",
+      "forgot": "Quên mật khẩu?"
     },
     "aside": {
       "eyebrow": "LUỒNG KHÁCH TIỀM NĂNG TRỰC TIẾP",
@@ -192,6 +193,55 @@
       "invalidBody": "Lời mời đã hết hạn, bị hủy hoặc đã được dùng. Hãy nhờ người đã mời bạn gửi lời mời mới.",
       "invalidTooMany": "Lời mời cũng hết hạn sau 5 lần nhập sai mật khẩu.",
       "invalidSignIn": "Đã là thành viên? Đăng nhập"
+    },
+    "account": {
+      "backToLogin": "Quay lại đăng nhập",
+      "loading": "Đang kiểm tra đường dẫn",
+      "forgot": {
+        "title": "Quên mật khẩu?",
+        "sub": "Nhập email của bạn, chúng tôi sẽ gửi đường dẫn để chọn mật khẩu mới.",
+        "email": "Email",
+        "emailInvalid": "Hãy nhập một địa chỉ email hợp lệ.",
+        "submit": "Gửi đường dẫn",
+        "sending": "Đang gửi",
+        "failed": "Chúng tôi chưa gửi được yêu cầu. Hãy thử lại sau giây lát.",
+        "sentTitle": "Hãy kiểm tra email của bạn",
+        "sentBody": "Nếu {email} có tài khoản, đường dẫn để chọn mật khẩu mới đang được gửi tới. Đường dẫn có hiệu lực trong một giờ."
+      },
+      "reset": {
+        "title": "Chọn mật khẩu mới",
+        "sub": "Bạn sẽ bị đăng xuất khỏi mọi nơi và có thể đăng nhập bằng mật khẩu mới.",
+        "password": "Mật khẩu mới",
+        "hint": "Ít nhất 12 ký tự.",
+        "tooShort": "Hãy dùng ít nhất 12 ký tự.",
+        "submit": "Lưu mật khẩu mới",
+        "saving": "Đang lưu",
+        "failed": "Chúng tôi chưa lưu được mật khẩu. Hãy thử lại sau giây lát.",
+        "doneTitle": "Đã đổi mật khẩu",
+        "doneBody": "Bây giờ bạn có thể đăng nhập bằng mật khẩu mới.",
+        "signIn": "Đăng nhập"
+      },
+      "verify": {
+        "title": "Xác minh email",
+        "working": "Đang xác minh địa chỉ email của bạn",
+        "doneTitle": "Đã xác minh email",
+        "doneBody": "Cảm ơn bạn. Bạn có thể khôi phục tài khoản qua email nếu quên mật khẩu.",
+        "open": "Mở LeadPilot",
+        "failedTitle": "Chúng tôi chưa xác minh được email của bạn",
+        "failedBody": "Máy chủ không phản hồi. Hãy mở lại đường dẫn sau giây lát."
+      },
+      "invalid": {
+        "title": "Đường dẫn này không còn dùng được",
+        "resetBody": "Nó đã được dùng, đã hết hạn hoặc chưa đầy đủ. Hãy yêu cầu đường dẫn mới.",
+        "verifyBody": "Nó đã được dùng hoặc đã hết hạn. Hãy đăng nhập và yêu cầu đường dẫn mới từ thanh thông báo ở trên cùng.",
+        "requestNew": "Yêu cầu đường dẫn mới"
+      },
+      "banner": {
+        "text": "Hãy xác nhận địa chỉ email của bạn. Chúng tôi đã gửi đường dẫn tới {email}.",
+        "resend": "Gửi lại",
+        "sent": "Chúng tôi đã gửi đường dẫn mới tới {email}.",
+        "failed": "Chúng tôi chưa gửi được. Hãy thử lại sau giây lát."
+      }
     }
   },
   "emailHint": {
@@ -224,7 +274,8 @@
     "RULE_REFERENCE_INVALID": "Một quy tắc đang trỏ tới tích hợp, người hoặc nhóm không thuộc không gian làm việc này.",
     "RULE_ORDER_INVALID": "Thứ tự quy tắc đã cũ. Hãy tải lại trang và thử lại.",
     "INTEGRATION_IN_USE": "Vẫn còn quy tắc đang dùng tích hợp này. Hãy gỡ nó khỏi các quy tắc, hoặc tắt tích hợp thay vì xóa.",
-    "URL_NOT_ALLOWED": "Địa chỉ này không được phép. Hãy dùng địa chỉ https công khai."
+    "URL_NOT_ALLOWED": "Địa chỉ này không được phép. Hãy dùng địa chỉ https công khai.",
+    "AUTH_TOKEN_INVALID": "Đường dẫn này sai, đã được dùng hoặc đã hết hạn. Hãy yêu cầu đường dẫn mới."
   },
   "validation": {
     "invalid_type": "Ô này là bắt buộc.",

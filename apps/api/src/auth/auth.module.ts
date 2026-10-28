@@ -7,6 +7,7 @@ import { RedisThrottlerStorage } from '../redis/redis-throttler.storage';
 import { WINDOW_STORE } from '../redis/redis.tokens';
 import type { RedisWindowStore } from '../redis/redis-window.store';
 import type { Env } from '../config/env.schema';
+import { AccountService } from './account.service';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
@@ -67,6 +68,7 @@ const JWT_AUDIENCE = 'leadpilot-api';
   controllers: [AuthController],
   providers: [
     AuthService,
+    AccountService,
     PasswordService,
     SessionService,
     // Order matters: authenticate first, then check the role.

@@ -121,6 +121,14 @@ export function LoginForm({ next, signupHref }: { next: string | null; signupHre
         onChange={(event) => setPassword(event.target.value)}
         error={field('password')}
       />
+      <div className="-mt-2 text-right">
+        <Link
+          href="/forgot-password"
+          className="text-sm text-accent-text underline underline-offset-4"
+        >
+          {t('forgot')}
+        </Link>
+      </div>
 
       <Button type="submit" size="lg" disabled={busy}>
         {busy ? (

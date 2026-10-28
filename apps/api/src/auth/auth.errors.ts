@@ -12,6 +12,13 @@ export const invalidCredentials = () =>
     HttpStatus.UNAUTHORIZED,
   );
 
+export const tokenInvalid = () =>
+  new DomainError(
+    ErrorCode.AUTH_TOKEN_INVALID,
+    'This link is wrong, already used or expired',
+    HttpStatus.BAD_REQUEST,
+  );
+
 export const sessionExpired = () =>
   new DomainError(
     ErrorCode.AUTH_SESSION_EXPIRED,

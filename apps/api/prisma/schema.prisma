@@ -155,12 +155,36 @@ model User {
   name         String?
   /// Saved language choice; null means use the workspace default.
   locale       Locale?
+  /// Set when the person followed the link in the verification email (or a password reset link).
+  emailVerifiedAt DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   memberships   Membership[]
   refreshTokens RefreshToken[]
+  tokens        UserToken[]
   invitesSent   Invite[]       @relation("InviteInvitedBy")
+}
+
+/// What a link in an email carries: a password reset or an address check. Only the SHA-256 of the
+/// token is kept; each works once and expires.
+enum UserTokenKind {
+  PASSWORD_RESET
+  EMAIL_VERIFY
+}
+
+model UserToken {
+  id        String        @id @default(uuid(7)) @db.Uuid
+  userId    String        @db.Uuid
+  kind      UserTokenKind
+  tokenHash String        @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime      @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, kind, createdAt])
 }
 
 model Membership {

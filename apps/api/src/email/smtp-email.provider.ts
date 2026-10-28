@@ -14,16 +14,19 @@ export interface SmtpOptions {
   port: number;
   /** `Name <address>` shown as the sender. */
   from: string;
+  /** The login of a real mail server (both or neither). */
+  user?: string;
+  pass?: string;
+  secure?: 'none' | 'starttls' | 'tls';
 }
 
 /** The whole send, from connecting to the server's answer, must finish within this. */
 export const SEND_DEADLINE_MS = 15_000;
 
 /**
- * SMTP through nodemailer. In development the server is Mailpit (UI on
- * :8025), so no real email ever leaves the machine. No authentication or TLS
- * is configured, so this provider is for Mailpit only: a real server needs
- * SMTP_USER/SMTP_PASS and required TLS added here (docs/backlog.md).
+ * SMTP through nodemailer. In development the server is Mailpit (UI on :8025), so no real email
+ * leaves the machine. For a real mail server set SMTP_USER, SMTP_PASS and SMTP_SECURE=starttls (587)
+ * or tls (465): with those the connection is encrypted and refuses to send in the clear.
  */
 export class SmtpEmailProvider implements EmailProvider {
   private readonly transport: Transporter;
@@ -39,7 +42,11 @@ export class SmtpEmailProvider implements EmailProvider {
       createTransport({
         host: options.host,
         port: options.port,
-        secure: false,
+        secure: options.secure === 'tls',
+        requireTLS: options.secure === 'starttls',
+        ...(options.user && options.pass
+          ? { auth: { user: options.user, pass: options.pass } }
+          : {}),
         // Fail in seconds, not minutes, when the mail server is down.
         connectionTimeout: 5_000,
         greetingTimeout: 5_000,

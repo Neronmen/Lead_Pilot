@@ -22,6 +22,7 @@ describe('validateEnv', () => {
       QUEUE_WORKERS: 'on',
       ENRICHMENT_PROVIDER: 'mock',
       ACTIONS_MODE: 'mock',
+      SMTP_SECURE: 'none',
       TRUST_PROXY: 0,
       API_DOCS: 'on',
       LLM_PROVIDER: 'auto',

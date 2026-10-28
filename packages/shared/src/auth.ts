@@ -52,6 +52,22 @@ export const loginRequestSchema = z.strictObject({
  * Returned by signup, login, refresh and accept invite. The refresh token is
  * never in the body: it travels in an httpOnly cookie.
  */
+/** `POST /auth/forgot-password`: the answer is the same whether or not the address has an account. */
+export const forgotPasswordRequestSchema = z.strictObject({ email: emailSchema });
+
+/** `POST /auth/reset-password`: the token from the email link and the new password. */
+export const resetPasswordRequestSchema = z.strictObject({
+  token: z.string().min(20).max(200),
+  password: newPasswordSchema,
+});
+
+/** `POST /auth/verify-email`. */
+export const verifyEmailRequestSchema = z.strictObject({ token: z.string().min(20).max(200) });
+
+export type ForgotPasswordRequest = z.infer<typeof forgotPasswordRequestSchema>;
+export type ResetPasswordRequest = z.infer<typeof resetPasswordRequestSchema>;
+export type VerifyEmailRequest = z.infer<typeof verifyEmailRequestSchema>;
+
 export const authSessionSchema = z.object({
   accessToken: z.string(),
   /** Seconds until the access token expires. */
@@ -66,6 +82,8 @@ export const meResponseSchema = z.object({
     name: z.string().nullable(),
     /** Null: follow the workspace default. */
     locale: localeSchema.nullable(),
+    /** False until the person follows the link in the verification email. */
+    emailVerified: z.boolean(),
   }),
   workspace: z.object({
     id: idSchema,

@@ -99,6 +99,8 @@ export class MockApi {
   sources: MockSource[] = [];
   /** Leads, newest first. */
   leads: MockLead[] = [];
+  /** False shows the "confirm your email" banner. */
+  emailVerified = true;
   /** What `GET /overview` answers. */
   overview = {
     leads: 120,
@@ -343,6 +345,7 @@ export class MockApi {
         email: 'daniel@northstargrowth.com',
         name: this.name,
         locale: this.locale,
+        emailVerified: this.emailVerified,
       },
       workspace: {
         id: '22222222-2222-4222-8222-222222222222',
@@ -537,6 +540,18 @@ export class MockApi {
           ],
         });
       }
+    }
+    if (path === '/auth/forgot-password' && method === 'POST') {
+      return route.fulfill({ status: 204, headers: cors });
+    }
+    if ((path === '/auth/reset-password' || path === '/auth/verify-email') && method === 'POST') {
+      const token = (sent as { token?: string } | undefined)?.token ?? '';
+      return token.startsWith('good')
+        ? route.fulfill({ status: 204, headers: cors })
+        : json(400, { error: { code: 'AUTH_TOKEN_INVALID', message: 'bad link' } });
+    }
+    if (path === '/auth/resend-verification' && method === 'POST') {
+      return route.fulfill({ status: 204, headers: cors });
     }
     if (path === '/overview' && method === 'GET') return json(200, this.overview);
     if (/^\/sources\/[0-9a-f-]{36}\/sample-lead$/.test(path) && method === 'POST') {

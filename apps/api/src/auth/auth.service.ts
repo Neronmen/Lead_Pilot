@@ -4,6 +4,7 @@ import type { LoginRequest, MeResponse, SignupRequest, UpdateMeRequest } from '@
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { emailTaken, invalidCredentials, noWorkspace, sessionExpired } from './auth.errors';
+import { AccountService } from './account.service';
 import { PasswordService } from './password.service';
 import { type IssuedSession, isForeignKeyViolation, SessionService } from './session.service';
 
@@ -20,6 +21,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly passwords: PasswordService,
     private readonly sessions: SessionService,
+    private readonly account: AccountService,
   ) {}
 
   /** Creates the user, the workspace and the OWNER membership in one transaction. */
@@ -27,13 +29,15 @@ export class AuthService {
     if (await this.emailExists(input.email)) throw emailTaken();
     const passwordHash = await this.passwords.hash(input.password);
 
+    let createdUserId = '';
     try {
-      return await this.prisma.$transaction(async (tx) => {
+      const session = await this.prisma.$transaction(async (tx) => {
         const user = await tx.user.create({
           // locale stays null: the owner follows the workspace language.
           data: { email: input.email, passwordHash, name: input.name },
           select: { id: true },
         });
+        createdUserId = user.id;
         const workspace = await tx.workspace.create({
           data: {
             name: input.workspaceName,
@@ -54,6 +58,11 @@ export class AuthService {
         });
         return this.sessions.issue(tx, user.id, workspace.id);
       });
+      // Best effort: a mail server that is down must not stop someone from creating an account.
+      this.account
+        .sendVerification(createdUserId)
+        .catch((error: Error) => this.logger.warn(`Verification email failed: ${error.message}`));
+      return session;
     } catch (error) {
       // Two signups with one email raced past the check above.
       if (isUniqueViolation(error) && (await this.emailExists(input.email))) throw emailTaken();
@@ -102,7 +111,9 @@ export class AuthService {
       where: { workspaceId_userId: { workspaceId, userId } },
       select: {
         role: true,
-        user: { select: { id: true, email: true, name: true, locale: true } },
+        user: {
+          select: { id: true, email: true, name: true, locale: true, emailVerifiedAt: true },
+        },
         workspace: {
           select: {
             id: true,
@@ -118,7 +129,12 @@ export class AuthService {
     });
     // The guard checked the membership; it can vanish between the two queries.
     if (!membership) throw sessionExpired();
-    return { user: membership.user, workspace: membership.workspace, role: membership.role };
+    const { emailVerifiedAt, ...user } = membership.user;
+    return {
+      user: { ...user, emailVerified: emailVerifiedAt !== null },
+      workspace: membership.workspace,
+      role: membership.role,
+    };
   }
 
   async updateMe(userId: string, workspaceId: string, input: UpdateMeRequest): Promise<MeResponse> {

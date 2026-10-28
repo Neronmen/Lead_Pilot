@@ -15,6 +15,12 @@ import { SkipThrottle, ThrottlerGuard } from '@nestjs/throttler';
 import {
   type AuthSession,
   authSessionSchema,
+  type ForgotPasswordRequest,
+  forgotPasswordRequestSchema,
+  type ResetPasswordRequest,
+  resetPasswordRequestSchema,
+  type VerifyEmailRequest,
+  verifyEmailRequestSchema,
   type LoginRequest,
   loginRequestSchema,
   type MeResponse,
@@ -30,6 +36,7 @@ import { ApiZodResponse, ZodBody } from '../common/validation/zod-swagger';
 import type { Env } from '../config/env.schema';
 import { type AuthContext, CurrentAuth, Public } from './auth-context';
 import { sessionExpired } from './auth.errors';
+import { AccountService } from './account.service';
 import { AuthService } from './auth.service';
 import {
   clearRefreshCookie,
@@ -53,6 +60,7 @@ export class AuthController {
 
   constructor(
     private readonly auth: AuthService,
+    private readonly account: AccountService,
     private readonly sessions: SessionService,
     config: ConfigService<Env, true>,
   ) {
@@ -80,6 +88,52 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<AuthSession> {
     return this.startSession(res, await this.auth.login(body));
+  }
+
+  @Public()
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Email a password reset link',
+    description: 'Always 204, whether or not the address has an account.',
+  })
+  @ApiNoContentResponse({ description: 'Asked' })
+  async forgotPassword(
+    @ZodBody(forgotPasswordRequestSchema) body: ForgotPasswordRequest,
+  ): Promise<void> {
+    await this.account.requestPasswordReset(body.email);
+  }
+
+  @Public()
+  @Post('reset-password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Choose a new password with the token from the email',
+    description: 'AUTH_TOKEN_INVALID when the link is wrong, used or expired. Ends every session.',
+  })
+  @ApiNoContentResponse({ description: 'Password changed' })
+  async resetPassword(
+    @ZodBody(resetPasswordRequestSchema) body: ResetPasswordRequest,
+  ): Promise<void> {
+    await this.account.resetPassword(body.token, body.password);
+  }
+
+  @Public()
+  @Post('verify-email')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Confirm an email address with the token from the email' })
+  @ApiNoContentResponse({ description: 'Verified' })
+  async verifyEmail(@ZodBody(verifyEmailRequestSchema) body: VerifyEmailRequest): Promise<void> {
+    await this.account.verifyEmail(body.token);
+  }
+
+  @Post('resend-verification')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Send the verification email again (at most once a minute)' })
+  @ApiNoContentResponse({ description: 'Sent, or already verified' })
+  async resendVerification(@CurrentAuth() auth: AuthContext): Promise<void> {
+    await this.account.sendVerification(auth.userId);
   }
 
   @Public()

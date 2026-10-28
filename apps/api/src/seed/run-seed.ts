@@ -83,6 +83,7 @@ async function main(): Promise<void> {
     }),
   );
   const token = session.accessToken;
+  await prisma.user.update({ where: { email: DEMO_EMAIL }, data: { emailVerifiedAt: new Date() } });
   const workspaceId = (
     await prisma.membership.findFirstOrThrow({
       where: { user: { email: DEMO_EMAIL } },

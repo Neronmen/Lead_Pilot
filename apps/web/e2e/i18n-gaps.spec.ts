@@ -22,6 +22,7 @@ const SAME_IN_BOTH = new Set([
   'shell.menuTitle',
   // Product and tool names, a person's name and sample data are the same in any language.
   'auth.footer',
+  'auth.account.forgot.email',
   'landing.brand',
   'landing.sample.name',
   // A pattern of placeholders and product names are the same in any language.

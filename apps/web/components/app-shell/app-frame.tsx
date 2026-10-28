@@ -5,6 +5,7 @@ import { RequireSession } from '@/components/auth-gate';
 import { SessionLoading, SessionUnavailable } from '@/components/session-screens';
 import { useMe } from '@/lib/auth/auth-provider';
 import { AppShell } from './app-shell';
+import { VerifyBanner } from './verify-banner';
 import { MeProvider } from './me-context';
 
 /**
@@ -24,7 +25,10 @@ function LoadMe({ children }: { children: ReactNode }) {
   if (me.data) {
     return (
       <MeProvider value={me.data}>
-        <AppShell>{children}</AppShell>
+        <AppShell>
+          <VerifyBanner />
+          {children}
+        </AppShell>
       </MeProvider>
     );
   }

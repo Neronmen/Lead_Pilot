@@ -52,12 +52,21 @@ export const PUBLIC = new Set([
   'POST /auth/logout',
   'POST /auth/invites/preview',
   'POST /auth/invites/accept',
+  'POST /auth/forgot-password',
+  'POST /auth/reset-password',
+  'POST /auth/verify-email',
   // Signed in with a source's API key, not a user: its tests are in ingest.e2e-spec.ts.
   'POST /v1/ingest/:sourceId',
 ]);
 // Own account or own workspace, readable by every member (so no admin-only 403 check);
 // 'GET /leads' has its cross-workspace test in isolation.e2e-spec.ts.
-export const OWN = new Set(['GET /auth/me', 'PATCH /auth/me', 'GET /leads', 'GET /overview']);
+export const OWN = new Set([
+  'GET /auth/me',
+  'PATCH /auth/me',
+  'POST /auth/resend-verification',
+  'GET /leads',
+  'GET /overview',
+]);
 export const WORKSPACE_COLLECTION = new Set([
   'GET /invites',
   'POST /invites',

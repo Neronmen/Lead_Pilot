@@ -1,3 +1,4 @@
+import { EMAIL_PROVIDER } from '../../src/email/email.provider';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import type { SignupRequest } from '@leadpilot/shared';
 import request from 'supertest';
@@ -34,6 +35,18 @@ export async function signUp(
 ): Promise<SignedUpUser> {
   const body = signupBody(overrides);
   const res = await request(app.getHttpServer()).post('/auth/signup').send(body).expect(201);
+  // The verification email goes out just after the answer. Wait for it, so a test that counts the
+  // mailbox afterwards is not surprised by it arriving late.
+  const mailer = app.get<{ lastTo?: (address: string) => unknown }>(EMAIL_PROVIDER, {
+    strict: false,
+  });
+  for (
+    let i = 0;
+    i < 25 && typeof mailer.lastTo === 'function' && !mailer.lastTo(body.email);
+    i += 1
+  ) {
+    await new Promise((resolve) => setTimeout(resolve, 40));
+  }
   return { body, accessToken: res.body.accessToken, refreshCookie: refreshCookieOf(res) };
 }
 

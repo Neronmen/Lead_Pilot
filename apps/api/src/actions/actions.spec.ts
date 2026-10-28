@@ -3,7 +3,7 @@ import { buildHotLeadEmail } from '../email/hot-lead-email';
 import { hotLeadCopy, hotLeadText } from '../email/templates/hot-lead-copy';
 import { deliverWebhook, leadMessage, type RoutedLead, signWebhook, slackEscape } from './delivery';
 import { checkWebhookUrl, isPrivateAddress, UrlNotAllowedError } from './net-guard';
-import { ActionError, ActionTransport } from './transport';
+import { ActionError, ActionTransport, guardedLookup } from './transport';
 
 const lead: RoutedLead = {
   id: '0194f7a0-0000-7000-8000-000000000002',
@@ -76,7 +76,7 @@ describe('outgoing address guard (SSRF)', () => {
   it('live mode refuses a private address before any request is made', async () => {
     const t = transport('live');
     const fetchSpy = jest.fn();
-    t.fetchImpl = fetchSpy as unknown as typeof fetch;
+    t.send = fetchSpy as never;
     await expect(t.post({ url: 'https://169.254.169.254/', body: {} })).rejects.toMatchObject({
       code: 'url_not_allowed',
     });
@@ -88,7 +88,7 @@ describe('transport', () => {
   it('mock mode sends nothing and remembers the request', async () => {
     const t = transport('mock');
     const fetchSpy = jest.fn();
-    t.fetchImpl = fetchSpy as unknown as typeof fetch;
+    t.send = fetchSpy as never;
     await t.post({ url: 'https://hooks.example.com/x', body: { a: 1 } });
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(t.sent).toHaveLength(1);
@@ -97,10 +97,10 @@ describe('transport', () => {
   it('live mode turns a bad answer into a short code and never follows a redirect', async () => {
     const t = transport('live');
     const answers = [
-      new Response('secret token in here', { status: 500 }),
-      new Response(null, { status: 302, headers: { location: 'http://10.0.0.1/' } }),
+      { status: 500, text: 'secret token in here' },
+      { status: 302, text: '' },
     ];
-    t.fetchImpl = (async () => answers.shift()) as unknown as typeof fetch;
+    t.send = (async () => answers.shift()) as never;
     // 93.184.216.34 is a public address, so no DNS lookup is needed.
     await expect(t.post({ url: 'https://93.184.216.34/x', body: {} })).rejects.toThrow(
       new ActionError('http_500'),
@@ -108,6 +108,17 @@ describe('transport', () => {
     await expect(t.post({ url: 'https://93.184.216.34/x', body: {} })).rejects.toThrow(
       new ActionError('redirect'),
     );
+  });
+});
+
+describe('connection guard', () => {
+  it('refuses a name that resolves to a private address, at the moment of connecting', async () => {
+    // "localhost" resolves to 127.0.0.1 / ::1: the address the socket would use is checked, so a
+    // hostile DNS server cannot show one address to a check and another to the connection.
+    const error = await new Promise<Error | null>((resolve) =>
+      guardedLookup('localhost', {}, (e) => resolve(e)),
+    );
+    expect(error).toBeInstanceOf(UrlNotAllowedError);
   });
 });
 
