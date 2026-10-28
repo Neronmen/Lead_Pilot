@@ -1,0 +1,10 @@
+# HTTPS certificates are fetched and renewed automatically (Let's Encrypt) for the two names below.
+{$APP_DOMAIN} {
+	encode gzip
+	reverse_proxy web:3000
+}
+
+{$API_DOMAIN} {
+	encode gzip
+	reverse_proxy api:3001
+}

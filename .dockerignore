@@ -1,0 +1,14 @@
+.git
+.claude
+**/node_modules
+**/.next
+**/.next-e2e
+**/dist
+**/dist-eval
+**/dist-seed
+**/test-results
+**/screenshots
+.env
+.env.*
+!.env.example
+*.log

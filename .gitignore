@@ -18,6 +18,7 @@ test-results/
 .env
 .env.*
 !.env.example
+!deploy/.env.production.example
 
 # local Claude Code settings
 .claude/settings.local.json

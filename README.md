@@ -46,12 +46,12 @@ flowchart LR
 ## What it deliberately does not do
 
 - It is not a CRM and does not assign work to a sales team: the customer hands leads over inside their own tools. (The data model keeps owners, teams and roles; the screens for them are hidden. See [docs/design-notes.md](docs/design-notes.md).)
-- No CSV import, embeddable form or change-history page yet (see [docs/backlog.md](docs/backlog.md)).
+- No billing or plans, no single sign-on, no WebGL landing animation (see [docs/backlog.md](docs/backlog.md)).
 - Real calls are off by default (`ACTIONS_MODE=mock`, `LLM_PROVIDER=auto` without a key): turn them on only with services that have a free tier.
 
 ## Deploying
 
-See [docs/deploy.md](docs/deploy.md): environment, the one-process-per-app layout, free-tier hosting notes and the checklist before real use (HTTPS, `TRUST_PROXY`, `API_DOCS=off`, a real `ENCRYPTION_KEY`).
+One server, one command: `deploy/docker-compose.yml` runs the API, the web app, PostgreSQL, Redis and Caddy (automatic HTTPS). See [docs/deploy.md](docs/deploy.md) for the steps, real email, real AI, backups and what to tell customers.
 
 ## Stack
 

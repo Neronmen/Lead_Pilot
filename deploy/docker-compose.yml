@@ -1,0 +1,99 @@
+# LeadPilot on one small server: `docker compose --env-file .env.production up -d --build`
+# See docs/deploy.md for the steps and the checklist. Nothing here needs a paid service.
+name: leadpilot-prod
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: leadpilot
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env.production}
+      POSTGRES_DB: leadpilot
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U leadpilot -d leadpilot']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'yes']
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: ..
+      target: api
+    restart: unless-stopped
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    environment:
+      NODE_ENV: production
+      API_PORT: 3001
+      DATABASE_URL: postgresql://leadpilot:${POSTGRES_PASSWORD}@postgres:5432/leadpilot
+      REDIS_URL: redis://redis:6379
+      WEB_ORIGIN: https://${APP_DOMAIN:?set APP_DOMAIN}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?set JWT_ACCESS_SECRET}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?set ENCRYPTION_KEY}
+      # One reverse proxy (Caddy) sits in front: rate limits then see each visitor's own address.
+      TRUST_PROXY: 1
+      API_DOCS: ${API_DOCS:-off}
+      QUEUE_WORKERS: on
+      ACTIONS_MODE: ${ACTIONS_MODE:-live}
+      ENRICHMENT_PROVIDER: ${ENRICHMENT_PROVIDER:-website}
+      LLM_PROVIDER: ${LLM_PROVIDER:-auto}
+      LLM_MODEL: ${LLM_MODEL:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      LLM_MAX_REQUESTS_PER_MINUTE: ${LLM_MAX_REQUESTS_PER_MINUTE:-12}
+      AI_DEFAULT_MONTHLY_LIMIT_USD: ${AI_DEFAULT_MONTHLY_LIMIT_USD:-5}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-starttls}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      EMAIL_FROM: ${EMAIL_FROM:-LeadPilot <no-reply@example.com>}
+
+  web:
+    build:
+      context: ..
+      target: web
+      args:
+        NEXT_PUBLIC_API_URL: https://${API_DOMAIN:?set API_DOMAIN}
+        NEXT_PUBLIC_DEMO_LOGIN: ${NEXT_PUBLIC_DEMO_LOGIN:-off}
+    restart: unless-stopped
+    depends_on:
+      - api
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN}
+      API_DOMAIN: ${API_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+    depends_on:
+      - web
+      - api
+
+volumes:
+  postgres-data:
+  redis-data:
+  caddy-data:
