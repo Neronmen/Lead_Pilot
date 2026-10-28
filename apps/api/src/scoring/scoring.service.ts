@@ -9,6 +9,7 @@ import type { ProcessLeadJob } from '../queue/pipeline.queue';
 import { costUsd, LLM_PROVIDER, type LlmProvider } from './llm.provider';
 import { buildUserMessage } from './prompt';
 import { PromptService } from './prompt.service';
+import { capForInfo, type InfoLevel, informationLevel, reviewReasonOf } from './info';
 import { extractJson, monthStart } from './scoring.util';
 import { RubricService } from './rubric.service';
 import { ruleScore, type ScoringInput } from './rules';
@@ -101,6 +102,7 @@ export class ScoringService {
       promptVersionId: prompt.id,
       fallback,
       threshold: workspace.reviewThreshold,
+      level: informationLevel(input.lead, input.company).level,
     });
   }
 
@@ -121,6 +123,7 @@ export class ScoringService {
       promptVersionId: (await this.prompts.active()).id,
       fallback: reason,
       threshold: workspace.reviewThreshold,
+      level: informationLevel(input.lead, input.company).level,
     });
   }
 
@@ -134,6 +137,11 @@ export class ScoringService {
       domain: string | null;
       country: string | null;
       isFreeMail: boolean;
+      message: string | null;
+      budget: string | null;
+      timeline: string | null;
+      jobTitle: string | null;
+      interest: string | null;
       customFields: unknown;
     },
     rubric: ScoringInput['rubric'],
@@ -149,6 +157,11 @@ export class ScoringService {
         domain: lead.domain,
         country: lead.country,
         isFreeMail: lead.isFreeMail,
+        message: lead.message,
+        budget: lead.budget,
+        timeline: lead.timeline,
+        jobTitle: lead.jobTitle,
+        interest: lead.interest,
         customFields: (lead.customFields ?? {}) as Record<string, unknown>,
       },
       rubric,
@@ -208,11 +221,21 @@ export class ScoringService {
       promptVersionId: string;
       fallback: FallbackReason | null;
       threshold: number;
+      level: InfoLevel;
     },
   ): Promise<void> {
     const db = this.tenant.for(job.workspaceId);
-    const tier = r.output.isSpam ? 'junk' : r.output.tier;
-    const review = r.fallback !== null || r.output.confidence < r.threshold;
+    // With limited information the rating is a guess: never Hot, and a person looks at it.
+    const output = capForInfo(r.output, r.level);
+    const tier = output.isSpam ? 'junk' : output.tier;
+    const reviewReason = reviewReasonOf({
+      fallback: r.fallback !== null,
+      level: r.level,
+      isSpam: output.isSpam,
+      confidence: output.confidence,
+      threshold: r.threshold,
+    });
+    const review = reviewReason !== null;
     await db.$transaction(async (tx) => {
       // A person's override is final: a later automatic score is recorded but changes nothing on the lead.
       const locked =
@@ -224,12 +247,13 @@ export class ScoringService {
           promptVersionId: r.promptVersionId,
           provider: r.provider,
           model: r.model,
-          output: r.output as unknown as Prisma.InputJsonObject,
-          score: r.output.score,
+          output: output as unknown as Prisma.InputJsonObject,
+          score: output.score,
           tier: DB_TIER[tier],
-          confidence: r.output.confidence,
-          isSpam: r.output.isSpam,
+          confidence: output.confidence,
+          isSpam: output.isSpam,
           isFallback: r.fallback !== null,
+          infoLevel: r.level,
           inputTokens: r.inputTokens,
           outputTokens: r.outputTokens,
           costUsd: costUsd(r.model, r.inputTokens, r.outputTokens),
@@ -243,10 +267,12 @@ export class ScoringService {
         data: locked
           ? {}
           : {
-              score: r.output.score,
+              score: output.score,
               tier: DB_TIER[tier],
-              confidence: r.output.confidence,
+              confidence: output.confidence,
               status: review ? 'NEEDS_REVIEW' : 'SCORED',
+              infoLevel: r.level,
+              reviewReason,
             },
       });
       await tx.leadEvent.create({
@@ -257,12 +283,14 @@ export class ScoringService {
           payload: {
             scoreId: score.id,
             tier,
-            score: r.output.score,
-            confidence: r.output.confidence,
+            score: output.score,
+            confidence: output.confidence,
             provider: r.provider,
             ratedWithoutAi: r.fallback !== null,
             ...(r.fallback ? { reason: r.fallback } : {}),
+            infoLevel: r.level,
             needsReview: review && !locked,
+            ...(reviewReason ? { reviewReason } : {}),
             ...(locked ? { keptPersonsRating: true } : {}),
           },
         },

@@ -38,6 +38,9 @@ function toItem(row: ListRow, submissions: number): LeadListItem {
     tier: row.tier,
     score: row.score,
     confidence: row.confidence,
+    infoLevel: (row.infoLevel as LeadListItem['infoLevel']) ?? null,
+    reviewReason: (row.reviewReason as LeadListItem['reviewReason']) ?? null,
+    outcome: row.outcome,
     source: row.source,
     owner: row.owner ? { id: row.owner.user.id, name: row.owner.user.name } : null,
     submissions: Math.max(1, submissions),
@@ -120,10 +123,26 @@ export class LeadsService {
       db.leadEvent.count({ where: { leadId: id, type: 'ingested' } }),
     ]);
     const company = row.domain ? await this.enrichment.cached(row.domain) : null;
+    const setter = row.outcomeSetBy
+      ? await db.membership.findFirst({
+          where: { userId: row.outcomeSetBy },
+          select: { user: { select: { id: true, name: true } } },
+        })
+      : null;
+    const outcomeSetBy = row.outcomeSetBy
+      ? { id: row.outcomeSetBy, name: setter?.user.name ?? null }
+      : null;
     const output = (score?.output ?? {}) as { reasons?: unknown; suggestedReply?: unknown };
     return {
       ...toItem(row, submissions),
       domain: row.domain,
+      message: row.message,
+      budget: row.budget,
+      timeline: row.timeline,
+      jobTitle: row.jobTitle,
+      interest: row.interest,
+      outcomeSetBy: outcomeSetBy,
+      outcomeSetAt: row.outcomeSetAt ? row.outcomeSetAt.toISOString() : null,
       customFields: (row.customFields ?? {}) as Record<string, unknown>,
       companyInfo: company
         ? { status: company.status, title: company.title, description: company.description }

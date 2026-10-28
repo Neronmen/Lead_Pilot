@@ -67,6 +67,22 @@ const DYNAMIC: Record<string, string[]> = {
     'rate_limited',
     'other',
   ].map((r) => `sources.stats.reasons.${r}`),
+  'leadDetail.infoLevel.${level}': ['limited', 'enough', 'rich'].map(
+    (l) => `leadDetail.infoLevel.${l}`,
+  ),
+  'leadDetail.reviewReasons.${reason}': ['limited_info', 'low_confidence', 'rated_without_ai'].map(
+    (r) => `leadDetail.reviewReasons.${r}`,
+  ),
+  'sources.readiness.fields.${field}': [
+    'name',
+    'email',
+    'phone',
+    'company',
+    'message',
+    'budget',
+    'timeline',
+    'jobTitle',
+  ].map((f) => `sources.readiness.fields.${f}`),
   'leads.statusName.${status}': [
     'NEW',
     'PROCESSING',

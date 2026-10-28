@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { PROMPT_NAME, PROMPT_V1 } from './prompt';
+import { DEFAULT_PROMPT_VERSION, PROMPT_NAME, PROMPTS } from './prompt';
 
 export interface ActivePrompt {
   id: string;
@@ -23,26 +22,28 @@ export class PromptService {
 
   async active(now: number = Date.now()): Promise<ActivePrompt> {
     if (this.cached && this.cached.until > now) return this.cached.prompt;
-    let row = await this.prisma.promptVersion.findFirst({
-      where: { name: PROMPT_NAME, isActive: true },
-      orderBy: { version: 'desc' },
-    });
-    if (!row) {
-      try {
-        row = await this.prisma.promptVersion.create({
-          data: { name: PROMPT_NAME, version: 1, template: PROMPT_V1, isActive: true },
-        });
-      } catch (error) {
-        // Two workers made version 1 at once: the unique (name, version) refused the second.
-        if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {
-          throw error;
-        }
-        row = await this.prisma.promptVersion.findFirstOrThrow({
-          where: { name: PROMPT_NAME, version: 1 },
-        });
-      }
+    // Every known version has a row (so a score can point at the wording that produced it).
+    for (const { version, template } of PROMPTS) {
+      await this.prisma.promptVersion.upsert({
+        where: { name_version: { name: PROMPT_NAME, version } },
+        create: { name: PROMPT_NAME, version, template, isActive: false },
+        update: {},
+      });
     }
-    const prompt = { id: row.id, version: row.version, template: row.template };
+    // The code decides which version is the default (raised only after a held-out evaluation).
+    const wanted = await this.prisma.promptVersion.findUniqueOrThrow({
+      where: { name_version: { name: PROMPT_NAME, version: DEFAULT_PROMPT_VERSION } },
+    });
+    if (!wanted.isActive) {
+      await this.prisma.$transaction([
+        this.prisma.promptVersion.updateMany({
+          where: { name: PROMPT_NAME },
+          data: { isActive: false },
+        }),
+        this.prisma.promptVersion.update({ where: { id: wanted.id }, data: { isActive: true } }),
+      ]);
+    }
+    const prompt = { id: wanted.id, version: wanted.version, template: wanted.template };
     this.cached = { prompt, until: now + 60_000 };
     return prompt;
   }

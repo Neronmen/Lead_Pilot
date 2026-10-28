@@ -10,6 +10,7 @@ import {
   type LeadTier,
   type RescoreRequest,
   type ReviewLeadRequest,
+  type SetOutcomeRequest,
 } from '@leadpilot/shared';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthClient } from '@/lib/auth/auth-provider';
@@ -91,5 +92,20 @@ export function useRescore() {
     mutationFn: (body: RescoreRequest) =>
       client.request('/leads/rescore', { method: 'POST', body, schema: rescoreResponseSchema }),
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['leads'] }),
+  });
+}
+
+/** A rep records how a lead ended (Won, Lost, Bad lead, or clears it). */
+export function useSetOutcome() {
+  const client = useAuthClient();
+  const queryClient = useQueryClient();
+  return useMutation<void, unknown, { id: string } & SetOutcomeRequest>({
+    mutationFn: ({ id, ...body }) =>
+      client.request(`/leads/${id}/outcome`, { method: 'POST', body }),
+    onSettled: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['leads'] }),
+        queryClient.invalidateQueries({ queryKey: ['lead'] }),
+      ]),
   });
 }

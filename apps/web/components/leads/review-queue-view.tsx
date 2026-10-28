@@ -13,6 +13,7 @@ import { formErrors } from '@/lib/i18n/errors';
 import { useMessage } from '@/lib/i18n/use-message';
 import { NO_FILTERS, useLead, useLeads, useReviewLead } from '@/lib/leads/use-leads';
 import { cn } from '@/lib/utils';
+import { ReasonNote } from './lead-extras';
 import { TierBadge } from './tier-badge';
 
 const WAITING = { ...NO_FILTERS, status: 'NEEDS_REVIEW' as const };
@@ -146,6 +147,8 @@ export function ReviewQueueView() {
             {t('open')}
           </Link>
         </div>
+
+        {current.reviewReason ? <ReasonNote reason={current.reviewReason} /> : null}
 
         <div className="flex flex-col gap-2">
           <span className="text-[13px] font-medium">{t('suggestion')}</span>

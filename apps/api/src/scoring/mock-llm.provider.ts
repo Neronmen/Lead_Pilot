@@ -28,6 +28,11 @@ export class MockLlmProvider implements LlmProvider {
       company: string | null;
       website: string | null;
       country: string | null;
+      jobTitle?: string | null;
+      message?: string | null;
+      interest?: string | null;
+      budget?: string | null;
+      timeline?: string | null;
       other: Record<string, unknown>;
     };
     const company = block(request.user, 'company_website') as ScoringInput['company'];
@@ -44,6 +49,11 @@ export class MockLlmProvider implements LlmProvider {
         domain: data.website,
         country: data.country,
         isFreeMail: data.freeEmail,
+        message: data.message ?? null,
+        budget: data.budget ?? null,
+        timeline: data.timeline ?? null,
+        jobTitle: data.jobTitle ?? null,
+        interest: data.interest ?? null,
         customFields: data.other,
       },
     });

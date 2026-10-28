@@ -128,6 +128,35 @@ test.describe('Lead detail', () => {
     await context.close();
   });
 
+  test('shows what they said, how much information we have, and records Won / Lost / Bad lead', async ({
+    browser,
+  }) => {
+    const { context, api, page } = await open(browser);
+    await page.goto(`${APP}/leads/${ANN}`);
+    await expect(page.getByRole('heading', { name: t.said })).toBeVisible();
+    await expect(page.getByText(/We need a tracking tool for our drivers/)).toBeVisible();
+    await expect(page.getByText('$10k-20k')).toBeVisible();
+    await expect(page.getByText('Head of Logistics')).toBeVisible();
+    await expect(page.getByText(t.infoLevel.enough)).toBeVisible();
+
+    await page.getByRole('button', { name: t.outcome.bad, exact: true }).click();
+    await expect(page.getByRole('status').filter({ hasText: t.outcome.saved })).toBeVisible();
+    expect(api.requests.find((r) => r.path === `/leads/${ANN}/outcome`)?.body).toEqual({
+      outcome: 'BAD',
+    });
+    await expect(page.getByRole('button', { name: t.outcome.bad, exact: true })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await expect(page.getByText(/Set by Daniel Park/)).toBeVisible();
+    await page.getByRole('button', { name: t.outcome.clear }).click();
+    await expect(page.getByRole('button', { name: t.outcome.bad, exact: true })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+    await context.close();
+  });
+
   test('a lead that is not found, a member (no technical details), and an error', async ({
     browser,
   }) => {
@@ -193,6 +222,15 @@ test.describe('Review queue', () => {
         tier: 'JUNK',
         note: 'as 1 2 3 4',
       });
+    await context.close();
+  });
+
+  test('says in plain words why a lead is waiting for a person', async ({ browser }) => {
+    const { context, page } = await open(browser);
+    await page.goto(`${APP}/review`);
+    await expect(page.getByText(en.leadDetail.reviewReasons.limited_info)).toBeVisible(); // sam: limited
+    await page.keyboard.press('s');
+    await expect(page.getByText(en.leadDetail.reviewReasons.low_confidence)).toBeVisible(); // An
     await context.close();
   });
 

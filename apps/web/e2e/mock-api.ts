@@ -95,6 +95,11 @@ export class MockApi {
         leadsLast30Days: 487,
         lastLeadAt: days(0),
         last30Days: {
+          readiness: {
+            accepted: 548,
+            sends: ['name', 'email', 'phone'],
+            missing: ['company', 'message', 'budget', 'timeline', 'jobTitle'],
+          },
           received: 560,
           created: 487,
           merged: 61,
@@ -118,6 +123,11 @@ export class MockApi {
         leadsLast30Days: 2,
         lastLeadAt: days(20),
         last30Days: {
+          readiness: {
+            accepted: 2,
+            sends: ['name', 'email', 'company', 'message'],
+            missing: ['phone', 'budget', 'timeline', 'jobTitle'],
+          },
           received: 2,
           created: 2,
           merged: 0,
@@ -146,6 +156,9 @@ export class MockApi {
       tier: 'WARM',
       score: 60,
       confidence: 0.8,
+      infoLevel: 'enough',
+      reviewReason: null,
+      outcome: 'NONE',
       source: {
         id: this.sources[sourceIndex]!.id,
         name: this.sources[sourceIndex]!.name,
@@ -169,6 +182,8 @@ export class MockApi {
         tier: 'WARM',
         score: 58,
         confidence: 0.42,
+        infoLevel: 'enough',
+        reviewReason: 'low_confidence',
       }),
       lead(3, null, 'sam@gmail.com', null, 1, {
         isFreeMail: true,
@@ -176,6 +191,8 @@ export class MockApi {
         tier: 'COLD',
         score: 30,
         confidence: 0.35,
+        infoLevel: 'limited',
+        reviewReason: 'limited_info',
         possibleDuplicateOf: {
           id: 'eeeeeeee-0000-4000-8000-000000000001',
           name: 'Ann Lee',
@@ -368,10 +385,16 @@ export class MockApi {
     if (path === '/leads/rescore' && method === 'POST') {
       return json(200, { queued: this.leads.filter((l) => l.status !== 'ROUTED').length });
     }
-    const leadRoute = /^\/leads\/([0-9a-f-]{36})(\/review)?$/.exec(path);
+    const leadRoute = /^\/leads\/([0-9a-f-]{36})(\/review|\/outcome)?$/.exec(path);
     if (leadRoute) {
       const lead = this.leads.find((l) => l.id === leadRoute[1]);
       if (!lead) return json(404, { error: { code: 'NOT_FOUND', message: 'x' } });
+      if (leadRoute[2] === '/outcome' && method === 'POST') {
+        const { outcome } = sent as { outcome: MockLead['outcome'] };
+        lead.outcome = outcome;
+        if (outcome === 'BAD') lead.tier = 'JUNK';
+        return route.fulfill({ status: 204, headers: cors });
+      }
       if (leadRoute[2] && method === 'POST') {
         const body = sent as {
           action: 'approve' | 'override';
@@ -393,6 +416,19 @@ export class MockApi {
         return json(200, {
           ...lead,
           domain: lead.isFreeMail ? null : 'acme.com',
+          message: lead.isFreeMail
+            ? null
+            : 'We need a tracking tool for our drivers.\nCan we talk this week?',
+          budget: lead.isFreeMail ? null : '$10k-20k',
+          timeline: lead.isFreeMail ? null : 'This quarter',
+          jobTitle: lead.isFreeMail ? null : 'Head of Logistics',
+          interest: null,
+          outcomeSetBy:
+            lead.outcome === 'NONE'
+              ? null
+              : { id: '11111111-1111-4111-8111-111111111111', name: 'Daniel Park' },
+          outcomeSetAt:
+            lead.outcome === 'NONE' ? null : new Date(Date.now() - 5 * 60_000).toISOString(),
           customFields: { budget: '5000' },
           companyInfo: lead.isFreeMail
             ? null
@@ -478,6 +514,7 @@ export class MockApi {
           rejected: 0,
           replayed: 0,
           topRejections: [],
+          readiness: { accepted: 0, sends: [], missing: [] },
         },
       };
       this.sources.push(source);
@@ -589,6 +626,7 @@ export interface MockSource {
     rejected: number;
     replayed: number;
     topRejections: { reason: string; count: number }[];
+    readiness: { accepted: number; sends: string[]; missing: string[] };
   };
 }
 
@@ -604,6 +642,9 @@ export interface MockLead {
   tier: 'HOT' | 'WARM' | 'COLD' | 'JUNK' | null;
   score: number | null;
   confidence: number | null;
+  infoLevel: 'limited' | 'enough' | 'rich' | null;
+  reviewReason: 'limited_info' | 'low_confidence' | 'rated_without_ai' | null;
+  outcome: 'NONE' | 'CONTACTED' | 'QUALIFIED' | 'WON' | 'LOST' | 'BAD';
   source: { id: string; name: string; type: 'WEBHOOK' | 'FORM' | 'CSV' };
   owner: { id: string; name: string | null } | null;
   submissions: number;

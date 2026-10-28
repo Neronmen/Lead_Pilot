@@ -81,6 +81,8 @@ enum LeadOutcome {
   QUALIFIED
   WON
   LOST
+  /// A rep says this was not a real lead (spam, wrong person): counts as junk.
+  BAD
 }
 
 enum LeadTier {
@@ -314,6 +316,9 @@ model IngestAttempt {
   outcome     IngestOutcome
   /// Why a REJECTED submission was refused: a code such as "invalid_email".
   reason      String?
+  /// For CREATED and MERGED: which useful fields the submission had (name, email, phone, company,
+  /// message, budget, timeline, jobTitle), so Lead sources can say what a source sends.
+  fields      String[]      @default([])
   createdAt   DateTime      @default(now())
 
   source Source @relation(fields: [sourceId, workspaceId], references: [id, workspaceId], onDelete: Cascade, onUpdate: Restrict)
@@ -340,7 +345,20 @@ model Lead {
   company      String?
   domain       String?
   country      String?     @db.Char(2)
+  /// What the person wrote and what they said about the deal: the best signal for rating a lead.
+  message      String?     @db.Text
+  budget       String?
+  timeline     String?
+  jobTitle     String?
+  interest     String?
   customFields Json        @default("{}")
+  /// How much we know about this lead: "limited" | "enough" | "rich" (set when it is rated).
+  infoLevel    String?
+  /// Why it waits in the Review queue: "limited_info" | "low_confidence" | "rated_without_ai".
+  reviewReason String?
+  /// Who set the outcome (Won / Lost / Bad lead) and when. Actor id with no FK, like Feedback.
+  outcomeSetBy String?     @db.Uuid
+  outcomeSetAt DateTime?
   rawPayload   Json
   status       LeadStatus  @default(NEW)
   outcome      LeadOutcome @default(NONE)
@@ -452,6 +470,8 @@ model Score {
   isSpam          Boolean
   /// True when the rule-based fallback produced this score.
   isFallback      Boolean  @default(false)
+  /// "limited" | "enough" | "rich": how much the lead told us when it was rated.
+  infoLevel       String   @default("enough")
   inputTokens     Int      @default(0)
   outputTokens    Int      @default(0)
   costUsd         Decimal  @default(0) @db.Decimal(12, 6)

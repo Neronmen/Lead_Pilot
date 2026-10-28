@@ -4,6 +4,7 @@ import {
   type RescoreRequest,
   type RescoreResponse,
   type ReviewLeadRequest,
+  type SetOutcomeRequest,
 } from '@leadpilot/shared';
 import { DomainError } from '../common/errors/domain-error';
 import type { $Enums, Prisma } from '../generated/prisma/client';
@@ -40,7 +41,7 @@ export class ReviewService {
         // person's) finds it already done: 409, nothing changes, no second correction.
         const { count } = await tx.lead.updateMany({
           where: { id: leadId, status: 'NEEDS_REVIEW' },
-          data: { status: 'SCORED' },
+          data: { status: 'SCORED', reviewReason: null },
         });
         if (count !== 1 || !lead.tier) {
           throw new DomainError(
@@ -66,6 +67,7 @@ export class ReviewService {
           score: newScore,
           // A person has decided: it no longer waits for review.
           status: lead.status === 'NEEDS_REVIEW' ? 'SCORED' : undefined,
+          reviewReason: null,
         },
       });
       await this.record(tx, actor, lead, latest?.id ?? null, {
@@ -73,6 +75,58 @@ export class ReviewService {
         newTier: body.tier,
         newScore,
         note: body.note ?? null,
+      });
+    });
+  }
+
+  /**
+   * A rep records how the lead ended: Won, Lost, or Bad lead (not a real lead: it becomes Junk, as
+   * a person's final rating). Kept with who and when. This is the real ground truth for later evals.
+   */
+  async setOutcome(actor: Actor, leadId: string, body: SetOutcomeRequest): Promise<void> {
+    const db = this.tenant.for(actor.workspaceId);
+    await db.$transaction(async (tx) => {
+      const lead = await tx.lead.findUnique({ where: { id: leadId } });
+      if (!lead) throw new DomainError(ErrorCode.NOT_FOUND, 'Lead not found', HttpStatus.NOT_FOUND);
+      if (lead.outcome === body.outcome) return; // nothing changes, nothing is recorded
+      const cleared = body.outcome === 'NONE';
+      await tx.lead.update({
+        where: { id: leadId },
+        data: {
+          outcome: body.outcome,
+          outcomeSetBy: cleared ? null : actor.userId,
+          outcomeSetAt: cleared ? null : new Date(),
+          ...(body.outcome === 'BAD'
+            ? {
+                tier: 'JUNK',
+                status: lead.status === 'NEEDS_REVIEW' ? 'SCORED' : undefined,
+                reviewReason: null,
+              }
+            : {}),
+        },
+      });
+      if (body.outcome === 'BAD' && lead.tier !== 'JUNK') {
+        const latest = await tx.score.findFirst({
+          where: { leadId },
+          orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        });
+        // The same correction as an override to Junk: the AI is measured against it, and a later
+        // automatic score cannot undo it.
+        await this.record(tx, actor, lead, latest?.id ?? null, {
+          kind: 'override',
+          newTier: 'JUNK',
+          newScore: lead.score,
+          note: 'Marked as a bad lead',
+        });
+      }
+      await tx.leadEvent.create({
+        data: {
+          workspaceId: actor.workspaceId,
+          leadId,
+          type: 'outcome',
+          actorUserId: actor.userId,
+          payload: { outcome: body.outcome, previous: lead.outcome },
+        },
       });
     });
   }

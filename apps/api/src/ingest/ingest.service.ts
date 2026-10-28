@@ -16,6 +16,17 @@ import { FixedWindowLimiter, type WindowStore } from './rate-limiter';
 export const REPLAY_WINDOW_SECONDS = 5 * 60;
 const IDEMPOTENCY_TTL_MS = 24 * 60 * 60 * 1000;
 const MAX_JSON_DEPTH = 10;
+/** The eight fields that make a lead easy to rate (Lead sources: "3 of 8 useful fields"). */
+export const USEFUL_FIELDS = [
+  'name',
+  'email',
+  'phone',
+  'company',
+  'message',
+  'budget',
+  'timeline',
+  'jobTitle',
+] as const;
 const LONE_SURROGATE = /[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/;
 /** A reserved key with no answer after this long belongs to a request that died. */
 const ABANDONED_AFTER_MS = 60_000;
@@ -366,9 +377,18 @@ export class IngestService {
       type: 'ingested',
       payload: { sourceId: source.sourceId, rawPayload: raw },
     });
+    // Which useful fields this submission had: Lead sources says what each source sends.
+    const present = USEFUL_FIELDS.filter((name) =>
+      name === 'name' ? Boolean(lead.firstName ?? lead.lastName) : Boolean(lead[name]),
+    );
     const attempt = (outcome: 'CREATED' | 'MERGED') =>
       tx.ingestAttempt.create({
-        data: { workspaceId: source.workspaceId, sourceId: source.sourceId, outcome },
+        data: {
+          workspaceId: source.workspaceId,
+          sourceId: source.sourceId,
+          outcome,
+          fields: present,
+        },
       });
 
     if (!existing) {

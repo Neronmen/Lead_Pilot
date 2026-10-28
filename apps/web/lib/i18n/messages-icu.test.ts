@@ -43,6 +43,9 @@ const values = {
   tier: 'Hot',
   percent: 70,
   domain: 'acme.com',
+  sends: 'name, email',
+  missing: 'company, message',
+  outcome: 'Won',
 };
 
 describe.each([

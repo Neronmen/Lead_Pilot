@@ -470,6 +470,23 @@
       "email": "Same email address: the new details are merged into the existing lead. Every submission stays on that lead’s timeline.",
       "phone": "No email, but the same phone number: merged into that lead.",
       "separate": "A new email with a phone number we already have: kept as a separate lead and marked “Possible duplicate”, so two different people are never merged by mistake."
+    },
+    "readiness": {
+      "sends": "This source sends: {sends} ({count} of 8 useful fields).",
+      "add": "Add {missing} to improve ratings.",
+      "all": "It sends every useful field.",
+      "none": "No submissions yet, so there is nothing to check.",
+      "noneSent": "This source sends none of the 8 useful fields.",
+      "fields": {
+        "name": "name",
+        "email": "email",
+        "phone": "phone",
+        "company": "company",
+        "message": "message",
+        "budget": "budget",
+        "timeline": "timeline",
+        "jobTitle": "job title"
+      }
     }
   },
   "settingsAdvanced": {
@@ -607,7 +624,36 @@
     "loadBody": "Check your connection and try again.",
     "retry": "Try again",
     "notFoundTitle": "Lead not found",
-    "notFoundBody": "It may have been removed, or it belongs to another workspace."
+    "notFoundBody": "It may have been removed, or it belongs to another workspace.",
+    "said": "What they said",
+    "message": "Message",
+    "budget": "Budget",
+    "timeline": "Timeline",
+    "jobTitle": "Job title",
+    "interest": "Interested in",
+    "infoLevel": {
+      "limited": "Information: limited",
+      "enough": "Information: enough",
+      "rich": "Information: rich"
+    },
+    "infoHelp": "How much this lead told us, from the company, what they wrote, budget, timeline, job title and the company website. With limited information a lead is never rated Hot.",
+    "reviewReasons": {
+      "limited_info": "There is too little information to rate this lead reliably, so it needs a human look.",
+      "low_confidence": "The AI was not sure about this rating, so it needs a human look.",
+      "rated_without_ai": "It was rated by simple rules, not by the AI, so it needs a human look."
+    },
+    "outcome": {
+      "title": "How did it end?",
+      "won": "Won",
+      "lost": "Lost",
+      "bad": "Bad lead",
+      "clear": "Clear",
+      "setBy": "Set by {name} {when}",
+      "setByUnknown": "Set by a team member {when}",
+      "badHelp": "A bad lead is not a real lead (spam, wrong person). It becomes Junk and the AI is checked against it.",
+      "saved": "Saved.",
+      "failed": "Couldn’t save. Nothing was changed."
+    }
   },
   "review": {
     "title": "Review queue",
@@ -632,6 +678,7 @@
     "loadTitle": "Couldn’t load the review queue",
     "loadBody": "Check your connection and try again.",
     "retry": "Try again",
-    "open": "Open lead"
+    "open": "Open lead",
+    "reasonTitle": "Why it is here"
   }
 }

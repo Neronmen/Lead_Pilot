@@ -102,6 +102,12 @@ test.describe('Lead sources', () => {
       page.getByText(/throwaway email address \(7\), phone number not valid \(3\)/),
     ).toBeVisible();
     await expect(page.getByText(/4 repeated sends were answered again/)).toBeVisible();
+    // What each source sends, in plain words.
+    await expect(
+      page.getByText(
+        /This source sends: name, email,? and phone \(3 of 8 useful fields\)\. Add company, message, budget,? and timeline to improve ratings\./,
+      ),
+    ).toBeVisible();
     await page.getByText(en.sources.help.title).click();
     await expect(page.getByText(/never merged by mistake/)).toBeVisible();
     await page.getByRole('button', { name: t.add }).click();

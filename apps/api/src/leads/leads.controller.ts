@@ -22,6 +22,8 @@ import {
   rescoreResponseSchema,
   type ReviewLeadRequest,
   reviewLeadRequestSchema,
+  type SetOutcomeRequest,
+  setOutcomeRequestSchema,
 } from '@leadpilot/shared';
 import { type AuthContext, CurrentAuth, MinRole } from '../auth/auth-context';
 import { ApiZodResponse, ZodBody } from '../common/validation/zod-swagger';
@@ -70,6 +72,18 @@ export class LeadsController {
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<LeadDetail> {
     return this.leads.detail(auth.workspaceId, id);
+  }
+
+  @Post(':id/outcome')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Record how a lead ended: Won, Lost, Bad lead (or clear it)' })
+  @ApiNoContentResponse({ description: 'Recorded' })
+  async setOutcome(
+    @CurrentAuth() auth: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @ZodBody(setOutcomeRequestSchema) body: SetOutcomeRequest,
+  ): Promise<void> {
+    await this.review.setOutcome(auth, id, body);
   }
 
   @Post(':id/review')

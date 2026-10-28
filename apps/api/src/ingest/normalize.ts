@@ -18,6 +18,12 @@ export interface NormalizedLead {
   domain?: string;
   /** ISO 3166-1 alpha-2, uppercase. */
   country?: string;
+  /** What the person wrote, and what they said about the deal: the best signals for rating. */
+  message?: string;
+  budget?: string;
+  timeline?: string;
+  jobTitle?: string;
+  interest?: string;
   /** Only set when an email was given: a merge must not reset it. */
   isFreeMail?: boolean;
   /** Everything that is not a known field, kept as sent. */
@@ -37,12 +43,29 @@ const ALIASES = {
   company: ['company', 'companyName', 'company_name'],
   website: ['website', 'domain', 'url'],
   country: ['country', 'countryCode', 'country_code'],
+  message: ['message', 'comment', 'comments', 'inquiry', 'enquiry'],
+  budget: ['budget', 'budget_range', 'budgetRange'],
+  timeline: ['timeline', 'timeframe', 'time_frame'],
+  jobTitle: ['jobTitle', 'job_title', 'title', 'position'],
+  interest: ['interest', 'interests', 'product', 'product_interest'],
 } as const;
 
 const KNOWN = new Set<string>(Object.values(ALIASES).flat());
 const COUNTRIES = new Set<string>(getCountries());
 const DOMAIN = /^(?=.{3,253}$)[a-z0-9-]+(\.[a-z0-9-]+)+$/;
 const nameSchema = displayTextSchema(100);
+const shortSchema = displayTextSchema(200);
+const MAX_MESSAGE = 2000;
+
+/** Free text from a form: line breaks stay, other control characters and lone surrogates go, and it is cut at `max`. */
+function plainText(text: string, max: number): string {
+  return text
+    .replace(/[^\P{Cc}\n\t]|[\p{Cf}\p{Zl}\p{Zp}]/gu, ' ')
+    .replace(/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/g, ' ')
+    .replace(/[ \t]+/g, ' ')
+    .trim()
+    .slice(0, max);
+}
 
 type Result = { ok: true; lead: NormalizedLead } | { ok: false; issues: PayloadIssue[] };
 
@@ -122,6 +145,21 @@ export function normalizePayload(
       if (rest.length > 0) lead.lastName = rest.join(' ');
     }
   }
+
+  const message = pick('message');
+  if (message) lead.message = plainText(message.text, MAX_MESSAGE) || undefined;
+  const short = (field: 'budget' | 'timeline' | 'jobTitle' | 'interest') => {
+    const found = pick(field);
+    if (!found) return undefined;
+    const parsed = shortSchema.safeParse(found.text);
+    if (parsed.success) return parsed.data;
+    bad(found.key, 'invalid_text');
+    return undefined;
+  };
+  lead.budget = short('budget');
+  lead.timeline = short('timeline');
+  lead.jobTitle = short('jobTitle');
+  lead.interest = short('interest');
 
   const website = pick('website');
   if (website) {

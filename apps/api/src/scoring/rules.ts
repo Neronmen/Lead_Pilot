@@ -11,6 +11,12 @@ export interface ScoringInput {
     domain: string | null;
     country: string | null;
     isFreeMail: boolean;
+    /** What the person wrote and said about the deal (the best signals). */
+    message: string | null;
+    budget: string | null;
+    timeline: string | null;
+    jobTitle: string | null;
+    interest: string | null;
     customFields: Record<string, unknown>;
   };
   rubric: IcpRubric;
@@ -28,6 +34,11 @@ function haystack(input: ScoringInput): string {
   const { lead, company } = input;
   return [
     lead.email,
+    lead.message,
+    lead.budget,
+    lead.timeline,
+    lead.jobTitle,
+    lead.interest,
     lead.company,
     lead.domain,
     JSON.stringify(lead.customFields),
@@ -87,6 +98,8 @@ export function ruleScore(input: ScoringInput): ScoreOutput & { facts: number } 
     facts += 1;
   }
   if (lead.firstName || lead.lastName) facts += 1;
+  for (const field of [lead.message, lead.budget, lead.timeline, lead.jobTitle])
+    if (field) facts += 1;
 
   if (lead.country) {
     facts += 1;

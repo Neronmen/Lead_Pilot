@@ -6,6 +6,10 @@
  *
  *   pnpm eval                                  # the built-in prompt (version 1)
  *   pnpm eval --candidate path/to/prompt.txt   # also run this prompt and show the difference
+ *   pnpm eval --candidate v2                   # the built-in version 2
+ *   pnpm eval --split dev                      # only the 30 "dev" leads (tune the prompt on these)
+ *   pnpm eval --split held                     # only the 20 "held-out" leads (measure ONCE, never tune on them)
+ *   pnpm eval --split dev --show-errors        # list the wrong leads (number, label, answer) to tune on
  *
  * It uses whichever AI the environment selects (LLM_PROVIDER, ANTHROPIC_API_KEY,
  * OPENAI_API_KEY): with no key it runs the free mock, which only proves the
@@ -17,7 +21,8 @@ import { resolve } from 'node:path';
 import { scoreOutputSchema, type IcpRubric, type ScoreOutput } from '@leadpilot/shared';
 import { chooseLlm } from '../src/scoring/llm.factory';
 import { costUsd, LlmError, type LlmProvider } from '../src/scoring/llm.provider';
-import { PROMPT_V1, buildUserMessage } from '../src/scoring/prompt';
+import { capForInfo, informationLevel, type InfoLevel } from '../src/scoring/info';
+import { PROMPT_V1, PROMPT_V2, buildUserMessage } from '../src/scoring/prompt';
 import type { ScoringInput } from '../src/scoring/rules';
 import { extractJson } from '../src/scoring/scoring.util';
 
@@ -38,6 +43,10 @@ interface RunResult {
   invalid: number;
   /** Why answers were unusable, most common first: an error message, "not JSON" or a schema problem. */
   problems: [string, number][];
+  /** Accuracy by how much the lead told us. */
+  byLevel: Partial<Record<InfoLevel, { total: number; correct: number }>>;
+  /** Wrong leads (number, label, answer), only with --show-errors. */
+  wrong: string[];
   accuracyOfValid: number;
   avgOutputTokens: number;
   avgThinkingTokens: number;
@@ -52,10 +61,23 @@ if (existsSync(envFile)) process.loadEnvFile(envFile);
 
 const root = resolve(__dirname, '../../../../evals');
 const rubric = JSON.parse(readFileSync(resolve(root, 'rubric.json'), 'utf8')) as IcpRubric;
-const leads: Labelled[] = readFileSync(resolve(root, 'leads.jsonl'), 'utf8')
+const all: Labelled[] = readFileSync(resolve(root, 'leads.jsonl'), 'utf8')
   .split('\n')
   .filter((line) => line.trim())
   .map((line) => JSON.parse(line) as Labelled);
+
+// Dev leads are for tuning the prompt. Held-out leads are measured once at the end and never tuned
+// on: numbers 0 and 1 of every five are held out (20 of 50, spread over every tier).
+const splitAt = process.argv.indexOf('--split');
+const split = splitAt === -1 ? 'all' : (process.argv[splitAt + 1] ?? 'all');
+const isHeld = (index: number) => index % 5 < 2;
+const chosen = all
+  .map((item, index) => ({ item, index }))
+  .filter(({ index }) =>
+    split === 'dev' ? !isHeld(index) : split === 'held' ? isHeld(index) : true,
+  );
+const leads = chosen.map(({ item }) => item);
+const showErrors = process.argv.includes('--show-errors');
 
 /** A short fixed word for why an answer was unusable (counted and printed per reason). */
 function reasonOf(error: unknown): string {
@@ -78,9 +100,13 @@ async function run(name: string, template: string, llm: LlmProvider): Promise<Ru
   let answered = 0;
   let outputTokens = 0;
   let thinkingTokens = 0;
-  for (const item of leads) {
+  const wrong: string[] = [];
+  const byLevel: Partial<Record<InfoLevel, { total: number; correct: number }>> = {};
+  for (const { item, index } of chosen) {
     const started = Date.now();
     let guess: Guess = 'invalid';
+    // The same cap the real pipeline applies: with limited information the answer is never Hot.
+    const info = informationLevel(item.lead, item.company);
     try {
       const answer = await llm.complete({
         system: template,
@@ -91,8 +117,10 @@ async function run(name: string, template: string, llm: LlmProvider): Promise<Ru
       thinkingTokens += answer.thinkingTokens ?? 0;
       answered += 1;
       const parsed = scoreOutputSchema.safeParse(extractJson(answer.text));
-      if (parsed.success) guess = (parsed.data as ScoreOutput).isSpam ? 'junk' : parsed.data.tier;
-      else {
+      if (parsed.success) {
+        const capped = capForInfo(parsed.data as ScoreOutput, info.level);
+        guess = capped.isSpam ? 'junk' : capped.tier;
+      } else {
         // Which field and what is wrong with it (names from our own schema, no values).
         const issue = parsed.error.issues[0];
         note(`schema_${issue?.path.join('.') || 'answer'}_${issue?.code}`);
@@ -105,7 +133,11 @@ async function run(name: string, template: string, llm: LlmProvider): Promise<Ru
     latency += Date.now() - started;
     if (guess === 'invalid') invalid += 1;
     if (guess === item.label) correct += 1;
+    else if (showErrors) wrong.push(`#${index} ${item.label} -> ${guess} (info: ${info.level})`);
     matrix[item.label][guess] += 1;
+    const bucket = (byLevel[info.level] ??= { total: 0, correct: 0 });
+    bucket.total += 1;
+    if (guess === item.label) bucket.correct += 1;
   }
   return {
     name,
@@ -113,6 +145,8 @@ async function run(name: string, template: string, llm: LlmProvider): Promise<Ru
     matrix,
     invalid,
     problems: [...problems.entries()].sort((a, b) => b[1] - a[1]),
+    byLevel,
+    wrong,
     accuracyOfValid: leads.length === invalid ? 0 : correct / (leads.length - invalid),
     avgOutputTokens: answered ? outputTokens / answered : 0,
     avgThinkingTokens: answered ? thinkingTokens / answered : 0,
@@ -138,6 +172,16 @@ function print(result: RunResult): void {
   console.log(
     `  Average latency: ${result.avgLatencyMs.toFixed(0)} ms (includes waiting for the pacing slot)`,
   );
+  console.log('  Accuracy by information level:');
+  for (const level of ['limited', 'enough', 'rich'] as const) {
+    const bucket = result.byLevel[level];
+    if (bucket) {
+      console.log(
+        `    ${level.padEnd(8)} ${((bucket.correct / bucket.total) * 100).toFixed(0).padStart(3)}%  (${bucket.correct} of ${bucket.total})`,
+      );
+    }
+  }
+  for (const line of result.wrong) console.log(`    wrong ${line}`);
   console.log('\n  Rows: the label. Columns: what the scorer said.');
   console.log(`  ${'label'.padEnd(8)}${[...TIERS, 'invalid'].map((g) => g.padStart(9)).join('')}`);
   for (const tier of TIERS) {
@@ -165,6 +209,7 @@ async function main(): Promise<void> {
       `WARNING: LLM_PROVIDER=${wanted}, but its API key was not found (looked in the shell and in ${envFile}), so the free mock is used.`,
     );
   }
+  console.log(`Leads: ${leads.length} (${split})`);
   console.log(
     `Scorer: ${llm.name} (${llm.model})${llm.name === 'mock' ? ' - the free built-in mock' : ''}`,
   );
@@ -173,7 +218,8 @@ async function main(): Promise<void> {
   if (candidateAt !== -1) {
     const file = process.argv[candidateAt + 1];
     if (!file) throw new Error('--candidate needs a file');
-    const candidate = await run(`candidate (${file})`, readFileSync(resolve(file), 'utf8'), llm);
+    const template = file === 'v2' ? PROMPT_V2 : readFileSync(resolve(file), 'utf8');
+    const candidate = await run(`candidate (${file})`, template, llm);
     print(candidate);
     const delta = (candidate.accuracy - base.accuracy) * 100;
     console.log(

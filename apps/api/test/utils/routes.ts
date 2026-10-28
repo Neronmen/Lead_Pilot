@@ -57,7 +57,7 @@ export const PUBLIC = new Set([
 ]);
 // Own account or own workspace, readable by every member (so no admin-only 403 check);
 // 'GET /leads' has its cross-workspace test in isolation.e2e-spec.ts.
-export const OWN = new Set(['GET /auth/me', 'PATCH /auth/me', 'GET /leads']);
+export const OWN = new Set(['GET /auth/me', 'PATCH /auth/me', 'GET /leads', 'GET /overview']);
 export const WORKSPACE_COLLECTION = new Set([
   'GET /invites',
   'POST /invites',
@@ -70,7 +70,11 @@ export const WORKSPACE_COLLECTION = new Set([
 ]);
 // Readable and usable by every member, by an id from the URL: a lead of another workspace
 // is a 404. Their cross-workspace tests are in leads.e2e-spec.ts.
-export const MEMBER_BY_ID = new Set(['GET /leads/:id', 'POST /leads/:id/review']);
+export const MEMBER_BY_ID = new Set([
+  'GET /leads/:id',
+  'POST /leads/:id/review',
+  'POST /leads/:id/outcome',
+]);
 export const WORKSPACE_BY_ID = new Set([
   'POST /invites/:id/resend',
   'DELETE /invites/:id',

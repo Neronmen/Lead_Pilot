@@ -5,6 +5,7 @@ import { costUsd, LlmError } from './llm.provider';
 import { MockLlmProvider } from './mock-llm.provider';
 import { boundedFields, buildUserMessage, safeJson } from './prompt';
 import { ruleScore, type ScoringInput, tierOf } from './rules';
+import { capForInfo, informationLevel, reviewReasonOf } from './info';
 import { extractJson, monthStart } from './scoring.util';
 
 const RUBRIC = {
@@ -24,6 +25,11 @@ const lead = (over: Partial<ScoringInput['lead']> = {}): ScoringInput['lead'] =>
   domain: 'acme.vn',
   country: 'VN',
   isFreeMail: false,
+  message: null,
+  budget: null,
+  timeline: null,
+  jobTitle: null,
+  interest: null,
   customFields: {},
   ...over,
 });
@@ -32,6 +38,59 @@ const input = (over: Partial<ScoringInput> = {}): ScoringInput => ({
   rubric: RUBRIC,
   company: { title: 'Acme', description: null, text: 'Software for logistics teams. Book a demo.' },
   ...over,
+});
+
+describe('information level, the Hot cap and the review reason', () => {
+  const none = { company: null, message: null, budget: null, timeline: null, jobTitle: null };
+  const site = { title: 'Acme', description: null, text: 'We make things.' };
+  const hot = { score: 90, tier: 'hot' as const, isSpam: false, confidence: 0.9, reasons: ['ok'] };
+
+  it('counts company, message, budget, timeline, job title and a readable website', () => {
+    expect(informationLevel(none, null).level).toBe('limited');
+    expect(informationLevel({ ...none, company: 'Acme' }, null).level).toBe('limited'); // one field
+    expect(informationLevel({ ...none, company: 'Acme', message: 'Need a demo' }, null).level).toBe(
+      'enough',
+    );
+    expect(informationLevel({ ...none, message: 'x', budget: '5k' }, site).level).toBe('enough'); // three
+    const rich = informationLevel({ ...none, message: 'x', budget: '5k', timeline: 'Q4' }, site);
+    expect(rich.level).toBe('rich'); // four
+    expect(rich.have).toEqual(['message', 'budget', 'timeline', 'website']);
+    // A website that could not be read does not count.
+    expect(
+      informationLevel({ ...none, message: 'x' }, { title: null, description: null, text: '' })
+        .level,
+    ).toBe('limited');
+  });
+
+  it('never rates a limited lead Hot: the tier drops to Warm and the score stays under the Hot line', () => {
+    expect(capForInfo(hot, 'limited')).toMatchObject({ tier: 'warm', score: 74 });
+    expect(capForInfo(hot, 'enough')).toBe(hot);
+    expect(capForInfo(hot, 'rich')).toBe(hot);
+    expect(capForInfo({ ...hot, tier: 'cold', score: 30 }, 'limited')).toMatchObject({
+      tier: 'cold',
+      score: 30,
+    });
+    expect(capForInfo({ ...hot, tier: 'junk', score: 5 }, 'limited')).toMatchObject({
+      tier: 'junk',
+      score: 5,
+    });
+  });
+
+  it('says why a lead needs a person: rated without AI, limited information, or low confidence', () => {
+    const base = {
+      fallback: false,
+      level: 'enough' as const,
+      isSpam: false,
+      confidence: 0.9,
+      threshold: 0.6,
+    };
+    expect(reviewReasonOf(base)).toBeNull();
+    expect(reviewReasonOf({ ...base, confidence: 0.4 })).toBe('low_confidence');
+    expect(reviewReasonOf({ ...base, level: 'limited' })).toBe('limited_info');
+    expect(reviewReasonOf({ ...base, level: 'limited', confidence: 0.4 })).toBe('limited_info');
+    expect(reviewReasonOf({ ...base, fallback: true, level: 'limited' })).toBe('rated_without_ai');
+    expect(reviewReasonOf({ ...base, level: 'limited', isSpam: true })).toBeNull(); // obvious spam needs no look
+  });
 });
 
 describe('the AI answer schema', () => {

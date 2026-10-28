@@ -21,6 +21,18 @@ export const updateSourceRequestSchema = z
     message: 'send a name or enabled',
   });
 
+/** The eight fields that make a lead easy to rate. */
+export const USEFUL_FIELDS = [
+  'name',
+  'email',
+  'phone',
+  'company',
+  'message',
+  'budget',
+  'timeline',
+  'jobTitle',
+] as const;
+
 /** Every reason a submission can be refused for; the web app has plain wording for each. */
 export const INGEST_REJECTION_REASONS = [
   'invalid_email',
@@ -59,6 +71,15 @@ export const sourceStatsSchema = z.object({
   replayed: z.number().int().nonnegative(),
   /** The most common reasons, most frequent first (at most 3). A code from INGEST_REJECTION_REASONS. */
   topRejections: z.array(z.object({ reason: z.string(), count: z.number().int().positive() })),
+  /**
+   * Which of the eight useful fields this source sends, from the last 30 days of accepted
+   * submissions: a field counts as sent when at least half of them had it.
+   */
+  readiness: z.object({
+    accepted: z.number().int().nonnegative(),
+    sends: z.array(z.enum(USEFUL_FIELDS)),
+    missing: z.array(z.enum(USEFUL_FIELDS)),
+  }),
 });
 
 /**

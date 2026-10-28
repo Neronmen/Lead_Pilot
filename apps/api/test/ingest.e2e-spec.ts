@@ -100,7 +100,7 @@ describe('Ingest (e2e)', () => {
         email: ` ${address.toUpperCase()} `,
         phone: '0901 234 567',
         name: 'Ann Lee',
-        budget: 5000,
+        loyalty: 5000,
       };
       const res = await send(t, body).expect(201);
       expect(res.body).toEqual({ leadId: expect.any(String), result: 'created' });
@@ -113,7 +113,7 @@ describe('Ingest (e2e)', () => {
         phone: '+84901234567',
         firstName: 'Ann',
         lastName: 'Lee',
-        customFields: { budget: 5000 },
+        customFields: { loyalty: 5000 },
         rawPayload: body,
       });
       const events = await prisma.leadEvent.findMany({ where: { leadId: lead.id } });
@@ -255,7 +255,7 @@ describe('Ingest (e2e)', () => {
       const stats = (list.body as Array<{ id: string; last30Days: Record<string, unknown> }>).find(
         (s) => s.id === t.sourceId,
       )!.last30Days;
-      expect(stats).toEqual({
+      expect(stats).toMatchObject({
         received: 8, // 3 created + 1 merged + 4 rejected
         created: 3,
         merged: 1,
@@ -599,5 +599,62 @@ describe('Ingest (e2e)', () => {
     ]) {
       expect(JSON.stringify(res.body)).not.toContain(t.key.split('.')[1]);
     }
+  });
+  describe('qualifying fields and what a source sends', () => {
+    it('stores message, budget, timeline, job title and interest, and a merge keeps the newest', async () => {
+      const t = await setup();
+      const address = email();
+      const first = await send(t, {
+        email: address,
+        message: 'We need tracking.\nCall me.',
+        budget: '$10k',
+        job_title: 'CTO',
+        timeframe: 'Q4',
+        product: 'Tracking',
+      }).expect(201);
+      const lead = await prisma.lead.findUniqueOrThrow({ where: { id: first.body.leadId } });
+      expect(lead).toMatchObject({
+        message: 'We need tracking.\nCall me.',
+        budget: '$10k',
+        jobTitle: 'CTO',
+        timeline: 'Q4',
+        interest: 'Tracking',
+      });
+      expect(lead.customFields).toEqual({});
+      await send(t, { email: address, budget: '$20k' }).expect(200);
+      expect(
+        await prisma.lead.findUniqueOrThrow({ where: { id: first.body.leadId } }),
+      ).toMatchObject({ budget: '$20k', message: 'We need tracking.\nCall me.' });
+    });
+
+    it('Lead sources says which useful fields a source sends (half or more of its submissions)', async () => {
+      const t = await setup();
+      const auth = { authorization: `Bearer ${t.owner.accessToken}` };
+      for (let i = 0; i < 4; i += 1) {
+        await send(t, {
+          email: email(),
+          name: 'Ann Lee',
+          ...(i < 2 ? { message: 'hi', company: 'Acme' } : {}),
+        }).expect(201);
+      }
+      await send(t, { email: email(), phone: '+84901234567' }).expect(201);
+      const list = await api().get('/sources').set(auth).expect(200);
+      type Row = {
+        id: string;
+        last30Days: { readiness: { accepted: number; sends: string[]; missing: string[] } };
+      };
+      const readiness = (list.body as Row[]).find((s) => s.id === t.sourceId)!.last30Days.readiness;
+      // 5 accepted: name 4/5 and email 5/5 (sent); message and company 2/5 and phone 1/5 (not sent).
+      expect(readiness.accepted).toBe(5);
+      expect(readiness.sends).toEqual(['name', 'email']);
+      expect(readiness.missing).toEqual([
+        'phone',
+        'company',
+        'message',
+        'budget',
+        'timeline',
+        'jobTitle',
+      ]);
+    });
   });
 });

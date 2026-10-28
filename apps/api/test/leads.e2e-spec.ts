@@ -398,4 +398,148 @@ describe('Leads list (e2e)', () => {
       await get(t.owner, '?tier=hot').expect(400);
     });
   });
+  describe('outcomes (Won, Lost, Bad lead) and the overview numbers', () => {
+    const post = (who: { accessToken: string }, path: string, body?: object) =>
+      request(app.getHttpServer())
+        .post(path)
+        .set('authorization', `Bearer ${who.accessToken}`)
+        .send(body);
+
+    it('a rep marks Won or Lost; it is kept with who and when, a repeat records nothing, and clearing removes it', async () => {
+      const t = await setup();
+      const l = await t.lead({ email: 'w@acme.com', tier: 'HOT', score: 90, status: 'SCORED' });
+      await post(t.member, `/leads/${l.id}/outcome`, { outcome: 'WON' }).expect(204);
+      const won = await prisma.lead.findUniqueOrThrow({ where: { id: l.id } });
+      expect(won).toMatchObject({ outcome: 'WON', tier: 'HOT' });
+      expect(won.outcomeSetBy).toBe(
+        (await membershipOf(prisma, t.member.email, t.workspaceId)).userId,
+      );
+      expect(won.outcomeSetAt).toBeInstanceOf(Date);
+
+      await post(t.member, `/leads/${l.id}/outcome`, { outcome: 'WON' }).expect(204); // no change
+      expect(await prisma.leadEvent.count({ where: { leadId: l.id, type: 'outcome' } })).toBe(1);
+
+      await post(t.owner, `/leads/${l.id}/outcome`, { outcome: 'LOST' }).expect(204);
+      expect(await prisma.leadEvent.count({ where: { leadId: l.id, type: 'outcome' } })).toBe(2);
+
+      await post(t.owner, `/leads/${l.id}/outcome`, { outcome: 'NONE' }).expect(204);
+      expect(await prisma.lead.findUniqueOrThrow({ where: { id: l.id } })).toMatchObject({
+        outcome: 'NONE',
+        outcomeSetBy: null,
+        outcomeSetAt: null,
+      });
+
+      const detail = await request(app.getHttpServer())
+        .get(`/leads/${l.id}`)
+        .set('authorization', `Bearer ${t.owner.accessToken}`)
+        .expect(200);
+      expect(detail.body).toMatchObject({ outcome: 'NONE', outcomeSetBy: null });
+    });
+
+    it('"Bad lead" makes it Junk as a person\'s final rating, leaves the queue, and is kept as a correction', async () => {
+      const t = await setup();
+      const l = await t.lead({
+        email: 'b@acme.com',
+        tier: 'WARM',
+        score: 60,
+        status: 'NEEDS_REVIEW',
+        reviewReason: 'limited_info',
+      });
+      await post(t.member, `/leads/${l.id}/outcome`, { outcome: 'BAD' }).expect(204);
+      expect(await prisma.lead.findUniqueOrThrow({ where: { id: l.id } })).toMatchObject({
+        outcome: 'BAD',
+        tier: 'JUNK',
+        status: 'SCORED',
+        reviewReason: null,
+      });
+      const [fb] = await prisma.feedback.findMany({ where: { leadId: l.id } });
+      expect(fb).toMatchObject({ kind: 'override', previousTier: 'WARM', newTier: 'JUNK' });
+
+      // The AI rating it again cannot bring it back.
+      await app.get(PipelineService).run({ workspaceId: t.workspaceId, leadId: l.id });
+      expect(await prisma.lead.findUniqueOrThrow({ where: { id: l.id } })).toMatchObject({
+        tier: 'JUNK',
+        outcome: 'BAD',
+      });
+    });
+
+    it("another workspace's lead is a 404, and a bad body is a 400", async () => {
+      const a = await setup();
+      const b = await setup();
+      const inB = await b.lead({ email: 'x@acme.com', tier: 'HOT', score: 90, status: 'SCORED' });
+      await post(a.owner, `/leads/${inB.id}/outcome`, { outcome: 'WON' }).expect(404);
+      expect(await prisma.lead.findUniqueOrThrow({ where: { id: inB.id } })).toMatchObject({
+        outcome: 'NONE',
+      });
+      const own = await a.lead({ email: 'y@acme.com' });
+      for (const body of [
+        {},
+        { outcome: 'MAYBE' },
+        { outcome: 'CONTACTED' },
+        { outcome: 'WON', by: 'me' },
+      ]) {
+        await post(a.owner, `/leads/${own.id}/outcome`, body).expect(400);
+      }
+    });
+
+    it('overview: junk share, median time to the first rating, leads by tier and by information level, own workspace only', async () => {
+      const t = await setup();
+      const other = await setup();
+      const at = (seconds: number) => new Date(Date.now() - 3600_000 + seconds * 1000);
+      const rated = async (
+        tier: 'HOT' | 'JUNK' | 'COLD',
+        infoLevel: string,
+        waitSeconds: number,
+        i: number,
+      ) => {
+        const created = at(0);
+        const l = await t.lead({
+          email: `o${i}@acme.com`,
+          tier,
+          score: 50,
+          infoLevel,
+          createdAt: created,
+        });
+        const sourceModelScore = await prisma.promptVersion.findFirst();
+        await prisma.score.create({
+          data: {
+            workspaceId: t.workspaceId,
+            leadId: l.id,
+            promptVersionId: sourceModelScore!.id,
+            provider: 'mock',
+            model: 'mock-1',
+            output: {},
+            score: 50,
+            tier,
+            confidence: 0.9,
+            isSpam: false,
+            latencyMs: 1,
+            createdAt: at(waitSeconds),
+          },
+        });
+      };
+      // The prompt version row exists once something was scored; make sure there is one.
+      await app
+        .get(PipelineService)
+        .run({ workspaceId: t.workspaceId, leadId: (await t.lead({ email: 'seed@acme.com' })).id });
+      await rated('HOT', 'rich', 10, 1);
+      await rated('HOT', 'enough', 20, 2);
+      await rated('JUNK', 'limited', 30, 3);
+      await rated('COLD', 'limited', 40, 4);
+      await other.lead({ email: 'z@acme.com', tier: 'HOT', score: 80, infoLevel: 'rich' });
+
+      const res = await request(app.getHttpServer())
+        .get('/overview')
+        .set('authorization', `Bearer ${t.member.accessToken}`)
+        .expect(200);
+      expect(res.body.byTier).toMatchObject({ HOT: 2, JUNK: 1 });
+      expect(res.body.byInfoLevel).toMatchObject({ rich: 1, enough: 1 });
+      expect(res.body.byInfoLevel.limited).toBeGreaterThanOrEqual(2);
+      expect(res.body.junkPercent).toBeGreaterThan(0);
+      expect(res.body.medianSecondsToFirstRating).toBeGreaterThan(0);
+      // Nothing of the other workspace shows: its HOT lead is not in the count.
+      expect(res.body.byTier.HOT).toBe(2);
+      await request(app.getHttpServer()).get('/overview').expect(401);
+    });
+  });
 });

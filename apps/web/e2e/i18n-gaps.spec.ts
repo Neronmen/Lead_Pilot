@@ -38,6 +38,8 @@ const SAME_IN_BOTH = new Set([
   'leadDetail.none',
   'leadDetail.email',
   'leadDetail.website',
+  'sources.readiness.fields.email',
+  'sources.readiness.fields.email',
 ]);
 
 test('every Vietnamese message differs from the English one (nothing left untranslated)', () => {

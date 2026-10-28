@@ -13,6 +13,7 @@ import { useSourceActions, useSources } from '@/lib/sources/use-sources';
 import { cn } from '@/lib/utils';
 import { AddSourceCard } from './add-source-card';
 import { DuplicatesHelp } from './duplicates-help';
+import { Readiness } from './readiness';
 import { SourceStats } from './source-stats';
 import { SourcesNotice, useFailureNotice, type Notice } from './sources-notice';
 
@@ -178,6 +179,7 @@ function SourceRow({
       </p>
 
       <SourceStats source={source} />
+      <Readiness source={source} />
 
       {mode === 'delete' ? (
         <div

@@ -11,6 +11,11 @@ export const leadStatusSchema = z.enum([
   'FAILED',
 ]);
 
+export const infoLevelSchema = z.enum(['limited', 'enough', 'rich']);
+/** Why a lead waits for a person (Review queue). */
+export const reviewReasonSchema = z.enum(['limited_info', 'low_confidence', 'rated_without_ai']);
+export const leadOutcomeSchema = z.enum(['NONE', 'CONTACTED', 'QUALIFIED', 'WON', 'LOST', 'BAD']);
+
 export const leadTierSchema = z.enum(['HOT', 'WARM', 'COLD', 'JUNK']);
 
 /** `GET /leads` query: all optional. `q` searches email, name, company and phone. */
@@ -42,6 +47,11 @@ export const leadListItemSchema = z.object({
   tier: leadTierSchema.nullable(),
   score: z.number().int().nullable(),
   confidence: z.number().nullable(),
+  /** How much the lead told us (null until rated). */
+  infoLevel: infoLevelSchema.nullable(),
+  reviewReason: reviewReasonSchema.nullable(),
+  /** What sales did with the lead: Won, Lost or Bad lead are set by a person. */
+  outcome: leadOutcomeSchema,
   source: z.object({ id: idSchema, name: z.string(), type: sourceTypeSchema }),
   owner: z.object({ id: idSchema, name: z.string().nullable() }).nullable(),
   /** How many submissions this lead holds: more than 1 means later ones were merged into it. */
@@ -84,6 +94,14 @@ export const leadEventSchema = z.object({
 /** `GET /leads/:id`. */
 export const leadDetailSchema = leadListItemSchema.extend({
   domain: z.string().nullable(),
+  /** What the person wrote and said about the deal. */
+  message: z.string().nullable(),
+  budget: z.string().nullable(),
+  timeline: z.string().nullable(),
+  jobTitle: z.string().nullable(),
+  interest: z.string().nullable(),
+  outcomeSetBy: z.object({ id: idSchema, name: z.string().nullable() }).nullable(),
+  outcomeSetAt: timestampSchema.nullable(),
   customFields: z.record(z.string(), z.unknown()),
   /** What was read from the company's website; null when there is no domain or no lookup yet. */
   companyInfo: z
@@ -114,6 +132,33 @@ export const reviewLeadRequestSchema = z.discriminatedUnion('action', [
   }),
 ]);
 
+/** `POST /leads/:id/outcome`: a rep records how the lead ended. "BAD" means not a real lead (counts as junk). */
+export const setOutcomeRequestSchema = z.strictObject({
+  outcome: z.enum(['NONE', 'WON', 'LOST', 'BAD']),
+});
+
+/** `GET /overview`: the last 30 days. */
+export const overviewSchema = z.object({
+  /** Leads created in the last 30 days. */
+  leads: z.number().int().nonnegative(),
+  rated: z.number().int().nonnegative(),
+  /** Share of rated leads that were filtered as junk, 0-100; null before any lead is rated. */
+  junkPercent: z.number().min(0).max(100).nullable(),
+  /** Median seconds from a lead arriving to its first rating; null before any lead is rated. */
+  medianSecondsToFirstRating: z.number().nonnegative().nullable(),
+  byTier: z.object({
+    HOT: z.number().int().nonnegative(),
+    WARM: z.number().int().nonnegative(),
+    COLD: z.number().int().nonnegative(),
+    JUNK: z.number().int().nonnegative(),
+  }),
+  byInfoLevel: z.object({
+    limited: z.number().int().nonnegative(),
+    enough: z.number().int().nonnegative(),
+    rich: z.number().int().nonnegative(),
+  }),
+});
+
 /** `POST /leads/rescore` (Owner/Admin): ask the AI to look again. */
 export const rescoreRequestSchema = z.strictObject({
   /** "without_ai": leads rated by the rules; "open": every lead not yet routed or failed. */
@@ -130,5 +175,9 @@ export type LeadScore = z.infer<typeof leadScoreSchema>;
 export type LeadEvent = z.infer<typeof leadEventSchema>;
 export type LeadDetail = z.infer<typeof leadDetailSchema>;
 export type ReviewLeadRequest = z.infer<typeof reviewLeadRequestSchema>;
+export type SetOutcomeRequest = z.infer<typeof setOutcomeRequestSchema>;
+export type Overview = z.infer<typeof overviewSchema>;
+export type InfoLevel = z.infer<typeof infoLevelSchema>;
+export type ReviewReason = z.infer<typeof reviewReasonSchema>;
 export type RescoreRequest = z.infer<typeof rescoreRequestSchema>;
 export type RescoreResponse = z.infer<typeof rescoreResponseSchema>;

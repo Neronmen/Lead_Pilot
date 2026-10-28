@@ -470,6 +470,23 @@
       "email": "Cùng địa chỉ email: thông tin mới được gộp vào khách tiềm năng đã có. Mọi lượt gửi đều được giữ trong dòng thời gian của khách đó.",
       "phone": "Không có email nhưng cùng số điện thoại: gộp vào khách tiềm năng đó.",
       "separate": "Email mới nhưng số điện thoại đã có: giữ thành một khách tiềm năng riêng và đánh dấu “Có thể trùng”, để không bao giờ gộp nhầm hai người khác nhau."
+    },
+    "readiness": {
+      "sends": "Nguồn này gửi: {sends} ({count} trên 8 trường hữu ích).",
+      "add": "Hãy thêm {missing} để xếp hạng chính xác hơn.",
+      "all": "Nguồn này gửi đủ mọi trường hữu ích.",
+      "none": "Chưa có lượt gửi nào nên chưa có gì để kiểm tra.",
+      "noneSent": "Nguồn này không gửi trường hữu ích nào trong 8 trường.",
+      "fields": {
+        "name": "tên",
+        "email": "email",
+        "phone": "số điện thoại",
+        "company": "công ty",
+        "message": "lời nhắn",
+        "budget": "ngân sách",
+        "timeline": "thời gian",
+        "jobTitle": "chức danh"
+      }
     }
   },
   "settingsAdvanced": {
@@ -607,7 +624,36 @@
     "loadBody": "Hãy kiểm tra kết nối và thử lại.",
     "retry": "Thử lại",
     "notFoundTitle": "Không tìm thấy khách tiềm năng",
-    "notFoundBody": "Có thể đã bị xóa, hoặc thuộc không gian làm việc khác."
+    "notFoundBody": "Có thể đã bị xóa, hoặc thuộc không gian làm việc khác.",
+    "said": "Họ đã nói gì",
+    "message": "Lời nhắn",
+    "budget": "Ngân sách",
+    "timeline": "Thời gian",
+    "jobTitle": "Chức danh",
+    "interest": "Quan tâm đến",
+    "infoLevel": {
+      "limited": "Thông tin: ít",
+      "enough": "Thông tin: đủ",
+      "rich": "Thông tin: nhiều"
+    },
+    "infoHelp": "Khách tiềm năng này cho biết bao nhiêu, tính từ công ty, lời nhắn, ngân sách, thời gian, chức danh và website công ty. Khi thông tin ít, khách tiềm năng không bao giờ được xếp hạng Nóng.",
+    "reviewReasons": {
+      "limited_info": "Thông tin quá ít để xếp hạng đáng tin cậy, nên cần một người xem lại.",
+      "low_confidence": "AI không chắc về xếp hạng này, nên cần một người xem lại.",
+      "rated_without_ai": "Được xếp hạng bằng quy tắc đơn giản, không phải AI, nên cần một người xem lại."
+    },
+    "outcome": {
+      "title": "Kết quả ra sao?",
+      "won": "Thắng",
+      "lost": "Thua",
+      "bad": "Không phải khách thật",
+      "clear": "Xóa",
+      "setBy": "{name} đặt {when}",
+      "setByUnknown": "Một thành viên đặt {when}",
+      "badHelp": "Khách không thật là spam hoặc sai người. Khách này sẽ thành Rác và AI được kiểm tra theo đó.",
+      "saved": "Đã lưu.",
+      "failed": "Không lưu được. Chưa có gì thay đổi."
+    }
   },
   "review": {
     "title": "Hàng chờ duyệt",
@@ -632,6 +678,7 @@
     "loadTitle": "Không tải được hàng chờ duyệt",
     "loadBody": "Hãy kiểm tra kết nối và thử lại.",
     "retry": "Thử lại",
-    "open": "Mở khách tiềm năng"
+    "open": "Mở khách tiềm năng",
+    "reasonTitle": "Vì sao ở đây"
   }
 }

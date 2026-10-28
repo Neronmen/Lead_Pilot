@@ -14,13 +14,50 @@ const issues = (payload: Record<string, unknown>, country: string | null = null)
 
 describe('normalizePayload', () => {
   it('lowercases the email, derives the company domain, and keeps unknown fields', () => {
-    expect(ok({ email: '  Ann@Acme.COM ', first_name: 'Ann', budget: 5000 })).toEqual({
+    expect(ok({ email: '  Ann@Acme.COM ', first_name: 'Ann', loyalty: 5000 })).toEqual({
       email: 'ann@acme.com',
       firstName: 'Ann',
       domain: 'acme.com',
       isFreeMail: false,
-      customFields: { budget: 5000 },
+      customFields: { loyalty: 5000 },
     });
+  });
+
+  it('reads the qualifying fields under their usual names, and keeps line breaks in the message', () => {
+    expect(
+      ok({
+        email: 'a@acme.com',
+        comments: 'We need a tool.\nCan we talk this week?',
+        budget_range: '$10k-20k',
+        timeframe: 'this quarter',
+        job_title: 'Head of Logistics',
+        product: 'Tracking',
+      }),
+    ).toMatchObject({
+      message: 'We need a tool.\nCan we talk this week?',
+      budget: '$10k-20k',
+      timeline: 'this quarter',
+      jobTitle: 'Head of Logistics',
+      interest: 'Tracking',
+      customFields: {},
+    });
+    expect(ok({ email: 'a@acme.com', budget: 5000 }).budget).toBe('5000');
+  });
+
+  it('cleans and limits them: control characters out, message cut at 2000, short fields refused when odd', () => {
+    const lead = ok({ email: 'a@acme.com', message: `hi there‮ ${'x'.repeat(3000)}` });
+    expect(lead.message).toHaveLength(2000);
+    expect(lead.message).not.toMatch(/[‮]/);
+    expect(ok({ email: 'a@acme.com', message: '   ' }).message).toBeUndefined();
+    expect(issues({ email: 'a@acme.com', jobTitle: 'CEO\nInjected' })).toEqual([
+      { path: 'jobTitle', code: 'invalid_text' },
+    ]);
+    expect(issues({ email: 'a@acme.com', budget: 'x'.repeat(201) })).toEqual([
+      { path: 'budget', code: 'invalid_text' },
+    ]);
+    expect(issues({ email: 'a@acme.com', message: { a: 1 } })).toEqual([
+      { path: 'message', code: 'invalid_type' },
+    ]);
   });
 
   it('flags free mail and does not use it as the company domain', () => {

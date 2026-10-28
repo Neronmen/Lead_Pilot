@@ -14,6 +14,7 @@ import { ApiError } from '@/lib/api';
 import { formErrors } from '@/lib/i18n/errors';
 import { useMessage } from '@/lib/i18n/use-message';
 import { useLead, useReviewLead } from '@/lib/leads/use-leads';
+import { InfoBadge, OutcomeCard, ReasonNote, SaidCard } from './lead-extras';
 import { TierBadge } from './tier-badge';
 
 const TIERS: LeadTier[] = ['HOT', 'WARM', 'COLD', 'JUNK'];
@@ -73,6 +74,7 @@ function Detail({ lead }: { lead: LeadDetail }) {
             <span className="tabular-nums">{t('score', { score: lead.score })}</span>
           ) : null}
           <Badge variant="outline">{status(lead.status)}</Badge>
+          {lead.infoLevel ? <InfoBadge level={lead.infoLevel} /> : null}
           <span className="text-muted-foreground">
             {lead.owner
               ? t('ownerIs', { name: lead.owner.name ?? t('unknownOwner') })
@@ -80,6 +82,8 @@ function Detail({ lead }: { lead: LeadDetail }) {
           </span>
         </div>
       </header>
+
+      {lead.reviewReason ? <ReasonNote reason={lead.reviewReason} /> : null}
 
       <section
         aria-labelledby="why"
@@ -124,7 +128,10 @@ function Detail({ lead }: { lead: LeadDetail }) {
         <About lead={lead} />
       </div>
 
+      <SaidCard lead={lead} />
+
       <Disagree lead={lead} />
+      <OutcomeCard lead={lead} />
       <Activity events={lead.events} />
 
       {canManage(me.role) && score ? (

@@ -14,7 +14,15 @@ const source = (over: Partial<Source>): Source => ({
   createdAt: day(100),
   leadsLast30Days: 0,
   lastLeadAt: null,
-  last30Days: { received: 0, created: 0, merged: 0, rejected: 0, replayed: 0, topRejections: [] },
+  last30Days: {
+    received: 0,
+    created: 0,
+    merged: 0,
+    rejected: 0,
+    replayed: 0,
+    topRejections: [],
+    readiness: { accepted: 0, sends: [], missing: [] },
+  },
   ...over,
 });
 

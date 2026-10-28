@@ -5,6 +5,7 @@ import {
   type HmacSecretResponse,
   type Source,
   type SourceStats,
+  USEFUL_FIELDS,
   type SourceWithKey,
   type UpdateSourceRequest,
 } from '@leadpilot/shared';
@@ -312,6 +313,27 @@ export class SourcesService {
     }
     for (const stats of result.values())
       stats.received = stats.created + stats.merged + stats.rejected;
+    // What each source sends: a field counts when at least half of the accepted submissions had it.
+    const accepted = await db.ingestAttempt.findMany({
+      where: { ...where, outcome: { in: ['CREATED', 'MERGED'] } },
+      select: { sourceId: true, fields: true },
+      take: 20_000,
+    });
+    const seen = new Map<string, { total: number; counts: Map<string, number> }>();
+    for (const row of accepted) {
+      const entry = seen.get(row.sourceId) ?? { total: 0, counts: new Map() };
+      entry.total += 1;
+      for (const field of row.fields) entry.counts.set(field, (entry.counts.get(field) ?? 0) + 1);
+      seen.set(row.sourceId, entry);
+    }
+    for (const [id, entry] of seen) {
+      const sends = USEFUL_FIELDS.filter((f) => (entry.counts.get(f) ?? 0) * 2 >= entry.total);
+      of(id).readiness = {
+        accepted: entry.total,
+        sends,
+        missing: USEFUL_FIELDS.filter((f) => !sends.includes(f)),
+      };
+    }
     for (const row of [...reasons].sort((a, b) => b._count._all - a._count._all)) {
       const top = of(row.sourceId).topRejections;
       if (top.length < 3) top.push({ reason: row.reason ?? 'other', count: row._count._all });
@@ -327,6 +349,7 @@ const emptyStats = (): SourceStats => ({
   rejected: 0,
   replayed: 0,
   topRejections: [],
+  readiness: { accepted: 0, sends: [], missing: [...USEFUL_FIELDS] },
 });
 
 function toSource(
