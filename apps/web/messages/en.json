@@ -782,7 +782,16 @@
     "loadBody": "Check your connection and try again.",
     "retry": "Try again",
     "open": "Open lead",
-    "reasonTitle": "Why it is here"
+    "reasonTitle": "Why it is here",
+    "help": {
+      "title": "How this page works",
+      "why": "These are leads the AI was not sure about, or that told us too little. A person checks them before they are handed over.",
+      "approve": "Approve: you agree with the AI’s rating. The lead is then handed over by your routing rules (Slack, Telegram, email).",
+      "rating": "Set the rating: you disagree. Pick Hot, Warm, Cold or Junk; your choice is final and helps measure the AI.",
+      "skip": "Skip: look at another lead first. The skipped lead stays in the queue and comes back at the end of this session."
+    },
+    "skipOnly": "Skip is off because this is the only lead waiting.",
+    "skippedNote": "Skipped {name}: it stays in the queue and comes back at the end."
   },
   "settingsRouting": {
     "title": "Routing rules",

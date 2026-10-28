@@ -39,6 +39,8 @@ export class MockLlmProvider implements LlmProvider {
     const [first, ...rest] = (data.name ?? '').split(' ');
     const { facts: _facts, ...answer } = ruleScore({
       rubric,
+      // buildUserMessage says which language the reasons are for.
+      language: request.user.includes('in Vietnamese.') ? 'vi' : 'en',
       company,
       lead: {
         email: data.email,

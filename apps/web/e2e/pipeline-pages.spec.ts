@@ -211,6 +211,12 @@ test.describe('Review queue', () => {
     await expect(page.getByRole('heading', { name: 'sam@gmail.com', level: 2 })).toBeVisible();
     await page.keyboard.press('s');
     await expect(page.getByRole('heading', { name: 'Nguyễn Văn An', level: 2 })).toBeVisible();
+    // The page says what happened to the skipped lead, and how to read the page is one click away.
+    await expect(
+      page.getByText('Skipped sam@gmail.com: it stays in the queue and comes back at the end.'),
+    ).toBeVisible();
+    await page.getByText(t.help.title).click();
+    await expect(page.getByText(/Approve: you agree with the AI/)).toBeVisible();
     await page.getByLabel(t.note).fill('as 1 2 3 4');
     expect(api.requests.some((r) => r.path.endsWith('/review'))).toBe(false);
     await page.getByLabel(t.note).blur();

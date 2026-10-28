@@ -782,7 +782,16 @@
     "loadBody": "Hãy kiểm tra kết nối và thử lại.",
     "retry": "Thử lại",
     "open": "Mở khách tiềm năng",
-    "reasonTitle": "Vì sao ở đây"
+    "reasonTitle": "Vì sao ở đây",
+    "help": {
+      "title": "Trang này dùng để làm gì",
+      "why": "Đây là những khách tiềm năng AI chưa chắc chắn, hoặc cung cấp quá ít thông tin. Một người kiểm tra trước khi bàn giao.",
+      "approve": "Duyệt: bạn đồng ý với xếp hạng của AI. Khách đó sẽ được bàn giao theo quy tắc phân bổ của bạn (Slack, Telegram, email).",
+      "rating": "Đặt xếp hạng: bạn không đồng ý. Chọn Nóng, Ấm, Lạnh hoặc Rác; lựa chọn của bạn là quyết định cuối và giúp đo độ chính xác của AI.",
+      "skip": "Bỏ qua: xem khách khác trước. Khách bị bỏ qua vẫn nằm trong hàng chờ và quay lại ở cuối phiên này."
+    },
+    "skipOnly": "Nút Bỏ qua đang tắt vì đây là khách duy nhất đang chờ.",
+    "skippedNote": "Đã bỏ qua {name}: khách này vẫn nằm trong hàng chờ và quay lại ở cuối."
   },
   "settingsRouting": {
     "title": "Quy tắc phân bổ",

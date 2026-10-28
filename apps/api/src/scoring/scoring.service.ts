@@ -54,6 +54,7 @@ export class ScoringService {
       lead,
       await this.rubric.get(job.workspaceId),
       lead.domain ? (await this.enrichment.forDomain(lead.domain, now)).data : null,
+      workspace.defaultLocale,
     );
     const prompt = await this.prompts.active();
 
@@ -112,7 +113,12 @@ export class ScoringService {
     const lead = await db.lead.findUnique({ where: { id: job.leadId } });
     if (!lead) return;
     const workspace = await db.workspace.findUniqueOrThrow({ where: { id: job.workspaceId } });
-    const input = await this.inputFor(lead, await this.rubric.get(job.workspaceId), null);
+    const input = await this.inputFor(
+      lead,
+      await this.rubric.get(job.workspaceId),
+      null,
+      workspace.defaultLocale,
+    );
     await this.save(job, {
       output: this.rules(input),
       provider: 'rules',
@@ -146,6 +152,7 @@ export class ScoringService {
     },
     rubric: ScoringInput['rubric'],
     company: ScoringInput['company'] | Promise<ScoringInput['company']>,
+    language: 'en' | 'vi' = 'en',
   ): Promise<ScoringInput> {
     return Promise.resolve(company).then((resolved) => ({
       lead: {
@@ -165,6 +172,7 @@ export class ScoringService {
         customFields: (lead.customFields ?? {}) as Record<string, unknown>,
       },
       rubric,
+      language,
       company: resolved,
     }));
   }

@@ -106,6 +106,10 @@ export function buildUserMessage(input: ScoringInput): string {
     '<company_website>',
     safeJson(company ?? null),
     '</company_website>',
+    // The people reading the reasons speak this language; the JSON keys and tier names stay as they are.
+    input.language === 'vi'
+      ? 'Write the reasons and suggestedReply in Vietnamese.'
+      : 'Write the reasons and suggestedReply in English.',
     'Rate this lead.',
   ].join('\n');
 }

@@ -20,6 +20,8 @@ export interface ScoringInput {
     customFields: Record<string, unknown>;
   };
   rubric: IcpRubric;
+  /** The language the reasons and the suggested reply are written in (the workspace's language). */
+  language?: 'en' | 'vi';
   /** What enrichment read from the company's website (may be empty). */
   company: { title: string | null; description: string | null; text: string } | null;
 }
@@ -61,6 +63,8 @@ export function ruleScore(input: ScoringInput): ScoreOutput & { facts: number } 
   const { lead, rubric } = input;
   const text = haystack(input);
   const reasons: string[] = [];
+  // The reasons are read by people, in the workspace's language.
+  const say = (en: string, vi: string) => (input.language === 'vi' ? vi : en);
   let score = 35;
   let facts = 0;
 
@@ -73,7 +77,12 @@ export function ruleScore(input: ScoringInput): ScoreOutput & { facts: number } 
       tier: 'junk',
       isSpam: true,
       confidence: 0.9,
-      reasons: ['The contact details look made up or like spam.'],
+      reasons: [
+        say(
+          'The contact details look made up or like spam.',
+          'Thông tin liên hệ có vẻ bịa đặt hoặc là thư rác.',
+        ),
+      ],
       facts,
     };
   }
@@ -81,17 +90,22 @@ export function ruleScore(input: ScoringInput): ScoreOutput & { facts: number } 
   if (lead.email) {
     if (lead.isFreeMail) {
       score -= 5;
-      reasons.push('Uses a free email address, not a company one.');
+      reasons.push(
+        say(
+          'Uses a free email address, not a company one.',
+          'Dùng email miễn phí, không phải email công ty.',
+        ),
+      );
     } else {
       score += 10;
       facts += 1;
-      reasons.push('Uses a company email address.');
+      reasons.push(say('Uses a company email address.', 'Dùng email của công ty.'));
     }
   }
   if (lead.company) {
     score += 5;
     facts += 1;
-    reasons.push(`Names a company (${lead.company}).`);
+    reasons.push(say(`Names a company (${lead.company}).`, `Có nêu công ty (${lead.company}).`));
   }
   if (lead.phone) {
     score += 3;
@@ -106,10 +120,20 @@ export function ruleScore(input: ScoringInput): ScoreOutput & { facts: number } 
     if (rubric.countries.length > 0) {
       if (rubric.countries.includes(lead.country)) {
         score += 15;
-        reasons.push(`Based in ${lead.country}, a country you target.`);
+        reasons.push(
+          say(
+            `Based in ${lead.country}, a country you target.`,
+            `Ở ${lead.country}, một quốc gia bạn nhắm tới.`,
+          ),
+        );
       } else {
         score -= 5;
-        reasons.push(`Based in ${lead.country}, outside the countries you target.`);
+        reasons.push(
+          say(
+            `Based in ${lead.country}, outside the countries you target.`,
+            `Ở ${lead.country}, ngoài các quốc gia bạn nhắm tới.`,
+          ),
+        );
       }
     }
   }
@@ -117,24 +141,28 @@ export function ruleScore(input: ScoringInput): ScoreOutput & { facts: number } 
   const industry = rubric.industries.find((name) => text.includes(name.toLowerCase()));
   if (industry) {
     score += 25;
-    reasons.push(`Looks like it works in ${industry}.`);
+    reasons.push(say(`Looks like it works in ${industry}.`, `Có vẻ làm trong ngành ${industry}.`));
   }
   if (input.company && input.company.text) facts += 1;
 
   const signal = rubric.budgetSignals.find((name) => text.includes(name.toLowerCase()));
   if (signal) {
     score += 15;
-    reasons.push(`Shows a buying signal: ${signal}.`);
+    reasons.push(say(`Shows a buying signal: ${signal}.`, `Có dấu hiệu muốn mua: ${signal}.`));
   }
 
   const dealBreaker = rubric.disqualifiers.find((name) => text.includes(name.toLowerCase()));
   if (dealBreaker) {
     score -= 50;
-    reasons.push(`Matches a deal-breaker: ${dealBreaker}.`);
+    reasons.push(
+      say(`Matches a deal-breaker: ${dealBreaker}.`, `Rơi vào điều loại trừ: ${dealBreaker}.`),
+    );
   }
 
   score = Math.max(0, Math.min(100, score));
-  if (reasons.length === 0) reasons.push('Not enough information to tell.');
+  if (reasons.length === 0) {
+    reasons.push(say('Not enough information to tell.', 'Chưa đủ thông tin để đánh giá.'));
+  }
   return {
     score,
     tier: tierOf(score),

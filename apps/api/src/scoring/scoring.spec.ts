@@ -325,3 +325,27 @@ describe('chooseLlm', () => {
     expect(chooseLlm({ LLM_PROVIDER: 'anthropic' }).name).toBe('mock'); // no key: stays free
   });
 });
+
+describe('the language of the reasons', () => {
+  const input = (language: 'en' | 'vi'): ScoringInput => ({
+    lead: lead({ email: 'mia@acme-test.com', company: 'Acme', country: 'VN' }),
+    rubric: RUBRIC,
+    company: null,
+    language,
+  });
+
+  it('asks the AI to write them in the workspace language', () => {
+    expect(buildUserMessage(input('vi'))).toContain('in Vietnamese.');
+    expect(buildUserMessage(input('en'))).toContain('in English.');
+  });
+
+  it('the rule-based answer (and the mock AI) speak Vietnamese for a Vietnamese workspace', async () => {
+    expect(ruleScore(input('vi')).reasons.join(' ')).toMatch(/công ty/);
+    expect(ruleScore(input('en')).reasons.join(' ')).toMatch(/company/);
+    const answer = await new MockLlmProvider().complete({
+      system: 'x',
+      user: buildUserMessage(input('vi')),
+    });
+    expect(JSON.parse(answer.text).reasons.join(' ')).toMatch(/công ty/);
+  });
+});
