@@ -4,6 +4,7 @@ import { meResponseSchema } from '@leadpilot/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   ClipboardCheck,
+  LayoutDashboard,
   LogOut,
   MoreHorizontal,
   SlidersHorizontal,
@@ -32,7 +33,7 @@ import { cn } from '@/lib/utils';
 import { canManage, useCurrentMe } from './me-context';
 
 interface NavItem {
-  id: 'leads' | 'review' | 'settings';
+  id: 'overview' | 'leads' | 'review' | 'settings';
   href: string;
   /** Pages under this path keep the item highlighted. */
   match: string;
@@ -43,6 +44,13 @@ interface NavItem {
 // Only the pages that exist. Overview, Review queue and Routing rules join the
 // list in the milestone that builds them (SPEC §7).
 const NAV: NavItem[] = [
+  {
+    id: 'overview',
+    href: '/overview',
+    match: '/overview',
+    icon: LayoutDashboard,
+    adminOnly: false,
+  },
   { id: 'leads', href: '/leads', match: '/leads', icon: Users, adminOnly: false },
   { id: 'review', href: '/review', match: '/review', icon: ClipboardCheck, adminOnly: false },
   {

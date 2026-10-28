@@ -46,3 +46,4 @@ apps/web/AGENTS.md
 .env_*
 
 dist-eval/
+dist-seed/

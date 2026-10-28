@@ -1,4 +1,4 @@
-import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ErrorCode } from '@leadpilot/shared';
@@ -10,6 +10,7 @@ import { PipelineQueue } from '../queue/pipeline.queue';
 import { hmacAad } from '../sources/sources.service';
 import { type AuthenticatedSource, IngestAuthService } from './ingest-auth.service';
 import { type NormalizedLead, normalizePayload } from './normalize';
+import { nextSample, SAMPLE_LEADS } from './sample-leads';
 import { FixedWindowLimiter, type WindowStore } from './rate-limiter';
 
 /** Signed requests older (or newer) than this are refused: a captured request cannot be replayed later. */
@@ -87,6 +88,29 @@ export class IngestService {
     private readonly limits: IngestLimits,
     private readonly pipeline: PipelineQueue,
   ) {}
+
+  /**
+   * "Send a sample lead" on Lead sources (Admin and Owner): a made-up lead goes through the same
+   * cleaning, dedup, saving and queueing as a real submission, so the demo needs no command line.
+   */
+  async submitSample(workspaceId: string, sourceId: string): Promise<IngestOutcome> {
+    const db = this.tenant.for(workspaceId);
+    const source = await db.source.findUnique({ where: { id: sourceId } });
+    if (!source)
+      throw new DomainError(ErrorCode.NOT_FOUND, 'Source not found', HttpStatus.NOT_FOUND);
+    if (!source.enabled) {
+      throw new DomainError(ErrorCode.CONFLICT, 'Switch the source on first', HttpStatus.CONFLICT);
+    }
+    const workspace = await db.workspace.findFirstOrThrow({ select: { defaultCountry: true } });
+    const payload = nextSample(randomInt(SAMPLE_LEADS.length), randomBytes(3).toString('hex'));
+    const authenticated: AuthenticatedSource = {
+      sourceId,
+      workspaceId,
+      hmacSecretEnc: null,
+      defaultCountry: workspace.defaultCountry,
+    };
+    return { ...(await this.store(db, authenticated, payload)), replayed: false };
+  }
 
   async handle(req: IngestRequest): Promise<IngestOutcome> {
     const source = await this.authenticate(req);

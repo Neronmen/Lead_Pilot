@@ -15,6 +15,8 @@ import {
   type CreateSourceRequest,
   createSourceRequestSchema,
   type HmacSecretResponse,
+  type SampleLeadResponse,
+  sampleLeadResponseSchema,
   hmacSecretResponseSchema,
   type Source,
   sourceSchema,
@@ -26,6 +28,7 @@ import {
 import { z } from 'zod';
 import { type AuthContext, CurrentAuth, MinRole } from '../auth/auth-context';
 import { ApiZodResponse, ZodBody } from '../common/validation/zod-swagger';
+import { IngestService } from '../ingest/ingest.service';
 import { SourcesService } from './sources.service';
 
 /** Settings > Lead sources and Advanced / Developer. Admin and Owner only. */
@@ -34,7 +37,10 @@ import { SourcesService } from './sources.service';
 @MinRole('ADMIN')
 @Controller('sources')
 export class SourcesController {
-  constructor(private readonly sources: SourcesService) {}
+  constructor(
+    private readonly sources: SourcesService,
+    private readonly ingest: IngestService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'Lead sources with leads in the last 30 days and the last lead' })
@@ -77,6 +83,20 @@ export class SourcesController {
   @ApiNoContentResponse({ description: 'Deleted' })
   remove(@CurrentAuth() auth: AuthContext, @Param('id', ParseUUIDPipe) id: string): Promise<void> {
     return this.sources.remove(auth, id);
+  }
+
+  @Post(':id/sample-lead')
+  @ApiOperation({
+    summary: 'Send a made-up sample lead through this source',
+    description: 'For the demo: it is cleaned, rated and routed like a real lead.',
+  })
+  @ApiZodResponse(HttpStatus.CREATED, sampleLeadResponseSchema, 'The new lead')
+  async sendSample(
+    @CurrentAuth() auth: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<SampleLeadResponse> {
+    const { body } = await this.ingest.submitSample(auth.workspaceId, id);
+    return { leadId: body.leadId };
   }
 
   @Post(':id/api-key')

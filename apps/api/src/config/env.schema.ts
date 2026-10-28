@@ -52,6 +52,11 @@ export const envSchema = z
     // Whether actions (Slack, Telegram, webhook, HubSpot) really call out: "mock" (default: nothing
     // leaves this machine, the run is recorded as done) or "live" (real calls to public addresses only).
     ACTIONS_MODE: z.enum(['mock', 'live']).default('mock'),
+    // How many reverse proxies sit in front of the API (0: none). Needed so the rate limits see each
+    // visitor's own address and not the proxy's. Never "true": a client could then spoof its address.
+    TRUST_PROXY: z.coerce.number().int().min(0).max(5).default(0),
+    // Whether the API documentation (Swagger at /docs) is served. Switch it off for a public deployment.
+    API_DOCS: z.enum(['on', 'off']).default('on'),
     // Which AI rates the leads. "auto": Anthropic if ANTHROPIC_API_KEY is set, else OpenAI if
     // OPENAI_API_KEY is set, else the free built-in mock (no key needed: the demo works as is).
     LLM_PROVIDER: z.enum(['auto', 'mock', 'anthropic', 'openai', 'gemini']).default('auto'),

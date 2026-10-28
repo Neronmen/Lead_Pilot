@@ -11,3 +11,4 @@ apps/web/e2e/screenshots
 apps/web/e2e/results.md
 apps/web/e2e/test-results
 dist-eval
+dist-seed

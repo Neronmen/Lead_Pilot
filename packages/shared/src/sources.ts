@@ -105,6 +105,10 @@ export const sourceSchema = z.object({
 export const sourceWithKeySchema = z.object({ source: sourceSchema, apiKey: z.string() });
 
 /** `POST /sources/:id/hmac-secret`: the new signing secret, shown once. */
+/** `POST /sources/:id/sample-lead`: the lead that was made. */
+export const sampleLeadResponseSchema = z.object({ leadId: idSchema });
+export type SampleLeadResponse = z.infer<typeof sampleLeadResponseSchema>;
+
 export const hmacSecretResponseSchema = z.object({ secret: z.string() });
 
 export type CreateSourceRequest = z.infer<typeof createSourceRequestSchema>;

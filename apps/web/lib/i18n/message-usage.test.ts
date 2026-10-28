@@ -38,7 +38,7 @@ function has(messages: Dict, key: string): boolean {
 const ROLES = ['OWNER', 'ADMIN', 'MEMBER'];
 const DYNAMIC: Record<string, string[]> = {
   'shell.roles.${me.role}': ROLES.map((r) => `shell.roles.${r}`),
-  'shell.nav.${id}': ['leads', 'review', 'settings'].map((id) => `shell.nav.${id}`),
+  'shell.nav.${id}': ['overview', 'leads', 'review', 'settings'].map((id) => `shell.nav.${id}`),
 
   'settings.nav.${id}': ['sources', 'routing', 'integrations', 'ideal', 'advanced'].map(
     (id) => `settings.nav.${id}`,
@@ -142,6 +142,12 @@ const DYNAMIC: Record<string, string[]> = {
   ].map((k) => `leadActions.type.${k}`),
   'leadActions.status.${run.status}': ['PENDING', 'RUNNING', 'SUCCEEDED', 'FAILED', 'DEAD'].map(
     (k) => `leadActions.status.${k}`,
+  ),
+  'getStarted.steps.${step.id}.title': ['source', 'ideal', 'handover'].map(
+    (k) => `getStarted.steps.${k}.title`,
+  ),
+  'getStarted.steps.${step.id}.body': ['source', 'ideal', 'handover'].map(
+    (k) => `getStarted.steps.${k}.body`,
   ),
   'routing.form.incomplete.${problem}': ['name', 'conditions', 'actions'].map(
     (k) => `routing.form.incomplete.${k}`,
@@ -262,6 +268,7 @@ const scanned = [
   'components/team',
   'components/sources',
   'components/routing',
+  'components/overview',
   'components/integrations',
   'components/leads',
   'app/login',
@@ -321,7 +328,7 @@ describe('message keys used by the app shell exist in EN and VI', () => {
   it('sidebar nav ids and role values in the source match what this test enumerates', () => {
     const sidebar = readFileSync(join(root, 'components/app-shell/sidebar.tsx'), 'utf8');
     const ids = [...sidebar.matchAll(/id: '(\w+)',\s*href/g)].map((m) => m[1]);
-    expect(ids.sort()).toEqual(['leads', 'review', 'settings']);
+    expect(ids.sort()).toEqual(['leads', 'overview', 'review', 'settings']);
     const settings = readFileSync(join(root, 'components/settings/settings-frame.tsx'), 'utf8');
     expect([...settings.matchAll(/id: '(\w+)',\s*href/g)].map((m) => m[1])).toEqual([
       'sources',

@@ -7,6 +7,7 @@ export default tseslint.config(
     ignores: [
       '**/dist/**',
       '**/dist-eval/**',
+      '**/dist-seed/**',
       '**/.next/**',
       '**/node_modules/**',
       '**/coverage/**',
@@ -92,6 +93,8 @@ export default tseslint.config(
     //   public website metadata (no workspace, no lead data), which the scope cannot query.
     // - scoring/prompt.service.ts: prompt versions are one global table (no workspace, no
     //   lead data), which the scope cannot query.
+    // - seed/run-seed.ts: a command-line script that removes the demo account's workspace and counts
+    //   what it made. It talks to the API over HTTP for everything else.
     // - ingest/ingest-auth.service.ts: finds a source by its API key prefix
     //   (globally unique) before the workspace is known; read-only, one lookup.
     files: [
@@ -105,6 +108,7 @@ export default tseslint.config(
       'apps/api/src/maintenance/maintenance.service.ts',
       'apps/api/src/enrichment/enrichment.service.ts',
       'apps/api/src/scoring/prompt.service.ts',
+      'apps/api/src/seed/run-seed.ts',
     ],
     rules: { 'no-restricted-imports': 'off', 'no-restricted-syntax': 'off' },
   },

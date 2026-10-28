@@ -76,7 +76,9 @@
       "submit": "Đăng nhập",
       "submitting": "Đang đăng nhập",
       "newHere": "Mới dùng LeadPilot?",
-      "create": "Tạo không gian làm việc"
+      "create": "Tạo không gian làm việc",
+      "demo": "Khám phá không gian làm việc demo",
+      "demoHint": "Đăng nhập vào tài khoản demo công khai với khách tiềm năng giả."
     },
     "aside": {
       "eyebrow": "LUỒNG KHÁCH TIỀM NĂNG TRỰC TIẾP",
@@ -495,7 +497,12 @@
       }
     },
     "keysHint": "Cần địa chỉ hoặc khóa của một nguồn?",
-    "keysLink": "Mở Nâng cao / Nhà phát triển"
+    "keysLink": "Mở Nâng cao / Nhà phát triển",
+    "sample": {
+      "button": "Gửi khách tiềm năng mẫu",
+      "sent": "Đã gửi một khách tiềm năng mẫu. Hệ thống đang xếp hạng.",
+      "open": "Xem trong danh sách khách tiềm năng"
+    }
   },
   "settingsAdvanced": {
     "title": "Nâng cao / Nhà phát triển",
@@ -938,5 +945,59 @@
       "DEAD": "Lỗi"
     },
     "retryFailed": "Không thử lại được. Hãy thử lại sau giây lát."
+  },
+  "overview": {
+    "title": "Tổng quan",
+    "sub": "LeadPilot đã làm gì cho bạn trong 30 ngày qua.",
+    "loading": "Đang tải số liệu",
+    "loadTitle": "Không tải được trang tổng quan",
+    "loadBody": "Máy chủ không phản hồi. Không có gì bị mất. Hãy thử lại sau giây lát.",
+    "retry": "Thử lại",
+    "empty": {
+      "title": "Chưa có khách tiềm năng nào",
+      "body": "Hãy kết nối một nguồn, số liệu sẽ hiện ở đây ngay khi khách tiềm năng đầu tiên đến.",
+      "cta": "Kết nối một nguồn"
+    },
+    "kpiLabel": "Số liệu chính",
+    "kpi": {
+      "leads": "Khách tiềm năng đã nhận",
+      "leadsHelp": "Đã xếp hạng {rated}",
+      "junk": "Rác đã lọc",
+      "junkHelp": "Thư rác và liên hệ giả mà đội của bạn không cần xem",
+      "time": "Thời gian đến khi xếp hạng",
+      "timeHelp": "Thời gian thường thấy từ lúc khách đến tới lúc được xếp hạng"
+    },
+    "tiers": "Khách tiềm năng theo xếp hạng",
+    "openLeads": "Mở danh sách khách tiềm năng",
+    "info": "Khách cung cấp bao nhiêu thông tin",
+    "infoHelp": "Khách ít thông tin được xếp hạng kém chắc chắn hơn và không bao giờ được xếp Nóng.",
+    "time": {
+      "seconds": "{n} giây",
+      "minutes": "{n} phút",
+      "hours": "{n} giờ",
+      "days": "{n} ngày"
+    }
+  },
+  "getStarted": {
+    "title": "Bắt đầu",
+    "progress": "Đã xong {done} trên {total}",
+    "done": "Đã xong",
+    "todo": "Chưa xong",
+    "go": "Thiết lập",
+    "change": "Thay đổi",
+    "steps": {
+      "source": {
+        "title": "Kết nối một nguồn",
+        "body": "Nơi khách tiềm năng đến: một biểu mẫu, Zapier, Make hoặc n8n."
+      },
+      "ideal": {
+        "title": "Mô tả khách hàng lý tưởng",
+        "body": "Để AI biết một khách tiềm năng tốt trông như thế nào."
+      },
+      "handover": {
+        "title": "Chọn nơi nhận khách tốt",
+        "body": "Kết nối Slack, Telegram hoặc webhook, rồi thêm một quy tắc."
+      }
+    }
   }
 }

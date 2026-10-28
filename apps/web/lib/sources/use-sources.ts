@@ -2,6 +2,8 @@
 
 import {
   hmacSecretResponseSchema,
+  sampleLeadResponseSchema,
+  type SampleLeadResponse,
   sourceSchema,
   sourceWithKeySchema,
   type CreateSourceRequest,
@@ -71,5 +73,18 @@ export function useSourceActions() {
     mutationFn: (id: string) => client.request(`/sources/${id}/hmac-secret`, { method: 'DELETE' }),
     onSettled: refresh,
   });
-  return { create, update, remove, rotateKey, enableSigning, disableSigning };
+  // A made-up lead through this source: it shows up in Leads (and Overview) as a real one would.
+  const sendSample = useMutation<SampleLeadResponse, unknown, string>({
+    mutationFn: (id) =>
+      client.request(`/sources/${id}/sample-lead`, {
+        method: 'POST',
+        schema: sampleLeadResponseSchema,
+      }),
+    onSettled: () => {
+      void refresh();
+      void queryClient.invalidateQueries({ queryKey: ['leads'] });
+      void queryClient.invalidateQueries({ queryKey: ['overview'] });
+    },
+  });
+  return { create, update, remove, rotateKey, enableSigning, disableSigning, sendSample };
 }

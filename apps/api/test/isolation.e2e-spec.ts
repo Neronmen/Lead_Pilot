@@ -245,6 +245,7 @@ describe('Tenant isolation matrix (e2e)', () => {
       'DELETE /sources/:id': (w) => w.source.id,
       'POST /sources/:id/api-key': (w) => w.source.id,
       'POST /sources/:id/hmac-secret': (w) => w.source.id,
+      'POST /sources/:id/sample-lead': (w) => w.source.id,
       'DELETE /sources/:id/hmac-secret': (w) => w.source.id,
       'PATCH /routing/rules/:id': (w) => w.rule.id,
       'DELETE /routing/rules/:id': (w) => w.rule.id,

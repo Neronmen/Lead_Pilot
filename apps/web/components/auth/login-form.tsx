@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuthClient } from '@/lib/auth/auth-provider';
+import { DEMO_EMAIL, DEMO_LOGIN, DEMO_PASSWORD } from '@/lib/demo';
 import { safeNext } from '@/lib/auth/safe-next';
 import { finishSignIn, whileSigningIn } from '@/lib/auth/sign-in-flow';
 import { formErrors, issuesToFormErrors, type FormErrors } from '@/lib/i18n/errors';
@@ -59,12 +60,17 @@ export function LoginForm({ next, signupHref }: { next: string | null; signupHre
       setErrors(issuesToFormErrors(toValidationIssues(parsed.error.issues)));
       return;
     }
+    await signIn(parsed.data);
+  }
+
+  async function signIn(credentials: { email: string; password: string }) {
+    if (sending.current) return;
     sending.current = true;
     setBusy(true);
     setErrors(null);
     try {
       await whileSigningIn(async () => {
-        await client.login(parsed.data);
+        await client.login(credentials);
         await finishSignIn(client, queryClient);
       });
       router.replace(safeNext(next));
@@ -126,6 +132,21 @@ export function LoginForm({ next, signupHref }: { next: string | null; signupHre
           t('submit')
         )}
       </Button>
+
+      {DEMO_LOGIN ? (
+        <div className="flex flex-col gap-1.5">
+          <Button
+            type="button"
+            size="lg"
+            variant="outline"
+            disabled={busy}
+            onClick={() => void signIn({ email: DEMO_EMAIL, password: DEMO_PASSWORD })}
+          >
+            {t('demo')}
+          </Button>
+          <p className="text-center text-xs text-muted-foreground">{t('demoHint')}</p>
+        </div>
+      ) : null}
 
       <p className="text-center text-sm text-muted-foreground">
         {t('newHere')}{' '}

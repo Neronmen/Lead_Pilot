@@ -22,6 +22,8 @@ describe('validateEnv', () => {
       QUEUE_WORKERS: 'on',
       ENRICHMENT_PROVIDER: 'mock',
       ACTIONS_MODE: 'mock',
+      TRUST_PROXY: 0,
+      API_DOCS: 'on',
       LLM_PROVIDER: 'auto',
       LLM_MAX_REQUESTS_PER_MINUTE: 0,
       AI_DEFAULT_MONTHLY_LIMIT_USD: 5,

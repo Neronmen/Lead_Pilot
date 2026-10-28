@@ -98,10 +98,11 @@ function SourceRow({
 }) {
   const t = useTranslations('sources');
   const failure = useFailureNotice();
-  const { update, remove } = useSourceActions();
+  const { update, remove, sendSample } = useSourceActions();
+  const [sampleSent, setSampleSent] = useState(false);
   const [mode, setMode] = useState<'view' | 'rename' | 'delete'>('view');
   const [name, setName] = useState(source.name);
-  const busy = update.isPending || remove.isPending;
+  const busy = update.isPending || remove.isPending || sendSample.isPending;
   const status = sourceStatus(source);
 
   async function run(action: () => Promise<unknown>) {
@@ -148,6 +149,21 @@ function SourceRow({
           <p className="text-xs text-muted-foreground">{t(`kind.${source.type}`)}</p>
         </div>
         <div className="flex flex-wrap gap-1.5">
+          {source.enabled ? (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={busy}
+              onClick={() =>
+                void run(async () => {
+                  await sendSample.mutateAsync(source.id);
+                  setSampleSent(true);
+                })
+              }
+            >
+              {t('sample.button')}
+            </Button>
+          ) : null}
           <Button size="sm" variant="outline" disabled={busy} onClick={() => setMode('rename')}>
             {t('actions.rename')}
           </Button>
@@ -188,6 +204,14 @@ function SourceRow({
         </span>
       </p>
 
+      {sampleSent ? (
+        <p role="status" className="text-[13px] text-accent-text">
+          {t('sample.sent')}{' '}
+          <Link href="/leads" className="underline underline-offset-2">
+            {t('sample.open')}
+          </Link>
+        </p>
+      ) : null}
       <SourceStats source={source} />
       <Readiness source={source} />
 

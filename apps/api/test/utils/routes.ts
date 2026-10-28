@@ -91,6 +91,7 @@ export const WORKSPACE_BY_ID = new Set([
   'DELETE /sources/:id',
   'POST /sources/:id/api-key',
   'POST /sources/:id/hmac-secret',
+  'POST /sources/:id/sample-lead',
   'DELETE /sources/:id/hmac-secret',
   'PATCH /routing/rules/:id',
   'DELETE /routing/rules/:id',

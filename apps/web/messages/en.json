@@ -76,7 +76,9 @@
       "submit": "Sign in",
       "submitting": "Signing in",
       "newHere": "New to LeadPilot?",
-      "create": "Create a workspace"
+      "create": "Create a workspace",
+      "demo": "Explore the demo workspace",
+      "demoHint": "Signs in to a public demo account with made-up leads."
     },
     "aside": {
       "eyebrow": "LIVE PIPELINE",
@@ -495,7 +497,12 @@
       }
     },
     "keysHint": "Need the address or key of a source?",
-    "keysLink": "Open Advanced / Developer"
+    "keysLink": "Open Advanced / Developer",
+    "sample": {
+      "button": "Send a sample lead",
+      "sent": "A sample lead was sent. It is being rated now.",
+      "open": "See it in Leads"
+    }
   },
   "settingsAdvanced": {
     "title": "Advanced / Developer",
@@ -938,5 +945,59 @@
       "DEAD": "Failed"
     },
     "retryFailed": "Couldn’t retry. Try again in a moment."
+  },
+  "overview": {
+    "title": "Overview",
+    "sub": "What LeadPilot did for you in the last 30 days.",
+    "loading": "Loading the numbers",
+    "loadTitle": "Couldn’t load the overview",
+    "loadBody": "The server didn’t respond. Nothing has been lost. Try again in a moment.",
+    "retry": "Try again",
+    "empty": {
+      "title": "No leads yet",
+      "body": "Connect a source and the numbers appear here as soon as the first lead arrives.",
+      "cta": "Connect a source"
+    },
+    "kpiLabel": "Key numbers",
+    "kpi": {
+      "leads": "Leads received",
+      "leadsHelp": "{rated} rated so far",
+      "junk": "Junk filtered out",
+      "junkHelp": "Spam and fake contacts your team never has to look at",
+      "time": "Time to first rating",
+      "timeHelp": "The typical time from a lead arriving to its rating"
+    },
+    "tiers": "Leads by rating",
+    "openLeads": "Open the leads list",
+    "info": "How much leads told us",
+    "infoHelp": "Leads that say little are rated with less confidence and never rated Hot.",
+    "time": {
+      "seconds": "{n, plural, one {# second} other {# seconds}}",
+      "minutes": "{n, plural, one {# minute} other {# minutes}}",
+      "hours": "{n, plural, one {# hour} other {# hours}}",
+      "days": "{n, plural, one {# day} other {# days}}"
+    }
+  },
+  "getStarted": {
+    "title": "Get started",
+    "progress": "{done} of {total} done",
+    "done": "Done",
+    "todo": "Not done yet",
+    "go": "Set up",
+    "change": "Change",
+    "steps": {
+      "source": {
+        "title": "Connect a source",
+        "body": "Where your leads come from: a form, Zapier, Make or n8n."
+      },
+      "ideal": {
+        "title": "Describe your ideal customer",
+        "body": "So the AI knows what a good lead looks like."
+      },
+      "handover": {
+        "title": "Choose where good leads go",
+        "body": "Connect Slack, Telegram or a webhook, then add a rule."
+      }
+    }
   }
 }

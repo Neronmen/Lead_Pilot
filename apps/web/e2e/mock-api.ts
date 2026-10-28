@@ -99,6 +99,15 @@ export class MockApi {
   sources: MockSource[] = [];
   /** Leads, newest first. */
   leads: MockLead[] = [];
+  /** What `GET /overview` answers. */
+  overview = {
+    leads: 120,
+    rated: 118,
+    junkPercent: 18.6,
+    medianSecondsToFirstRating: 12,
+    byTier: { HOT: 41, WARM: 33, COLD: 22, JUNK: 22 },
+    byInfoLevel: { limited: 20, enough: 60, rich: 38 },
+  };
   /** Routing rules in order, changed by the Routing calls. */
   rules: MockRule[] = [];
   /** Connected tools; `failTest` makes "Send test message" fail with that code. */
@@ -528,6 +537,10 @@ export class MockApi {
           ],
         });
       }
+    }
+    if (path === '/overview' && method === 'GET') return json(200, this.overview);
+    if (/^\/sources\/[0-9a-f-]{36}\/sample-lead$/.test(path) && method === 'POST') {
+      return json(201, { leadId: crypto.randomUUID() });
     }
     if (path === '/routing/rules' && method === 'GET') return json(200, this.rules);
     if (path === '/routing/rules' && method === 'POST') {

@@ -17,5 +17,6 @@ import type { WindowStore } from './rate-limiter';
       useFactory: (store: WindowStore) => new IngestLimits(store),
     },
   ],
+  exports: [IngestService],
 })
 export class IngestModule {}

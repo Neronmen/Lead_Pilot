@@ -192,6 +192,18 @@ describe('Routing and actions (e2e)', () => {
     expect((await prisma.lead.findUniqueOrThrow({ where: { id: lead.id } })).tags).toEqual(['hot']);
   });
 
+  it('"Send a sample lead" goes through the real ingest path, and only when the source is on', async () => {
+    const w = await setup();
+    const res = await http().post(`/sources/${w.sourceId}/sample-lead`).set(w.auth).expect(201);
+    const lead = await prisma.lead.findUniqueOrThrow({ where: { id: res.body.leadId } });
+    expect(lead).toMatchObject({ workspaceId: w.workspaceId, sourceId: w.sourceId });
+    expect(
+      await prisma.ingestAttempt.count({ where: { sourceId: w.sourceId, outcome: 'CREATED' } }),
+    ).toBe(1);
+    await http().patch(`/sources/${w.sourceId}`).set(w.auth).send({ enabled: false }).expect(200);
+    await http().post(`/sources/${w.sourceId}/sample-lead`).set(w.auth).expect(409);
+  });
+
   it('waits for a person: a lead in the review queue is not routed until it is approved', async () => {
     const w = await setup();
     const lead = await makeLead(w, { status: 'NEEDS_REVIEW', reviewReason: 'low_confidence' });
