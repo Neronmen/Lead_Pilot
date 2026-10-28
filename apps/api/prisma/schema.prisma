@@ -298,6 +298,8 @@ model Source {
   /// AES-256-GCM encrypted.
   hmacSecretEnc String?
   enabled       Boolean    @default(true)
+  /// Whether the public web form of this source (`/f/<id>`) accepts leads without an API key.
+  formEnabled   Boolean    @default(false)
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 

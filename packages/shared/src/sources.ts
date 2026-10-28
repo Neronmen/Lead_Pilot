@@ -16,10 +16,13 @@ export const updateSourceRequestSchema = z
   .strictObject({
     name: displayTextSchema(100).optional(),
     enabled: z.boolean().optional(),
+    formEnabled: z.boolean().optional(),
   })
-  .refine((body) => body.name !== undefined || body.enabled !== undefined, {
-    message: 'send a name or enabled',
-  });
+  .refine(
+    (body) =>
+      body.name !== undefined || body.enabled !== undefined || body.formEnabled !== undefined,
+    { message: 'send a name, enabled or formEnabled' },
+  );
 
 /** The eight fields that make a lead easy to rate. */
 export const USEFUL_FIELDS = [
@@ -95,6 +98,8 @@ export const sourceSchema = z.object({
   apiKeyPrefix: z.string(),
   /** Whether requests must carry an HMAC signature. The secret is never shown again. */
   hmacEnabled: z.boolean(),
+  /** Whether the public web form of this source is switched on. */
+  formEnabled: z.boolean(),
   createdAt: timestampSchema,
   leadsLast30Days: z.number().int().nonnegative(),
   lastLeadAt: timestampSchema.nullable(),
@@ -105,6 +110,46 @@ export const sourceSchema = z.object({
 export const sourceWithKeySchema = z.object({ source: sourceSchema, apiKey: z.string() });
 
 /** `POST /sources/:id/hmac-secret`: the new signing secret, shown once. */
+/** Rows of a spreadsheet, sent in batches: a column name is the key, a cell is the value. */
+export const IMPORT_BATCH_ROWS = 200;
+export const importRowsRequestSchema = z.strictObject({
+  rows: z
+    .array(z.record(z.string().trim().min(1).max(100), z.string().max(2000)))
+    .min(1)
+    .max(IMPORT_BATCH_ROWS),
+});
+export type ImportRowsRequest = z.infer<typeof importRowsRequestSchema>;
+
+/** What happened to one batch of rows: new leads, merged into known ones, refused (and why). */
+export const importResultSchema = z.object({
+  created: z.number().int().nonnegative(),
+  merged: z.number().int().nonnegative(),
+  rejected: z.number().int().nonnegative(),
+  reasons: z.array(z.object({ reason: z.string(), count: z.number().int().positive() })),
+});
+export type ImportResult = z.infer<typeof importResultSchema>;
+
+/** `GET /v1/forms/:sourceId` (public): what the web form shows above the fields. */
+export const publicFormInfoSchema = z.object({ workspaceName: z.string() });
+export type PublicFormInfo = z.infer<typeof publicFormInfoSchema>;
+
+/**
+ * `POST /v1/forms/:sourceId` (public): what a visitor types. `website` is a trap for bots: it is
+ * hidden from people, so a filled one means a script, and the lead is quietly dropped.
+ */
+export const publicFormSubmissionSchema = z.strictObject({
+  name: z.string().max(200).optional(),
+  email: z.string().max(254).optional(),
+  phone: z.string().max(60).optional(),
+  company: z.string().max(200).optional(),
+  jobTitle: z.string().max(200).optional(),
+  message: z.string().max(2000).optional(),
+  budget: z.string().max(200).optional(),
+  timeline: z.string().max(200).optional(),
+  website: z.string().max(200).optional(),
+});
+export type PublicFormSubmission = z.infer<typeof publicFormSubmissionSchema>;
+
 /** `POST /sources/:id/sample-lead`: the lead that was made. */
 export const sampleLeadResponseSchema = z.object({ leadId: idSchema });
 export type SampleLeadResponse = z.infer<typeof sampleLeadResponseSchema>;

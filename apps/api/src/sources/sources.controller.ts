@@ -15,6 +15,10 @@ import {
   type CreateSourceRequest,
   createSourceRequestSchema,
   type HmacSecretResponse,
+  type ImportResult,
+  importResultSchema,
+  type ImportRowsRequest,
+  importRowsRequestSchema,
   type SampleLeadResponse,
   sampleLeadResponseSchema,
   hmacSecretResponseSchema,
@@ -97,6 +101,22 @@ export class SourcesController {
   ): Promise<SampleLeadResponse> {
     const { body } = await this.ingest.submitSample(auth.workspaceId, id);
     return { leadId: body.leadId };
+  }
+
+  @Post(':id/import')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Import a batch of spreadsheet rows (up to 200)',
+    description:
+      'Each row is cleaned, de-duplicated and rated like a real lead. Bad rows are counted, not fatal.',
+  })
+  @ApiZodResponse(HttpStatus.OK, importResultSchema, 'What happened to the batch')
+  importRows(
+    @CurrentAuth() auth: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @ZodBody(importRowsRequestSchema) body: ImportRowsRequest,
+  ): Promise<ImportResult> {
+    return this.ingest.importRows(auth.workspaceId, id, body.rows);
   }
 
   @Post(':id/api-key')

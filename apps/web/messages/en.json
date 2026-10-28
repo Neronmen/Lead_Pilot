@@ -56,7 +56,8 @@
       "advanced": "Advanced / Developer",
       "ideal": "Ideal customer",
       "routing": "Routing rules",
-      "integrations": "Integrations"
+      "integrations": "Integrations",
+      "history": "Change history"
     }
   },
   "noAccess": {
@@ -553,6 +554,40 @@
       "button": "Send a sample lead",
       "sent": "A sample lead was sent. It is being rated now.",
       "open": "See it in Leads"
+    },
+    "import": {
+      "button": "Import a spreadsheet",
+      "title": "Import a spreadsheet",
+      "help": "Choose a CSV file (up to 5,000 rows). Each row is cleaned, checked for duplicates and rated like a lead from a form. The first line must name the columns, for example Name, Email, Company, Message.",
+      "choose": "CSV file",
+      "close": "Close",
+      "found": "Found {rows} rows in {columns} columns.",
+      "columns": "Columns: {list}",
+      "noContact": "No column looks like an email or a phone number, so no row can become a lead. Rename the column (for example “Email”) and choose the file again.",
+      "start": "Import {rows} rows",
+      "working": "Importing {done} of {total}",
+      "done": "{created} new leads, {merged} added to leads you already had, {rejected} skipped.",
+      "why": "Skipped because: {list}",
+      "open": "See them in Leads",
+      "problem": {
+        "big": "This file is larger than {mb} MB. Split it and import the parts.",
+        "rows": "This file has more than {rows} rows. Split it and import the parts.",
+        "empty": "No rows were found. Check that the first line names the columns.",
+        "read": "This file could not be read. Save it as CSV and try again."
+      }
+    },
+    "webForm": {
+      "title": "Website form",
+      "on": "On: anyone with the link can send you a lead.",
+      "off": "Off: switch it on to get a form you can put on your website.",
+      "turnOn": "Turn on",
+      "turnOff": "Turn off",
+      "link": "The link to the form:",
+      "linkLabel": "Form link",
+      "embed": "Or paste this on your website to show the form inside a page:",
+      "embedLabel": "Embed code",
+      "frameTitle": "Contact form",
+      "safe": "The form has no key to hide. It is limited per visitor, ignores scripts that fill hidden fields, and only sends the details the visitor typed."
     }
   },
   "settingsAdvanced": {
@@ -1100,5 +1135,100 @@
       "body": "Create a workspace, connect a source and send a sample lead in a few minutes."
     },
     "footer": "LeadPilot is a portfolio project. The demo uses made-up leads."
+  },
+  "publicForm": {
+    "metaTitle": "Contact form",
+    "loading": "Loading the form",
+    "title": "Contact {company}",
+    "sub": "Leave your details and the team will get back to you.",
+    "name": "Your name",
+    "email": "Email",
+    "phone": "Phone",
+    "company": "Company",
+    "message": "How can we help?",
+    "trap": "Leave this empty",
+    "contactHint": "Please give an email or a phone number so we can reach you.",
+    "submit": "Send",
+    "sending": "Sending",
+    "problem": {
+      "invalid": "Please check your email or phone number: we need at least one that works.",
+      "slow": "Too many requests from your connection. Please try again in a minute.",
+      "failed": "We couldn’t send your details. Please try again in a moment."
+    },
+    "thanks": {
+      "title": "Thank you",
+      "body": "Your details reached {company}. They will be in touch."
+    },
+    "unavailable": {
+      "title": "This form isn’t available",
+      "body": "The link may be wrong, or the form has been switched off."
+    },
+    "error": {
+      "title": "We couldn’t load the form",
+      "body": "Please try again in a moment."
+    }
+  },
+  "settingsHistory": {
+    "title": "Change history",
+    "sub": "Who changed what in your workspace, newest first."
+  },
+  "history": {
+    "loading": "Loading the history",
+    "loadTitle": "Couldn’t load the history",
+    "loadBody": "The server didn’t respond. Nothing has been lost. Try again in a moment.",
+    "retry": "Try again",
+    "empty": {
+      "title": "No changes yet",
+      "body": "Changes to sources, rules, integrations and people will be listed here."
+    },
+    "more": "Show more",
+    "someone": "Someone who has left",
+    "system": "LeadPilot",
+    "details": "See before and after",
+    "before": "Before",
+    "after": "After",
+    "other": "{actor} changed something in {area}.",
+    "filter": {
+      "area": "Area",
+      "anyArea": "All areas",
+      "person": "Person",
+      "anyone": "Everyone",
+      "time": "When",
+      "anyTime": "Any time",
+      "days7": "Last 7 days",
+      "days30": "Last 30 days",
+      "days90": "Last 90 days"
+    },
+    "area": {
+      "rules": "Routing rules",
+      "sources": "Lead sources",
+      "ideal_customer": "Ideal customer",
+      "integrations": "Integrations",
+      "team": "Team",
+      "general": "General"
+    },
+    "action": {
+      "invite_created": "{actor} invited {name}.",
+      "invite_reissued": "{actor} made a new invite link for {name}.",
+      "invite_resent": "{actor} sent the invite to {name} again.",
+      "invite_cancelled": "{actor} cancelled the invite for {name}.",
+      "member_joined": "{name} joined the workspace.",
+      "member_role_changed": "{actor} changed the role of {name}.",
+      "member_removed": "{actor} removed {name} from the workspace.",
+      "source_created": "{actor} added the source “{name}”.",
+      "source_updated": "{actor} changed the source “{name}”.",
+      "source_deleted": "{actor} deleted the source “{name}”.",
+      "source_key_rotated": "{actor} made a new API key for “{name}”.",
+      "source_hmac_enabled": "{actor} turned on request signing for “{name}”.",
+      "source_hmac_disabled": "{actor} turned off request signing for “{name}”.",
+      "ideal_customer_updated": "{actor} changed the ideal customer.",
+      "rule_created": "{actor} added the rule “{name}”.",
+      "rule_updated": "{actor} changed the rule “{name}”.",
+      "rule_deleted": "{actor} deleted the rule “{name}”.",
+      "rule_reordered": "{actor} changed the order of the rules.",
+      "integration_connected": "{actor} connected “{name}”.",
+      "integration_updated": "{actor} changed the integration “{name}”.",
+      "integration_deleted": "{actor} disconnected “{name}”."
+    }
   }
 }

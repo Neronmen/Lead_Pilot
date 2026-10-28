@@ -14,8 +14,10 @@ import { useSourceActions, useSources } from '@/lib/sources/use-sources';
 import { cn } from '@/lib/utils';
 import { AddSourceCard } from './add-source-card';
 import { DuplicatesHelp } from './duplicates-help';
+import { ImportCard } from './import-card';
 import { Readiness } from './readiness';
 import { SourceStats } from './source-stats';
+import { WebFormCard } from './web-form-card';
 import { SourcesNotice, useFailureNotice, type Notice } from './sources-notice';
 
 /** Settings > Lead sources (Owner and Admin only: the Settings frame keeps everyone else out). */
@@ -100,6 +102,7 @@ function SourceRow({
   const failure = useFailureNotice();
   const { update, remove, sendSample } = useSourceActions();
   const [sampleSent, setSampleSent] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [mode, setMode] = useState<'view' | 'rename' | 'delete'>('view');
   const [name, setName] = useState(source.name);
   const busy = update.isPending || remove.isPending || sendSample.isPending;
@@ -164,6 +167,11 @@ function SourceRow({
               {t('sample.button')}
             </Button>
           ) : null}
+          {source.enabled ? (
+            <Button size="sm" variant="outline" disabled={busy} onClick={() => setImporting(true)}>
+              {t('import.button')}
+            </Button>
+          ) : null}
           <Button size="sm" variant="outline" disabled={busy} onClick={() => setMode('rename')}>
             {t('actions.rename')}
           </Button>
@@ -212,6 +220,10 @@ function SourceRow({
           </Link>
         </p>
       ) : null}
+      {importing ? (
+        <ImportCard sourceId={source.id} onClose={() => setImporting(false)} onNotice={onNotice} />
+      ) : null}
+      <WebFormCard source={source} onNotice={onNotice} />
       <SourceStats source={source} />
       <Readiness source={source} />
 

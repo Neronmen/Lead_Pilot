@@ -83,6 +83,8 @@ describe('Tenant isolation matrix (e2e)', () => {
       });
     if (route === 'PATCH /sources/:id') return req.send({ name: 'Renamed by someone else' });
     if (route === 'PATCH /routing/rules/:id') return req.send({ enabled: false });
+    if (route === 'POST /sources/:id/import')
+      return req.send({ rows: [{ email: 'x@acme-test.com' }] });
     if (route === 'PATCH /integrations/:id') return req.send({ enabled: false });
     if (route === 'POST /routing/rules')
       return req.send({
@@ -246,6 +248,7 @@ describe('Tenant isolation matrix (e2e)', () => {
       'POST /sources/:id/api-key': (w) => w.source.id,
       'POST /sources/:id/hmac-secret': (w) => w.source.id,
       'POST /sources/:id/sample-lead': (w) => w.source.id,
+      'POST /sources/:id/import': (w) => w.source.id,
       'DELETE /sources/:id/hmac-secret': (w) => w.source.id,
       'PATCH /routing/rules/:id': (w) => w.rule.id,
       'DELETE /routing/rules/:id': (w) => w.rule.id,

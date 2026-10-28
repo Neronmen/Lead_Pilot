@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { WINDOW_STORE } from '../redis/redis.tokens';
 import { IngestAuthService } from './ingest-auth.service';
+import { FormsController } from './forms.controller';
 import { IngestController } from './ingest.controller';
 import { IngestLimits, IngestService } from './ingest.service';
 import type { WindowStore } from './rate-limiter';
 
 @Module({
-  controllers: [IngestController],
+  controllers: [IngestController, FormsController],
   providers: [
     IngestService,
     IngestAuthService,

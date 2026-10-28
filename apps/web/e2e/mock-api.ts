@@ -101,6 +101,18 @@ export class MockApi {
   leads: MockLead[] = [];
   /** False shows the "confirm your email" banner. */
   emailVerified = true;
+  /** Change history entries, newest first (the mock serves them two at a time). */
+  history: {
+    id: string;
+    createdAt: string;
+    area: string;
+    action: string;
+    entityType: string;
+    entityId: string | null;
+    actor: { id: string; name: string | null; email: string | null } | null;
+    before: Record<string, string | number | boolean | null> | null;
+    after: Record<string, string | number | boolean | null> | null;
+  }[] = [];
   /** What `GET /overview` answers. */
   overview = {
     leads: 120,
@@ -154,6 +166,7 @@ export class MockApi {
         enabled: true,
         apiKeyPrefix: 'a1b2c3d4',
         hmacEnabled: false,
+        formEnabled: false,
         createdAt: days(60),
         leadsLast30Days: 487,
         lastLeadAt: days(0),
@@ -182,6 +195,7 @@ export class MockApi {
         enabled: true,
         apiKeyPrefix: 'e5f6a7b8',
         hmacEnabled: true,
+        formEnabled: false,
         createdAt: days(90),
         leadsLast30Days: 2,
         lastLeadAt: days(20),
@@ -553,6 +567,36 @@ export class MockApi {
     if (path === '/auth/resend-verification' && method === 'POST') {
       return route.fulfill({ status: 204, headers: cors });
     }
+    if (/^\/sources\/[0-9a-f-]{36}\/import$/.test(path) && method === 'POST') {
+      const rows = (sent as { rows: Record<string, string>[] }).rows;
+      const bad = rows.filter((r) => !Object.keys(r).some((k) => /mail|phone/i.test(k))).length;
+      return json(200, {
+        created: rows.length - bad,
+        merged: 0,
+        rejected: bad,
+        reasons: bad ? [{ reason: 'contact_required', count: bad }] : [],
+      });
+    }
+    const formMatch = /^\/v1\/forms\/([0-9a-f-]{36})$/.exec(path);
+    if (formMatch) {
+      if (formMatch[1]!.endsWith('dead')) {
+        return json(404, { error: { code: 'NOT_FOUND', message: 'Form not found' } });
+      }
+      if (method === 'GET') return json(200, { workspaceName: 'Northstar Growth' });
+      return route.fulfill({ status: 204, headers: cors });
+    }
+    if (path === '/history' && method === 'GET') {
+      const params = new URL(request.url()).searchParams;
+      const area = params.get('area');
+      const before = params.get('before');
+      const all = this.history.filter((entry) => !area || entry.area === area);
+      const start = before ? Number(before) : 0;
+      const page = all.slice(start, start + 2);
+      return json(200, {
+        entries: page,
+        next: start + 2 < all.length ? String(start + 2) : null,
+      });
+    }
     if (path === '/overview' && method === 'GET') return json(200, this.overview);
     if (/^\/sources\/[0-9a-f-]{36}\/sample-lead$/.test(path) && method === 'POST') {
       return json(201, { leadId: crypto.randomUUID() });
@@ -690,6 +734,7 @@ export class MockApi {
         enabled: true,
         apiKeyPrefix: '0a1b2c3d',
         hmacEnabled: false,
+        formEnabled: false,
         createdAt: new Date().toISOString(),
         leadsLast30Days: 0,
         lastLeadAt: null,
@@ -802,6 +847,7 @@ export interface MockSource {
   enabled: boolean;
   apiKeyPrefix: string;
   hmacEnabled: boolean;
+  formEnabled: boolean;
   createdAt: string;
   leadsLast30Days: number;
   lastLeadAt: string | null;

@@ -204,6 +204,37 @@ describe('Routing and actions (e2e)', () => {
     await http().post(`/sources/${w.sourceId}/sample-lead`).set(w.auth).expect(409);
   });
 
+  it('imports spreadsheet rows: new, merged, refused, and keeps going after a bad row', async () => {
+    const w = await setup();
+    const rows = [
+      { Name: 'Ann One', Email: 'ann.one@acme-test.com', Company: 'Acme' },
+      { name: 'Ann Again', email: 'ann.one@acme-test.com', message: 'second row, same person' },
+      { name: 'Bob Two', email: 'bob.two@acme-test.com' },
+      { name: 'Nobody' },
+      { name: 'Throwaway', email: 'x@mailinator.com' },
+    ];
+    const res = await http()
+      .post(`/sources/${w.sourceId}/import`)
+      .set(w.auth)
+      .send({ rows })
+      .expect(200);
+    expect(res.body).toMatchObject({ created: 2, merged: 1, rejected: 2 });
+    expect(res.body.reasons.reduce((n: number, r: { count: number }) => n + r.count, 0)).toBe(2);
+    expect(
+      await prisma.lead.count({ where: { workspaceId: w.workspaceId, sourceId: w.sourceId } }),
+    ).toBe(2);
+    expect(
+      await prisma.ingestAttempt.count({ where: { sourceId: w.sourceId, outcome: 'REJECTED' } }),
+    ).toBe(2);
+    // Too many rows in one batch, or nothing to import, is refused up front.
+    await http().post(`/sources/${w.sourceId}/import`).set(w.auth).send({ rows: [] }).expect(400);
+    await http()
+      .post(`/sources/${w.sourceId}/import`)
+      .set(w.auth)
+      .send({ rows: Array.from({ length: 201 }, () => ({ email: 'a@b.co' })) })
+      .expect(400);
+  });
+
   it('waits for a person: a lead in the review queue is not routed until it is approved', async () => {
     const w = await setup();
     const lead = await makeLead(w, { status: 'NEEDS_REVIEW', reviewReason: 'low_confidence' });

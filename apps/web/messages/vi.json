@@ -56,7 +56,8 @@
       "advanced": "Nâng cao / Nhà phát triển",
       "ideal": "Khách hàng lý tưởng",
       "routing": "Quy tắc phân bổ",
-      "integrations": "Tích hợp"
+      "integrations": "Tích hợp",
+      "history": "Lịch sử thay đổi"
     }
   },
   "noAccess": {
@@ -553,6 +554,40 @@
       "button": "Gửi khách tiềm năng mẫu",
       "sent": "Đã gửi một khách tiềm năng mẫu. Hệ thống đang xếp hạng.",
       "open": "Xem trong danh sách khách tiềm năng"
+    },
+    "import": {
+      "button": "Nhập bảng tính",
+      "title": "Nhập bảng tính",
+      "help": "Chọn một tệp CSV (tối đa 5.000 dòng). Mỗi dòng được làm sạch, kiểm tra trùng lặp và xếp hạng như khách tiềm năng từ biểu mẫu. Dòng đầu phải ghi tên các cột, ví dụ Name, Email, Company, Message.",
+      "choose": "Tệp CSV",
+      "close": "Đóng",
+      "found": "Tìm thấy {rows} dòng trong {columns} cột.",
+      "columns": "Các cột: {list}",
+      "noContact": "Không có cột nào giống email hoặc số điện thoại, nên không dòng nào thành khách tiềm năng được. Hãy đổi tên cột (ví dụ “Email”) rồi chọn lại tệp.",
+      "start": "Nhập {rows} dòng",
+      "working": "Đang nhập {done} trên {total}",
+      "done": "{created} khách tiềm năng mới, {merged} gộp vào khách đã có, {rejected} bị bỏ qua.",
+      "why": "Bỏ qua vì: {list}",
+      "open": "Xem trong danh sách khách tiềm năng",
+      "problem": {
+        "big": "Tệp này lớn hơn {mb} MB. Hãy tách nhỏ rồi nhập từng phần.",
+        "rows": "Tệp này có hơn {rows} dòng. Hãy tách nhỏ rồi nhập từng phần.",
+        "empty": "Không tìm thấy dòng nào. Hãy kiểm tra dòng đầu có ghi tên các cột.",
+        "read": "Không đọc được tệp này. Hãy lưu thành CSV rồi thử lại."
+      }
+    },
+    "webForm": {
+      "title": "Biểu mẫu trên website",
+      "on": "Đang bật: bất kỳ ai có đường dẫn đều có thể gửi khách tiềm năng cho bạn.",
+      "off": "Đang tắt: hãy bật để có một biểu mẫu đặt lên website của bạn.",
+      "turnOn": "Bật",
+      "turnOff": "Tắt",
+      "link": "Đường dẫn tới biểu mẫu:",
+      "linkLabel": "Đường dẫn biểu mẫu",
+      "embed": "Hoặc dán đoạn này vào website để hiển thị biểu mẫu ngay trong trang:",
+      "embedLabel": "Mã nhúng",
+      "frameTitle": "Biểu mẫu liên hệ",
+      "safe": "Biểu mẫu không có khóa nào phải giấu. Mỗi người truy cập bị giới hạn số lần gửi, bỏ qua các đoạn mã tự điền ô ẩn, và chỉ gửi những gì người đó đã nhập."
     }
   },
   "settingsAdvanced": {
@@ -1100,5 +1135,100 @@
       "body": "Tạo không gian làm việc, kết nối một nguồn và gửi khách tiềm năng mẫu chỉ trong vài phút."
     },
     "footer": "LeadPilot là dự án portfolio. Bản demo dùng khách tiềm năng giả."
+  },
+  "publicForm": {
+    "metaTitle": "Biểu mẫu liên hệ",
+    "loading": "Đang tải biểu mẫu",
+    "title": "Liên hệ {company}",
+    "sub": "Hãy để lại thông tin, đội ngũ sẽ liên hệ lại với bạn.",
+    "name": "Tên của bạn",
+    "email": "Email",
+    "phone": "Số điện thoại",
+    "company": "Công ty",
+    "message": "Chúng tôi có thể giúp gì?",
+    "trap": "Để trống ô này",
+    "contactHint": "Vui lòng cho biết email hoặc số điện thoại để chúng tôi liên hệ.",
+    "submit": "Gửi",
+    "sending": "Đang gửi",
+    "problem": {
+      "invalid": "Hãy kiểm tra email hoặc số điện thoại: chúng tôi cần ít nhất một thông tin liên hệ dùng được.",
+      "slow": "Có quá nhiều yêu cầu từ kết nối của bạn. Vui lòng thử lại sau một phút.",
+      "failed": "Chúng tôi chưa gửi được thông tin của bạn. Vui lòng thử lại sau giây lát."
+    },
+    "thanks": {
+      "title": "Cảm ơn bạn",
+      "body": "Thông tin của bạn đã đến {company}. Họ sẽ liên hệ lại."
+    },
+    "unavailable": {
+      "title": "Biểu mẫu này không dùng được",
+      "body": "Đường dẫn có thể sai, hoặc biểu mẫu đã bị tắt."
+    },
+    "error": {
+      "title": "Chúng tôi chưa tải được biểu mẫu",
+      "body": "Vui lòng thử lại sau giây lát."
+    }
+  },
+  "settingsHistory": {
+    "title": "Lịch sử thay đổi",
+    "sub": "Ai đã thay đổi gì trong không gian làm việc của bạn, mới nhất trước."
+  },
+  "history": {
+    "loading": "Đang tải lịch sử",
+    "loadTitle": "Không tải được lịch sử",
+    "loadBody": "Máy chủ không phản hồi. Không có gì bị mất. Hãy thử lại sau giây lát.",
+    "retry": "Thử lại",
+    "empty": {
+      "title": "Chưa có thay đổi nào",
+      "body": "Các thay đổi về nguồn, quy tắc, tích hợp và con người sẽ được liệt kê ở đây."
+    },
+    "more": "Xem thêm",
+    "someone": "Một người đã rời đi",
+    "system": "LeadPilot",
+    "details": "Xem trước và sau",
+    "before": "Trước",
+    "after": "Sau",
+    "other": "{actor} đã thay đổi một mục trong {area}.",
+    "filter": {
+      "area": "Khu vực",
+      "anyArea": "Mọi khu vực",
+      "person": "Người",
+      "anyone": "Mọi người",
+      "time": "Thời gian",
+      "anyTime": "Mọi lúc",
+      "days7": "7 ngày qua",
+      "days30": "30 ngày qua",
+      "days90": "90 ngày qua"
+    },
+    "area": {
+      "rules": "Quy tắc phân bổ",
+      "sources": "Nguồn khách tiềm năng",
+      "ideal_customer": "Khách hàng lý tưởng",
+      "integrations": "Tích hợp",
+      "team": "Đội ngũ",
+      "general": "Chung"
+    },
+    "action": {
+      "invite_created": "{actor} đã mời {name}.",
+      "invite_reissued": "{actor} đã tạo đường dẫn mời mới cho {name}.",
+      "invite_resent": "{actor} đã gửi lại lời mời cho {name}.",
+      "invite_cancelled": "{actor} đã hủy lời mời dành cho {name}.",
+      "member_joined": "{name} đã tham gia không gian làm việc.",
+      "member_role_changed": "{actor} đã đổi vai trò của {name}.",
+      "member_removed": "{actor} đã xóa {name} khỏi không gian làm việc.",
+      "source_created": "{actor} đã thêm nguồn “{name}”.",
+      "source_updated": "{actor} đã thay đổi nguồn “{name}”.",
+      "source_deleted": "{actor} đã xóa nguồn “{name}”.",
+      "source_key_rotated": "{actor} đã tạo khóa API mới cho “{name}”.",
+      "source_hmac_enabled": "{actor} đã bật ký yêu cầu cho “{name}”.",
+      "source_hmac_disabled": "{actor} đã tắt ký yêu cầu cho “{name}”.",
+      "ideal_customer_updated": "{actor} đã thay đổi khách hàng lý tưởng.",
+      "rule_created": "{actor} đã thêm quy tắc “{name}”.",
+      "rule_updated": "{actor} đã thay đổi quy tắc “{name}”.",
+      "rule_deleted": "{actor} đã xóa quy tắc “{name}”.",
+      "rule_reordered": "{actor} đã đổi thứ tự các quy tắc.",
+      "integration_connected": "{actor} đã kết nối “{name}”.",
+      "integration_updated": "{actor} đã thay đổi tích hợp “{name}”.",
+      "integration_deleted": "{actor} đã ngắt kết nối “{name}”."
+    }
   }
 }

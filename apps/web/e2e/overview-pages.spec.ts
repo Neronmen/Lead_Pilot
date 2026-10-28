@@ -230,3 +230,160 @@ test('the front page fits a phone without sideways scrolling', async ({ browser 
   await checkPage(page);
   await context.close();
 });
+
+test.describe('Import a spreadsheet', () => {
+  const t = en.sources.import;
+
+  test('reads a CSV, shows what it found, imports it and says how it went', async ({ browser }) => {
+    const { context, api, page } = await open(browser);
+    await page.goto(`${APP}/settings/sources`);
+    await page.getByRole('button', { name: t.button }).first().click();
+    const csv = 'Name,E-mail,Company\nAnn,ann@acme-test.com,Acme\nBob,bob@acme-test.com,Globex\n';
+    await page.getByLabel(t.choose).setInputFiles({
+      name: 'leads.csv',
+      mimeType: 'text/csv',
+      buffer: Buffer.from(csv),
+    });
+    await expect(page.getByText('Found 2 rows in 3 columns.')).toBeVisible();
+    await page.getByRole('button', { name: 'Import 2 rows' }).click();
+    await expect(
+      page.getByText(/2 new leads, 0 added to leads you already had, 0 skipped/),
+    ).toBeVisible();
+    const call = api.requests.find((r) => r.path.endsWith('/import'));
+    expect(call?.body).toEqual({
+      rows: [
+        { Name: 'Ann', 'E-mail': 'ann@acme-test.com', Company: 'Acme' },
+        { Name: 'Bob', 'E-mail': 'bob@acme-test.com', Company: 'Globex' },
+      ],
+    });
+    await context.close();
+  });
+
+  test('warns when no column looks like an email or phone', async ({ browser }) => {
+    const { context, page } = await open(browser);
+    await page.goto(`${APP}/settings/sources`);
+    await page.getByRole('button', { name: t.button }).first().click();
+    await page.getByLabel(t.choose).setInputFiles({
+      name: 'x.csv',
+      mimeType: 'text/csv',
+      buffer: Buffer.from('Name,Company\nAnn,Acme\n'),
+    });
+    await expect(page.getByText(/No column looks like an email/)).toBeVisible();
+    await context.close();
+  });
+});
+
+test.describe('Website form', () => {
+  const t = en.sources.webForm;
+  const f = en.publicForm;
+  const SOURCE = 'dddddddd-0000-4000-8000-000000000001';
+
+  test('turning it on shows the link and the embed code', async ({ browser }) => {
+    const { context, api, page } = await open(browser);
+    await page.goto(`${APP}/settings/sources`);
+    const card = page.getByRole('region', { name: t.title }).first();
+    await card.getByRole('button', { name: t.turnOn }).click();
+    await expect(card.getByText(t.link)).toBeVisible();
+    await expect(card.locator(`code[aria-label="${t.linkLabel}"]`)).toContainText(`/f/${SOURCE}`);
+    await expect(card.locator(`code[aria-label="${t.embedLabel}"]`)).toContainText('<iframe');
+    expect(api.requests.find((r) => r.method === 'PATCH')?.body).toEqual({ formEnabled: true });
+    await context.close();
+  });
+
+  test('a visitor fills the public form and sees a thank-you; the trap field stays empty', async ({
+    browser,
+  }) => {
+    const { context, api, page } = await open(browser);
+    await page.goto(`${APP}/f/${SOURCE}`);
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Contact Northstar Growth');
+    await page.getByRole('button', { name: f.submit }).click();
+    await expect(page.getByText(f.problem.invalid)).toBeVisible();
+    await page.getByLabel(f.email, { exact: true }).fill('visitor@acme-test.com');
+    await page.getByLabel(f.name).fill('Vera Visitor');
+    await page.getByRole('button', { name: f.submit }).click();
+    await expect(page.getByRole('heading', { name: f.thanks.title })).toBeVisible();
+    const call = api.requests.find((r) => r.method === 'POST' && r.path === `/v1/forms/${SOURCE}`);
+    expect(call?.body).toMatchObject({
+      email: 'visitor@acme-test.com',
+      name: 'Vera Visitor',
+      website: '',
+    });
+    await shot(page, 'public-form');
+    await context.close();
+  });
+
+  test('a form that is off says so', async ({ browser }) => {
+    const { context, page } = await open(browser);
+    await page.goto(`${APP}/f/00000000-0000-4000-8000-00000000dead`);
+    await expect(page.getByRole('heading', { name: f.unavailable.title })).toBeVisible();
+    await context.close();
+  });
+
+  test('the public form passes the accessibility check on a phone', async ({ browser }) => {
+    const context = await browser.newContext({ viewport: { width: 375, height: 812 } });
+    await prepare(context, 'light', 'vi');
+    await new MockApi({ role: 'OWNER' }).install(context);
+    const page = await context.newPage();
+    await page.goto(`${APP}/f/${SOURCE}`);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await checkPage(page);
+    await context.close();
+  });
+});
+
+test.describe('Change history', () => {
+  const t = en.history;
+  const entry = (n: number, area: string, action: string, after: Record<string, string>) => ({
+    id: `aaaaaaaa-0000-4000-8000-00000000010${n}`,
+    createdAt: new Date(Date.now() - n * 3_600_000).toISOString(),
+    area,
+    action,
+    entityType: 'x',
+    entityId: null,
+    actor: {
+      id: 'bbbbbbbb-0000-4000-8000-000000000001',
+      name: 'Daniel Park',
+      email: 'daniel@acme-test.com',
+    },
+    before: null,
+    after,
+  });
+  const seed = (api: MockApi) => {
+    api.history = [
+      entry(1, 'rules', 'rule.updated', { name: 'Partner leads', enabled: 'false' }),
+      entry(2, 'sources', 'source.created', { name: 'Zapier' }),
+      entry(3, 'integrations', 'integration.connected', { name: '#hot-leads' }),
+    ];
+  };
+
+  test('says each change as a sentence, grouped by day, and loads more', async ({ browser }) => {
+    const { context, page } = await open(browser, 'OWNER', 'dark', 'en', seed);
+    await page.goto(`${APP}/settings/history`);
+    await expect(page.getByText('Daniel Park changed the rule “Partner leads”.')).toBeVisible();
+    await expect(page.getByText('Daniel Park added the source “Zapier”.')).toBeVisible();
+    await expect(page.getByText('Daniel Park connected “#hot-leads”.')).toHaveCount(0);
+    await page.getByRole('button', { name: t.more }).click();
+    await expect(page.getByText('Daniel Park connected “#hot-leads”.')).toBeVisible();
+    await shot(page, 'change-history');
+    await context.close();
+  });
+
+  test('filters by area, and an empty result says so', async ({ browser }) => {
+    const { context, api, page } = await open(browser, 'OWNER', 'dark', 'en', seed);
+    await page.goto(`${APP}/settings/history`);
+    await page.getByLabel(t.filter.area).selectOption('team');
+    await expect(page.getByText(t.empty.title)).toBeVisible();
+    await page.getByLabel(t.filter.area).selectOption('rules');
+    await expect(page.getByText('Daniel Park changed the rule “Partner leads”.')).toBeVisible();
+    expect(api.requests.some((r) => r.path === '/history')).toBe(true);
+    await context.close();
+  });
+
+  test('the page passes the accessibility check in Vietnamese and light', async ({ browser }) => {
+    const { context, page } = await open(browser, 'OWNER', 'light', 'vi', seed);
+    await page.goto(`${APP}/settings/history`);
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(vi.settingsHistory.title);
+    await checkPage(page);
+    await context.close();
+  });
+});

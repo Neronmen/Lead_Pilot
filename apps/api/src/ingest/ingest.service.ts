@@ -1,7 +1,7 @@
 import { createHash, createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { ErrorCode } from '@leadpilot/shared';
+import { ErrorCode, type ImportResult } from '@leadpilot/shared';
 import { DomainError } from '../common/errors/domain-error';
 import { CryptoService } from '../crypto/crypto.service';
 import { Prisma } from '../generated/prisma/client';
@@ -9,7 +9,7 @@ import { TenantPrisma } from '../prisma/tenant-prisma.service';
 import { PipelineQueue } from '../queue/pipeline.queue';
 import { hmacAad } from '../sources/sources.service';
 import { type AuthenticatedSource, IngestAuthService } from './ingest-auth.service';
-import { type NormalizedLead, normalizePayload } from './normalize';
+import { canonicalHeader, type NormalizedLead, normalizePayload } from './normalize';
 import { nextSample, SAMPLE_LEADS } from './sample-leads';
 import { FixedWindowLimiter, type WindowStore } from './rate-limiter';
 
@@ -39,10 +39,13 @@ export class IngestLimits {
   readonly perSource: FixedWindowLimiter;
   /** Failed authentications per IP per minute: slows down guessing keys. */
   readonly failedAuthPerIp: FixedWindowLimiter;
+  /** Web form submissions per IP per minute: the form has no key, so each visitor is counted. */
+  readonly formPerIp: FixedWindowLimiter;
 
   constructor(store: WindowStore) {
     this.perSource = new FixedWindowLimiter(120, store, 'ingest:source');
     this.failedAuthPerIp = new FixedWindowLimiter(20, store, 'ingest:failed-auth');
+    this.formPerIp = new FixedWindowLimiter(10, store, 'ingest:form-ip');
   }
 }
 
@@ -94,22 +97,113 @@ export class IngestService {
    * cleaning, dedup, saving and queueing as a real submission, so the demo needs no command line.
    */
   async submitSample(workspaceId: string, sourceId: string): Promise<IngestOutcome> {
+    const { db, source } = await this.ownSource(workspaceId, sourceId);
+    const payload = nextSample(randomInt(SAMPLE_LEADS.length), randomBytes(3).toString('hex'));
+    return { ...(await this.store(db, source, payload)), replayed: false };
+  }
+
+  /**
+   * A batch of spreadsheet rows (Admin and Owner), each cleaned, de-duplicated and queued like a real
+   * submission. A bad row is counted and skipped, never stops the rest, and counts in the source's
+   * numbers like any refused submission.
+   */
+  async importRows(
+    workspaceId: string,
+    sourceId: string,
+    rows: Record<string, string>[],
+  ): Promise<ImportResult> {
+    const { db, source } = await this.ownSource(workspaceId, sourceId);
+    let created = 0;
+    let merged = 0;
+    let rejected = 0;
+    const reasons = new Map<string, number>();
+    for (const row of rows) {
+      try {
+        const clean = Object.fromEntries(
+          Object.entries(row).map(([key, value]) => [canonicalHeader(key), value]),
+        );
+        const stored = await this.store(db, source, clean);
+        if (stored.body.result === 'created') created += 1;
+        else merged += 1;
+      } catch (error) {
+        // Only a refusal of the data itself is skipped; a real failure (database down) stops the batch.
+        if (!(error instanceof DomainError)) throw error;
+        const reason = rejectionReason(error) ?? 'invalid_request';
+        rejected += 1;
+        reasons.set(reason, (reasons.get(reason) ?? 0) + 1);
+        await this.record(db, source, 'REJECTED', reason);
+      }
+    }
+    return {
+      created,
+      merged,
+      rejected,
+      reasons: [...reasons.entries()]
+        .map(([reason, count]) => ({ reason, count }))
+        .sort((a, b) => b.count - a.count),
+    };
+  }
+
+  /** A source of this workspace that is switched on, ready to take leads from a logged-in person. */
+  private async ownSource(
+    workspaceId: string,
+    sourceId: string,
+  ): Promise<{ db: Db; source: AuthenticatedSource }> {
     const db = this.tenant.for(workspaceId);
-    const source = await db.source.findUnique({ where: { id: sourceId } });
-    if (!source)
-      throw new DomainError(ErrorCode.NOT_FOUND, 'Source not found', HttpStatus.NOT_FOUND);
-    if (!source.enabled) {
+    const row = await db.source.findUnique({ where: { id: sourceId } });
+    if (!row) throw new DomainError(ErrorCode.NOT_FOUND, 'Source not found', HttpStatus.NOT_FOUND);
+    if (!row.enabled) {
       throw new DomainError(ErrorCode.CONFLICT, 'Switch the source on first', HttpStatus.CONFLICT);
     }
     const workspace = await db.workspace.findFirstOrThrow({ select: { defaultCountry: true } });
-    const payload = nextSample(randomInt(SAMPLE_LEADS.length), randomBytes(3).toString('hex'));
-    const authenticated: AuthenticatedSource = {
-      sourceId,
-      workspaceId,
-      hmacSecretEnc: null,
-      defaultCountry: workspace.defaultCountry,
+    return {
+      db,
+      source: {
+        sourceId,
+        workspaceId,
+        hmacSecretEnc: null,
+        defaultCountry: workspace.defaultCountry,
+      },
     };
-    return { ...(await this.store(db, authenticated, payload)), replayed: false };
+  }
+
+  /** What the public form shows, or a plain "not found" when its form is off (or the id is wrong). */
+  async formInfo(sourceId: string): Promise<{ workspaceName: string }> {
+    const source = await this.auth.publicForm(sourceId);
+    if (!source) throw new DomainError(ErrorCode.NOT_FOUND, 'Form not found', HttpStatus.NOT_FOUND);
+    return { workspaceName: source.workspaceName };
+  }
+
+  /**
+   * A visitor's submission from the public web form. Counted per address and per source; a filled trap
+   * field is dropped without a word (a bot learns nothing); the rest goes through the same cleaning,
+   * dedup and queueing as any lead.
+   */
+  async submitForm(
+    sourceId: string,
+    ip: string,
+    fields: Record<string, string | undefined>,
+  ): Promise<void> {
+    const source = await this.auth.publicForm(sourceId);
+    if (!source) throw new DomainError(ErrorCode.NOT_FOUND, 'Form not found', HttpStatus.NOT_FOUND);
+    const byIp = await this.limits.formPerIp.hit(ip);
+    if (byIp > 0) throw new RateLimitedError(byIp);
+    const bySource = await this.limits.perSource.hit(source.sourceId);
+    if (bySource > 0) throw new RateLimitedError(bySource);
+
+    const { website, ...visible } = fields;
+    if (website && website.trim() !== '') return; // a bot filled the field people cannot see
+    const payload = Object.fromEntries(
+      Object.entries(visible).filter(([, value]) => value !== undefined && value.trim() !== ''),
+    );
+    const db = this.tenant.for(source.workspaceId);
+    try {
+      await this.store(db, source, { ...payload, source: 'web_form' });
+    } catch (error) {
+      const reason = rejectionReason(error);
+      if (reason) await this.record(db, source, 'REJECTED', reason);
+      throw error;
+    }
   }
 
   async handle(req: IngestRequest): Promise<IngestOutcome> {

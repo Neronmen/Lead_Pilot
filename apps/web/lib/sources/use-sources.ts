@@ -3,6 +3,9 @@
 import {
   hmacSecretResponseSchema,
   sampleLeadResponseSchema,
+  importResultSchema,
+  type ImportResult,
+  type ImportRowsRequest,
   type SampleLeadResponse,
   sourceSchema,
   sourceWithKeySchema,
@@ -86,5 +89,28 @@ export function useSourceActions() {
       void queryClient.invalidateQueries({ queryKey: ['overview'] });
     },
   });
-  return { create, update, remove, rotateKey, enableSigning, disableSigning, sendSample };
+  // One batch of spreadsheet rows (the page sends a file in batches of 200).
+  const importRows = useMutation<ImportResult, unknown, { id: string } & ImportRowsRequest>({
+    mutationFn: ({ id, rows }) =>
+      client.request(`/sources/${id}/import`, {
+        method: 'POST',
+        body: { rows },
+        schema: importResultSchema,
+      }),
+    onSettled: () => {
+      void refresh();
+      void queryClient.invalidateQueries({ queryKey: ['leads'] });
+      void queryClient.invalidateQueries({ queryKey: ['overview'] });
+    },
+  });
+  return {
+    create,
+    update,
+    remove,
+    rotateKey,
+    enableSigning,
+    disableSigning,
+    sendSample,
+    importRows,
+  };
 }

@@ -47,6 +47,7 @@ interface SourceRow {
   name: string;
   type: 'WEBHOOK' | 'FORM' | 'CSV';
   enabled: boolean;
+  formEnabled: boolean;
   apiKeyPrefix: string;
   hmacSecretEnc: string | null;
   createdAt: Date;
@@ -126,9 +127,12 @@ export class SourcesService {
         if (!before) throw sourceNotFound();
         const changed = await tx.source.update({
           where: { id },
-          data: { name: input.name, enabled: input.enabled },
+          data: { name: input.name, enabled: input.enabled, formEnabled: input.formEnabled },
         });
-        const same = changed.name === before.name && changed.enabled === before.enabled;
+        const same =
+          changed.name === before.name &&
+          changed.enabled === before.enabled &&
+          changed.formEnabled === before.formEnabled;
         if (!same) {
           await this.audit.record(tx, actor.workspaceId, {
             actorUserId: actor.userId,
@@ -365,6 +369,7 @@ function toSource(
     enabled: row.enabled,
     apiKeyPrefix: row.apiKeyPrefix,
     hmacEnabled: row.hmacSecretEnc !== null,
+    formEnabled: row.formEnabled,
     createdAt: row.createdAt.toISOString(),
     leadsLast30Days,
     lastLeadAt: lastLeadAt ? lastLeadAt.toISOString() : null,

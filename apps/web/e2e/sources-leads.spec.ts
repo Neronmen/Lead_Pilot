@@ -87,7 +87,7 @@ for (const { id, url, h1 } of PAGES) {
 test.describe('Lead sources', () => {
   const t = en.sources;
 
-  test('shows a plain status per source, and offers no website form or spreadsheet upload', async ({
+  test('shows a plain status per source, with a website form and a spreadsheet import', async ({
     browser,
   }) => {
     const { context, page } = await open(browser);
@@ -112,7 +112,7 @@ test.describe('Lead sources', () => {
     await expect(page.getByText(/never merged by mistake/)).toBeVisible();
     await page.getByRole('button', { name: t.add }).click();
     await expect(page.getByRole('radio')).toHaveCount(2);
-    await expect(page.getByText(/website form|spreadsheet/i)).toHaveCount(0);
+    await page.keyboard.press('Escape');
     await context.close();
   });
 

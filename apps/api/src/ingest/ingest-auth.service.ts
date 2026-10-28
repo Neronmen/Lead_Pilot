@@ -24,6 +24,28 @@ const DUMMY_HASH = hashApiKey('lp_00000000.dummy-key-for-constant-time-compare')
 export class IngestAuthService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /**
+   * The source behind a public web form, when its form is switched on (and the source is on); else null.
+   * No key is involved: the form is open to anyone with the link, which is why it is rate limited per
+   * address and has a trap field for bots.
+   */
+  async publicForm(
+    sourceId: string,
+  ): Promise<(AuthenticatedSource & { workspaceName: string }) | null> {
+    const row = await this.prisma.source.findUnique({
+      where: { id: sourceId },
+      include: { workspace: { select: { name: true, defaultCountry: true } } },
+    });
+    if (!row || !row.enabled || !row.formEnabled) return null;
+    return {
+      sourceId: row.id,
+      workspaceId: row.workspaceId,
+      hmacSecretEnc: null,
+      defaultCountry: row.workspace.defaultCountry,
+      workspaceName: row.workspace.name,
+    };
+  }
+
   /** The source when the key is valid for exactly this source and the source is on; else null, whatever the reason. */
   async authenticate(sourceId: string, presentedKey: string): Promise<AuthenticatedSource | null> {
     const prefix = apiKeyPrefix(presentedKey);

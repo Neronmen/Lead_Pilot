@@ -51,6 +51,20 @@ const ALIASES = {
 } as const;
 
 const KNOWN = new Set<string>(Object.values(ALIASES).flat());
+
+const squash = (key: string) => key.toLowerCase().replace(/[^a-z0-9]/g, '');
+const HEADERS = new Map<string, string>();
+for (const aliases of Object.values(ALIASES)) {
+  for (const alias of aliases) HEADERS.set(squash(alias), aliases[0]);
+}
+
+/**
+ * A spreadsheet column name as the field it means: "First Name", "E-mail" and "EMAIL" are firstName and
+ * email. A column that means nothing known keeps its own name (it becomes a custom field).
+ */
+export function canonicalHeader(key: string): string {
+  return HEADERS.get(squash(key)) ?? key;
+}
 const COUNTRIES = new Set<string>(getCountries());
 const DOMAIN = /^(?=.{3,253}$)[a-z0-9-]+(\.[a-z0-9-]+)+$/;
 const nameSchema = displayTextSchema(100);

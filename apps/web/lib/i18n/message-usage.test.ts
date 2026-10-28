@@ -40,7 +40,7 @@ const DYNAMIC: Record<string, string[]> = {
   'shell.roles.${me.role}': ROLES.map((r) => `shell.roles.${r}`),
   'shell.nav.${id}': ['overview', 'leads', 'review', 'settings'].map((id) => `shell.nav.${id}`),
 
-  'settings.nav.${id}': ['sources', 'routing', 'integrations', 'ideal', 'advanced'].map(
+  'settings.nav.${id}': ['sources', 'routing', 'integrations', 'ideal', 'history', 'advanced'].map(
     (id) => `settings.nav.${id}`,
   ),
   'routing.field.${c.field}': [
@@ -149,6 +149,28 @@ const DYNAMIC: Record<string, string[]> = {
   'getStarted.steps.${step.id}.body': ['source', 'ideal', 'handover'].map(
     (k) => `getStarted.steps.${k}.body`,
   ),
+  'sources.import.problem.${problem}': ['big', 'rows', 'empty', 'read'].map(
+    (k) => `sources.import.problem.${k}`,
+  ),
+  'publicForm.problem.${problem}': ['invalid', 'slow', 'failed'].map(
+    (k) => `publicForm.problem.${k}`,
+  ),
+  'history.area.${area}': [
+    'rules',
+    'sources',
+    'ideal_customer',
+    'integrations',
+    'team',
+    'general',
+  ].map((k) => `history.area.${k}`),
+  'history.area.${entry.area}': [
+    'rules',
+    'sources',
+    'ideal_customer',
+    'integrations',
+    'team',
+    'general',
+  ].map((k) => `history.area.${k}`),
   'routing.form.incomplete.${problem}': ['name', 'conditions', 'actions'].map(
     (k) => `routing.form.incomplete.${k}`,
   ),
@@ -269,6 +291,8 @@ const scanned = [
   'components/sources',
   'components/routing',
   'components/overview',
+  'components/forms',
+  'components/history',
   'components/integrations',
   'components/leads',
   'app/page.tsx',
@@ -336,6 +360,7 @@ describe('message keys used by the app shell exist in EN and VI', () => {
       'routing',
       'integrations',
       'ideal',
+      'history',
       'advanced',
     ]);
   });

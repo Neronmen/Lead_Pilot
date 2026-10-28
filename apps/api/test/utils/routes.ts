@@ -57,6 +57,9 @@ export const PUBLIC = new Set([
   'POST /auth/verify-email',
   // Signed in with a source's API key, not a user: its tests are in ingest.e2e-spec.ts.
   'POST /v1/ingest/:sourceId',
+  // The public web form: no sign-in; its tests are in forms.e2e-spec.ts.
+  'GET /v1/forms/:sourceId',
+  'POST /v1/forms/:sourceId',
 ]);
 // Own account or own workspace, readable by every member (so no admin-only 403 check);
 // 'GET /leads' has its cross-workspace test in isolation.e2e-spec.ts.
@@ -77,6 +80,7 @@ export const WORKSPACE_COLLECTION = new Set([
   'PUT /icp-rubric',
   'POST /leads/rescore',
   'GET /routing/rules',
+  'GET /history',
   'POST /routing/rules',
   'PUT /routing/rules/order',
   'POST /routing/test',
@@ -101,6 +105,7 @@ export const WORKSPACE_BY_ID = new Set([
   'POST /sources/:id/api-key',
   'POST /sources/:id/hmac-secret',
   'POST /sources/:id/sample-lead',
+  'POST /sources/:id/import',
   'DELETE /sources/:id/hmac-secret',
   'PATCH /routing/rules/:id',
   'DELETE /routing/rules/:id',

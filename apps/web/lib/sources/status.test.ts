@@ -9,6 +9,7 @@ const source = (over: Partial<Source>): Source => ({
   name: 'Zapier',
   type: 'WEBHOOK',
   enabled: true,
+  formEnabled: false,
   apiKeyPrefix: 'abcd1234',
   hmacEnabled: false,
   createdAt: day(100),
