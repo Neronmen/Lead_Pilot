@@ -67,3 +67,15 @@ baseline), which proves the plumbing, not a real model; the labels are a small d
 - `POST /leads/:id/outcome` marks a lead Won / Lost / Bad lead (bad = junk), with who and when. These are the real labels for later evals.
 - `GET /overview` returns % junk filtered, median time from received to first rating, and leads by tier and by information level. UI comes later.
 - Prompt **v2** (calibrated tiers, reads the new fields) is the default. Protocol: `pnpm eval --split dev --show-errors` to tune (30 leads), `pnpm eval --split held` once to measure (20 leads, never tuned on). Gemini 3.5 Flash Lite: dev v1 60% -> v2 83%; held-out v1 55% -> v2 65%. Weak spot: limited-info cold leads rated junk.
+
+## Routing and actions (M4a)
+
+After a lead is rated, `RoutingRunner` (step 3 of the pipeline) evaluates the workspace's rules.
+
+- **Rules** (`/routing/rules`, Admin/Owner): ordered, first matching rule wins; an "always run" rule runs too and never stops the others. Conditions are AND/OR groups over `score`, `tier`, `country`, `source`, `industry` (the lead's own `industry` custom field), `isFreeMail` and custom fields. `POST /routing/test` is a dry run: it says which rule decides and shows every comparison, and sends nothing.
+- **Actions**: assign (a person, or the next member of a team: round-robin by `lastAssignedAt`; a lead that already has an owner is never taken away), tag, "New Hot lead" email (React Email, EN/VI), Slack, Telegram, outgoing webhook (signed: `X-LeadPilot-Signature` = HMAC-SHA256 of `<timestamp>.<body>`) and HubSpot contact.
+- **Not acted on while it waits for a person**: a lead in the Review queue is routed after it is approved or corrected.
+- **Runs** (`ActionRun`): assign and tag run at once; the rest are queued (BullMQ queue `actions`, 5 tries, 10 s doubling). A run is unique per lead + rule + position, so routing twice sends nothing twice. A temporary failure is retried; the last try, or a failure no retry can fix (bad config, integration off, 401/403/404), leaves it `DEAD`. `GET /actions` lists runs; `POST /actions/:id/retry` queues a failed one again.
+- **Integrations** (`/integrations`): the token or address is encrypted (AES-256-GCM, bound to its row) and never returned; an outgoing webhook's signing secret is shown once. "Send test message" stores the result and shows `needs_attention` with a short code (`http_401`, `timeout`...) when it fails.
+- **`ACTIONS_MODE=mock`** (default): nothing leaves the machine; the call is recorded in memory and the run succeeds. `live` makes real calls. Outgoing addresses must be public https: private, loopback and link-local addresses are refused when an integration is saved and again, with a DNS check, before each call; redirects are not followed. Slack addresses must be on `hooks.slack.com`.
+- Known limit: the DNS check and the call resolve the name separately, so a hostile DNS server could answer differently the second time (DNS rebinding). Fine for a portfolio; connect to the checked address (pin it) before real use. Answers from the other service are read up to 64 KB only, and Slack text has `&`, `<`, `>` escaped so a lead cannot ping a channel.

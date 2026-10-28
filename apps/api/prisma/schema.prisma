@@ -100,6 +100,13 @@ enum IntegrationType {
   WEBHOOK
 }
 
+/// Shown on the Integrations cards; needs_attention after a failed test or action.
+enum IntegrationStatus {
+  connected
+  needs_attention
+  paused
+}
+
 enum ActionStatus {
   PENDING
   RUNNING
@@ -352,6 +359,8 @@ model Lead {
   jobTitle     String?
   interest     String?
   customFields Json        @default("{}")
+  /// Labels added by routing rules ("set tags").
+  tags         String[]    @default([])
   /// How much we know about this lead: "limited" | "enough" | "rich" (set when it is rated).
   infoLevel    String?
   /// Why it waits in the Review queue: "limited_info" | "low_confidence" | "rated_without_ai".
@@ -561,6 +570,10 @@ model Integration {
   /// AES-256-GCM encrypted JSON config (tokens, webhook URLs).
   configEnc   String
   enabled     Boolean         @default(true)
+  status      IntegrationStatus @default(connected)
+  /// Plain words about the last failure; never a token or a URL.
+  lastError    String?
+  lastTestedAt DateTime?
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 

@@ -49,6 +49,9 @@ export const envSchema = z
     // Where company info comes from: "mock" (made-up, no network: the demo and tests) or
     // "website" (reads the lead's company homepage, public internet addresses only).
     ENRICHMENT_PROVIDER: z.enum(['mock', 'website']).default('mock'),
+    // Whether actions (Slack, Telegram, webhook, HubSpot) really call out: "mock" (default: nothing
+    // leaves this machine, the run is recorded as done) or "live" (real calls to public addresses only).
+    ACTIONS_MODE: z.enum(['mock', 'live']).default('mock'),
     // Which AI rates the leads. "auto": Anthropic if ANTHROPIC_API_KEY is set, else OpenAI if
     // OPENAI_API_KEY is set, else the free built-in mock (no key needed: the demo works as is).
     LLM_PROVIDER: z.enum(['auto', 'mock', 'anthropic', 'openai', 'gemini']).default('auto'),

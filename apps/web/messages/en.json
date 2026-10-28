@@ -216,7 +216,11 @@
     "HMAC_ALREADY_ENABLED": "Signing is already on for this source. Switch it off first to get a new secret.",
     "PAYLOAD_TOO_LARGE": "The request is too large.",
     "UNSUPPORTED_MEDIA_TYPE": "Send the request as JSON.",
-    "IDEMPOTENCY_KEY_REUSED": "This Idempotency-Key was already used with different data."
+    "IDEMPOTENCY_KEY_REUSED": "This Idempotency-Key was already used with different data.",
+    "RULE_REFERENCE_INVALID": "A rule points at an integration, person or team that is not in this workspace.",
+    "RULE_ORDER_INVALID": "The rule order is out of date. Reload the page and try again.",
+    "INTEGRATION_IN_USE": "Rules still use this integration. Remove it from them, or switch it off instead.",
+    "URL_NOT_ALLOWED": "This address is not allowed. Use a public https address."
   },
   "validation": {
     "invalid_type": "This field is required.",

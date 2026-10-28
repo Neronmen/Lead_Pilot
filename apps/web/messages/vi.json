@@ -216,7 +216,11 @@
     "HMAC_ALREADY_ENABLED": "Chữ ký đã được bật cho nguồn này. Hãy tắt chữ ký trước để lấy bí mật mới.",
     "PAYLOAD_TOO_LARGE": "Yêu cầu quá lớn.",
     "UNSUPPORTED_MEDIA_TYPE": "Hãy gửi yêu cầu dưới dạng JSON.",
-    "IDEMPOTENCY_KEY_REUSED": "Idempotency-Key này đã được dùng với dữ liệu khác."
+    "IDEMPOTENCY_KEY_REUSED": "Idempotency-Key này đã được dùng với dữ liệu khác.",
+    "RULE_REFERENCE_INVALID": "Một quy tắc đang trỏ tới tích hợp, người hoặc nhóm không thuộc không gian làm việc này.",
+    "RULE_ORDER_INVALID": "Thứ tự quy tắc đã cũ. Hãy tải lại trang và thử lại.",
+    "INTEGRATION_IN_USE": "Vẫn còn quy tắc đang dùng tích hợp này. Hãy gỡ nó khỏi các quy tắc, hoặc tắt tích hợp thay vì xóa.",
+    "URL_NOT_ALLOWED": "Địa chỉ này không được phép. Hãy dùng địa chỉ https công khai."
   },
   "validation": {
     "invalid_type": "Ô này là bắt buộc.",

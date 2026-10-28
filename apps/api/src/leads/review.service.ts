@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import {
   ErrorCode,
   type RescoreRequest,
@@ -10,6 +10,7 @@ import { DomainError } from '../common/errors/domain-error';
 import type { $Enums, Prisma } from '../generated/prisma/client';
 import { TenantPrisma } from '../prisma/tenant-prisma.service';
 import { PipelineQueue } from '../queue/pipeline.queue';
+import { RoutingRunner } from '../routing/routing.runner';
 
 interface Actor {
   userId: string;
@@ -21,13 +22,18 @@ const RESCORE_BATCH = 1000;
 /** A person checks the AI's rating (Review queue, Lead detail), or asks the AI to look again. */
 @Injectable()
 export class ReviewService {
+  private readonly logger = new Logger(ReviewService.name);
+
   constructor(
     private readonly tenant: TenantPrisma,
     private readonly pipeline: PipelineQueue,
+    private readonly routing: RoutingRunner,
   ) {}
 
   async review(actor: Actor, leadId: string, body: ReviewLeadRequest): Promise<void> {
     const db = this.tenant.for(actor.workspaceId);
+    // A lead that was waiting for review is released by this decision: the routing rules start now.
+    let released = false;
     await db.$transaction(async (tx) => {
       const lead = await tx.lead.findUnique({ where: { id: leadId } });
       if (!lead) throw new DomainError(ErrorCode.NOT_FOUND, 'Lead not found', HttpStatus.NOT_FOUND);
@@ -56,6 +62,7 @@ export class ReviewService {
           newScore: lead.score,
           note: null,
         });
+        released = true;
         return;
       }
 
@@ -76,7 +83,16 @@ export class ReviewService {
         newScore,
         note: body.note ?? null,
       });
+      released = lead.status === 'NEEDS_REVIEW';
     });
+    if (released) {
+      // Routing queues its sends and never throws into the request: the review is already saved.
+      await this.routing
+        .routeLead({ workspaceId: actor.workspaceId, leadId })
+        .catch((error: Error) =>
+          this.logger.error(`Routing after review failed: ${error.message}`),
+        );
+    }
   }
 
   /**

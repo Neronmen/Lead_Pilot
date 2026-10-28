@@ -26,6 +26,13 @@ export const AuditAction = {
   SourceHmacEnabled: 'source.hmac_enabled',
   SourceHmacDisabled: 'source.hmac_disabled',
   IdealCustomerUpdated: 'ideal_customer.updated',
+  RuleCreated: 'rule.created',
+  RuleUpdated: 'rule.updated',
+  RuleDeleted: 'rule.deleted',
+  RulesReordered: 'rule.reordered',
+  IntegrationConnected: 'integration.connected',
+  IntegrationUpdated: 'integration.updated',
+  IntegrationDeleted: 'integration.deleted',
 } as const;
 
 export interface AuditEntry {

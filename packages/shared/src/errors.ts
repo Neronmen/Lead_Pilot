@@ -41,6 +41,16 @@ export const ErrorCode = {
   UNSUPPORTED_MEDIA_TYPE: 'UNSUPPORTED_MEDIA_TYPE',
   /** The same Idempotency-Key was sent with a different body. */
   IDEMPOTENCY_KEY_REUSED: 'IDEMPOTENCY_KEY_REUSED',
+
+  // Routing and integrations (M4).
+  /** A rule points at an integration, person or team that is not in this workspace. */
+  RULE_REFERENCE_INVALID: 'RULE_REFERENCE_INVALID',
+  /** Reorder must list every rule exactly once. */
+  RULE_ORDER_INVALID: 'RULE_ORDER_INVALID',
+  /** An integration that rules still use cannot be deleted: switch it off instead. */
+  INTEGRATION_IN_USE: 'INTEGRATION_IN_USE',
+  /** The address is not allowed (not https, or it points inside a private network). */
+  URL_NOT_ALLOWED: 'URL_NOT_ALLOWED',
 } as const;
 
 export type KnownErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

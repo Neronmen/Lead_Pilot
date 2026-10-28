@@ -67,6 +67,13 @@ export const WORKSPACE_COLLECTION = new Set([
   'GET /icp-rubric',
   'PUT /icp-rubric',
   'POST /leads/rescore',
+  'GET /routing/rules',
+  'POST /routing/rules',
+  'PUT /routing/rules/order',
+  'POST /routing/test',
+  'GET /integrations',
+  'POST /integrations',
+  'GET /actions',
 ]);
 // Readable and usable by every member, by an id from the URL: a lead of another workspace
 // is a 404. Their cross-workspace tests are in leads.e2e-spec.ts.
@@ -85,4 +92,10 @@ export const WORKSPACE_BY_ID = new Set([
   'POST /sources/:id/api-key',
   'POST /sources/:id/hmac-secret',
   'DELETE /sources/:id/hmac-secret',
+  'PATCH /routing/rules/:id',
+  'DELETE /routing/rules/:id',
+  'PATCH /integrations/:id',
+  'DELETE /integrations/:id',
+  'POST /integrations/:id/test',
+  'POST /actions/:id/retry',
 ]);

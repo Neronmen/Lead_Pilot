@@ -23,6 +23,7 @@ import { PipelineModule } from './pipeline/pipeline.module';
 import { MaintenanceModule } from './maintenance/maintenance.module';
 import { EnrichmentModule } from './enrichment/enrichment.module';
 import { ScoringModule } from './scoring/scoring.module';
+import { RoutingModule } from './routing/routing.module';
 
 // One .env at the repo root, shared by all apps. Same depth from src/ and dist/.
 // Real environment variables take precedence over the file.
@@ -44,6 +45,7 @@ const ROOT_ENV_FILE = resolve(__dirname, '../../../.env');
     MaintenanceModule,
     EnrichmentModule,
     ScoringModule,
+    RoutingModule,
     HealthModule,
     AuditModule,
     EmailModule,

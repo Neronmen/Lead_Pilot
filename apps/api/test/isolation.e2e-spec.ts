@@ -82,6 +82,22 @@ describe('Tenant isolation matrix (e2e)', () => {
         notes: null,
       });
     if (route === 'PATCH /sources/:id') return req.send({ name: 'Renamed by someone else' });
+    if (route === 'PATCH /routing/rules/:id') return req.send({ enabled: false });
+    if (route === 'PATCH /integrations/:id') return req.send({ enabled: false });
+    if (route === 'POST /routing/rules')
+      return req.send({
+        name: 'Matrix rule',
+        conditions: { match: 'all', conditions: [] },
+        actions: [{ type: 'tag', tag: 'matrix' }],
+      });
+    if (route === 'PUT /routing/rules/order') return req.send({ ids: [crypto.randomUUID()] });
+    if (route === 'POST /routing/test') return req.send({ lead: {} });
+    if (route === 'POST /integrations')
+      return req.send({
+        type: 'SLACK',
+        name: 'Matrix',
+        config: { webhookUrl: 'https://hooks.slack.com/services/T0/B0/matrix' },
+      });
     return req;
   }
 
@@ -131,7 +147,38 @@ describe('Tenant isolation matrix (e2e)', () => {
         .post(`/sources/${created.body.source.id}/hmac-secret`)
         .set('authorization', bearer(owner))
         .expect(201);
+      const rule = await http()
+        .post('/routing/rules')
+        .set('authorization', bearer(owner))
+        .send({
+          name: `${label} rule`,
+          conditions: { match: 'all', conditions: [] },
+          actions: [{ type: 'tag', tag: 'matrix' }],
+        })
+        .expect(201);
+      const integration = await http()
+        .post('/integrations')
+        .set('authorization', bearer(owner))
+        .send({
+          type: 'SLACK',
+          name: `${label} slack`,
+          config: { webhookUrl: 'https://hooks.slack.com/services/T0/B0/matrix' },
+        })
+        .expect(201);
+      const lead = await makeLead(prisma, workspaceId);
+      const run = await prisma.actionRun.create({
+        data: {
+          workspaceId,
+          leadId: lead.id,
+          type: 'tag',
+          jobKey: `${label}-${crypto.randomUUID()}`,
+          status: 'DEAD',
+        },
+      });
       return {
+        rule: rule.body as { id: string },
+        integration: integration.body as { id: string },
+        run,
         source: created.body.source as { id: string },
         owner,
         admin,
@@ -170,6 +217,18 @@ describe('Tenant isolation matrix (e2e)', () => {
           where: { workspaceId: a.workspaceId },
           orderBy: { id: 'asc' },
         }),
+        rules: await prisma.routingRule.findMany({
+          where: { workspaceId: a.workspaceId },
+          orderBy: { id: 'asc' },
+        }),
+        integrations: await prisma.integration.findMany({
+          where: { workspaceId: a.workspaceId },
+          orderBy: { id: 'asc' },
+        }),
+        runs: await prisma.actionRun.findMany({
+          where: { workspaceId: a.workspaceId },
+          orderBy: { id: 'asc' },
+        }),
         audit: await prisma.auditLog.count({ where: { workspaceId: a.workspaceId } }),
       };
     }
@@ -187,6 +246,12 @@ describe('Tenant isolation matrix (e2e)', () => {
       'POST /sources/:id/api-key': (w) => w.source.id,
       'POST /sources/:id/hmac-secret': (w) => w.source.id,
       'DELETE /sources/:id/hmac-secret': (w) => w.source.id,
+      'PATCH /routing/rules/:id': (w) => w.rule.id,
+      'DELETE /routing/rules/:id': (w) => w.rule.id,
+      'PATCH /integrations/:id': (w) => w.integration.id,
+      'DELETE /integrations/:id': (w) => w.integration.id,
+      'POST /integrations/:id/test': (w) => w.integration.id,
+      'POST /actions/:id/retry': (w) => w.run.id,
     };
     const idFor = (route: string, w: typeof a): string => {
       const pick = TARGET_ID[route];
