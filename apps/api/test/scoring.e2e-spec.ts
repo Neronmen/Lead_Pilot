@@ -124,7 +124,7 @@ describe('Scoring (e2e)', () => {
     const version = await prisma.promptVersion.findUniqueOrThrow({
       where: { id: score!.promptVersionId },
     });
-    expect(version).toMatchObject({ name: 'lead-score', version: 1, isActive: true });
+    expect(version).toMatchObject({ name: 'lead-score', version: 2, isActive: true });
 
     expect(await prisma.lead.findUniqueOrThrow({ where: { id: l.id } })).toMatchObject({
       status: 'SCORED',

@@ -44,7 +44,7 @@ export const PROMPTS: { version: number; template: string }[] = [
 ];
 
 /** The version new installations (and workspaces) use. Raised only after a held-out evaluation. */
-export const DEFAULT_PROMPT_VERSION = 1;
+export const DEFAULT_PROMPT_VERSION = 2;
 
 /**
  * Makes a value safe to put between the prompt's tags: JSON-encoded, with "<"

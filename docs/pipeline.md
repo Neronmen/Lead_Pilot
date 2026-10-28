@@ -59,3 +59,11 @@ override is final**: later automatic scoring is recorded but never changes that 
 accuracy, a confusion matrix by tier, average cost and latency. `pnpm eval --candidate prompt.txt`
 runs a second prompt and shows the difference. With no key it measures the free mock (the rule
 baseline), which proves the plumbing, not a real model; the labels are a small demo set.
+
+### Information level, outcomes, overview (M3.5)
+
+- Every score has an **information level**: `limited` (at most 1 of company, message, budget, timeline, job title, readable website), `enough` (2-3), `rich` (4+). A `limited` lead is never Hot (capped to Warm, score at most 74) and goes to the Review queue with a plain reason (`limited_info`).
+- Ingest accepts and stores `message`, `budget`, `timeline`, `jobTitle`, `interest`. `GET /sources` shows per source which useful fields arrived in the last 30 days.
+- `POST /leads/:id/outcome` marks a lead Won / Lost / Bad lead (bad = junk), with who and when. These are the real labels for later evals.
+- `GET /overview` returns % junk filtered, median time from received to first rating, and leads by tier and by information level. UI comes later.
+- Prompt **v2** (calibrated tiers, reads the new fields) is the default. Protocol: `pnpm eval --split dev --show-errors` to tune (30 leads), `pnpm eval --split held` once to measure (20 leads, never tuned on). Gemini 3.5 Flash Lite: dev v1 60% -> v2 83%; held-out v1 55% -> v2 65%. Weak spot: limited-info cold leads rated junk.
