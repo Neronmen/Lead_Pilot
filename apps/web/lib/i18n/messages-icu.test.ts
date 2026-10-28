@@ -48,6 +48,8 @@ const values = {
   outcome: 'Won',
   n: 1,
   mb: 2,
+  from: 1,
+  to: 25,
   actor: 'Mia',
   area: 'Routing rules',
   company: 'Acme',

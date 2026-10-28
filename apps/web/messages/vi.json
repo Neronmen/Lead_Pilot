@@ -348,7 +348,14 @@
     "unknownLead": "một khách tiềm năng trước đó",
     "tier": "Xếp hạng",
     "allTiers": "Mọi hạng",
-    "colRating": "Xếp hạng"
+    "colRating": "Xếp hạng",
+    "pager": {
+      "label": "Các trang khách tiềm năng",
+      "range": "Đang hiện {from}–{to}",
+      "prev": "Trước",
+      "next": "Sau",
+      "size": "Mỗi trang"
+    }
   },
   "settingsTeam": {
     "title": "Đội ngũ",
@@ -756,7 +763,9 @@
       "badHelp": "Khách không thật là spam hoặc sai người. Khách này sẽ thành Rác và AI được kiểm tra theo đó.",
       "saved": "Đã lưu.",
       "failed": "Không lưu được. Chưa có gì thay đổi."
-    }
+    },
+    "activityMore": "Hiện thêm {count} mục cũ hơn",
+    "activityLess": "Thu gọn"
   },
   "review": {
     "title": "Hàng chờ duyệt",
@@ -1039,7 +1048,9 @@
       "FAILED": "Lỗi, sẽ thử lại",
       "DEAD": "Lỗi"
     },
-    "retryFailed": "Không thử lại được. Hãy thử lại sau giây lát."
+    "retryFailed": "Không thử lại được. Hãy thử lại sau giây lát.",
+    "more": "Hiện thêm {count} mục",
+    "less": "Thu gọn"
   },
   "overview": {
     "title": "Tổng quan",

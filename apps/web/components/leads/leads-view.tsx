@@ -1,7 +1,7 @@
 'use client';
 
 import type { LeadListItem, LeadStatus, LeadTier } from '@leadpilot/shared';
-import { LoaderCircle, Plug, Search, SearchX, Users } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plug, Search, SearchX, Users } from 'lucide-react';
 import { useFormatter, useNow, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { NativeSelect } from '@/components/ui/native-select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TierBadge } from './tier-badge';
-import { hasFilters, NO_FILTERS, useLeads, type LeadFilters } from '@/lib/leads/use-leads';
+import { hasFilters, NO_FILTERS, useLeadsPage, type LeadFilters } from '@/lib/leads/use-leads';
 import { useSources } from '@/lib/sources/use-sources';
 import { cn } from '@/lib/utils';
 
@@ -41,11 +41,22 @@ export function LeadsView() {
 
   // Members cannot read the sources list, so the source filter is for Owner and Admin.
   const sources = useSources(admin);
-  const leads = useLeads(filters);
+  // Previous / Next over pages of 25, 50 or 100: the list never grows without end. The cursors of the
+  // pages already seen are kept, so Previous is exact; a new filter or page size starts at page 1.
+  const [size, setSize] = useState(25);
+  const pageKey = `${JSON.stringify(filters)}|${size}`;
+  const [pager, setPager] = useState<{ key: string; cursors: (string | undefined)[] }>({
+    key: pageKey,
+    cursors: [undefined],
+  });
+  const cursors = pager.key === pageKey ? pager.cursors : [undefined];
+  const pageIndex = cursors.length - 1;
+  const leads = useLeadsPage(filters, cursors[pageIndex], size);
+  const nextCursor = leads.data?.nextCursor ?? null;
   // One clock for every row, passed explicitly: without it next-intl falls back to the
   // environment's time and logs ENVIRONMENT_FALLBACK (server and client could disagree).
   const now = useNow({ updateInterval: 60_000 });
-  const items = leads.data?.pages.flatMap((page) => page.items) ?? [];
+  const items = leads.data?.items ?? [];
   const filtered = hasFilters(filters);
 
   function clear() {
@@ -203,27 +214,48 @@ export function LeadsView() {
               </tbody>
             </table>
           </section>
-          <div className="flex flex-wrap items-center gap-3">
+          <nav aria-label={t('pager.label')} className="flex flex-wrap items-center gap-3">
             <span className="text-[13px] text-muted-foreground" role="status">
-              {t('count', { count: items.length })}
+              {t('pager.range', {
+                from: pageIndex * size + 1,
+                to: pageIndex * size + items.length,
+              })}
             </span>
-            {leads.hasNextPage ? (
-              <Button
-                variant="outline"
-                disabled={leads.isFetchingNextPage}
-                onClick={() => void leads.fetchNextPage()}
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={pageIndex === 0 || leads.isFetching}
+              onClick={() => setPager({ key: pageKey, cursors: cursors.slice(0, -1) })}
+            >
+              <ChevronLeft aria-hidden />
+              {t('pager.prev')}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!nextCursor || leads.isFetching}
+              onClick={() =>
+                setPager({ key: pageKey, cursors: [...cursors, nextCursor ?? undefined] })
+              }
+            >
+              {t('pager.next')}
+              <ChevronRight aria-hidden />
+            </Button>
+            <label className="ml-auto flex items-center gap-2 text-[13px] text-muted-foreground">
+              {t('pager.size')}
+              <NativeSelect
+                className="h-9 w-auto"
+                value={size}
+                onChange={(event) => setSize(Number(event.target.value))}
               >
-                {leads.isFetchingNextPage ? (
-                  <>
-                    <LoaderCircle className="animate-spin motion-reduce:animate-none" aria-hidden />
-                    {t('loadingMore')}
-                  </>
-                ) : (
-                  t('loadMore')
-                )}
-              </Button>
-            ) : null}
-          </div>
+                {[25, 50, 100].map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </NativeSelect>
+            </label>
+          </nav>
         </>
       )}
     </div>

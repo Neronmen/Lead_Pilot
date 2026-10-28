@@ -12,7 +12,13 @@ import {
   type ReviewLeadRequest,
   type SetOutcomeRequest,
 } from '@leadpilot/shared';
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { useAuthClient } from '@/lib/auth/auth-provider';
 
 export interface LeadFilters {
@@ -34,6 +40,7 @@ export function leadsQuery(
   filters: LeadFilters,
   cursor?: string,
   order: 'newest' | 'oldest' = 'newest',
+  limit?: number,
 ): string {
   const params = new URLSearchParams();
   if (filters.q.trim()) params.set('q', filters.q.trim());
@@ -43,6 +50,7 @@ export function leadsQuery(
   if (filters.freeMail) params.set('freeMail', filters.freeMail);
   if (order === 'oldest') params.set('order', 'oldest');
   if (cursor) params.set('cursor', cursor);
+  if (limit) params.set('limit', String(limit));
   const text = params.toString();
   return text ? `?${text}` : '';
 }
@@ -56,6 +64,22 @@ export function useLeads(filters: LeadFilters, order: 'newest' | 'oldest' = 'new
     queryFn: ({ pageParam }) =>
       client.request(`/leads${leadsQuery(filters, pageParam, order)}`, { schema: leadListSchema }),
     getNextPageParam: (last) => last.nextCursor ?? undefined,
+  });
+}
+
+/**
+ * One page of leads (the Leads list shows 25, 50 or 100 at a time with Previous / Next, so the page
+ * never grows without end). The previous page stays on screen while the next one loads.
+ */
+export function useLeadsPage(filters: LeadFilters, cursor: string | undefined, limit: number) {
+  const client = useAuthClient();
+  return useQuery<LeadList>({
+    queryKey: ['leads', 'page', filters, cursor ?? '', limit],
+    queryFn: () =>
+      client.request(`/leads${leadsQuery(filters, cursor, 'newest', limit)}`, {
+        schema: leadListSchema,
+      }),
+    placeholderData: keepPreviousData,
   });
 }
 

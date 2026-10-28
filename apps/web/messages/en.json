@@ -348,7 +348,14 @@
     "unknownLead": "an earlier lead",
     "tier": "Rating",
     "allTiers": "All ratings",
-    "colRating": "Rating"
+    "colRating": "Rating",
+    "pager": {
+      "label": "Pages of leads",
+      "range": "Showing {from}–{to}",
+      "prev": "Previous",
+      "next": "Next",
+      "size": "Per page"
+    }
   },
   "settingsTeam": {
     "title": "Team",
@@ -756,7 +763,9 @@
       "badHelp": "A bad lead is not a real lead (spam, wrong person). It becomes Junk and the AI is checked against it.",
       "saved": "Saved.",
       "failed": "Couldn’t save. Nothing was changed."
-    }
+    },
+    "activityMore": "Show {count} older entries",
+    "activityLess": "Show fewer"
   },
   "review": {
     "title": "Review queue",
@@ -1039,7 +1048,9 @@
       "FAILED": "Failed, will retry",
       "DEAD": "Failed"
     },
-    "retryFailed": "Couldn’t retry. Try again in a moment."
+    "retryFailed": "Couldn’t retry. Try again in a moment.",
+    "more": "Show {count} more",
+    "less": "Show fewer"
   },
   "overview": {
     "title": "Overview",

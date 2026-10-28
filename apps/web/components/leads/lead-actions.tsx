@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useActionRuns, useRetryAction } from '@/lib/routing/use-routing';
 
+const SHOWN = 5;
+
 /** The action types the API can record (the others do not exist yet). */
 const kind = (run: ActionRun) => run.type as 'assign';
 
@@ -24,6 +26,7 @@ export function LeadActions({ leadId }: { leadId: string }) {
   const runs = useActionRuns(leadId, true);
   const retry = useRetryAction(leadId);
   const [retryFailed, setRetryFailed] = useState(false);
+  const [all, setAll] = useState(false);
 
   async function onRetry(id: string) {
     setRetryFailed(false);
@@ -52,7 +55,7 @@ export function LeadActions({ leadId }: { leadId: string }) {
         <p className="text-[13px] text-danger-text">{t('loadError')}</p>
       ) : (
         <ul className="flex flex-col gap-1.5">
-          {runs.data?.map((run: ActionRun) => (
+          {(all ? runs.data : runs.data?.slice(0, SHOWN))?.map((run: ActionRun) => (
             <li key={run.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
               <span className="min-w-0 flex-1">
                 {t(`type.${kind(run)}`)}
@@ -87,6 +90,11 @@ export function LeadActions({ leadId }: { leadId: string }) {
           ))}
         </ul>
       )}
+      {(runs.data?.length ?? 0) > SHOWN ? (
+        <Button size="sm" variant="ghost" onClick={() => setAll((v) => !v)}>
+          {all ? t('less') : t('more', { count: (runs.data?.length ?? 0) - SHOWN })}
+        </Button>
+      ) : null}
     </section>
   );
 }

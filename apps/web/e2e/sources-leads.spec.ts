@@ -281,7 +281,9 @@ test.describe('Leads list', () => {
     await context.close();
   });
 
-  test('"Show more" loads the next page', async ({ browser }) => {
+  test('shows 25 at a time with Previous / Next and a page size, so the list never grows without end', async ({
+    browser,
+  }) => {
     const { context, api, page } = await open(browser);
     const base = api.leads[0]!;
     api.leads = Array.from({ length: 30 }, (_, i): MockLead => ({
@@ -292,9 +294,18 @@ test.describe('Leads list', () => {
     }));
     await page.goto(`${APP}/leads`);
     await expect(page.getByRole('row')).toHaveCount(26); // header + 25
-    await page.getByRole('button', { name: t.loadMore }).click();
+    await expect(page.getByText('Showing 1–25')).toBeVisible();
+    await expect(page.getByRole('button', { name: t.pager.prev })).toBeDisabled();
+    await page.getByRole('button', { name: t.pager.next }).click();
+    await expect(page.getByText('Showing 26–30')).toBeVisible();
+    await expect(page.getByRole('row')).toHaveCount(6); // header + 5
+    await expect(page.getByRole('button', { name: t.pager.next })).toBeDisabled();
+    await page.getByRole('button', { name: t.pager.prev }).click();
+    await expect(page.getByText('Showing 1–25')).toBeVisible();
+    // A bigger page shows everything at once and goes back to page 1.
+    await page.getByLabel(t.pager.size).selectOption('50');
     await expect(page.getByRole('row')).toHaveCount(31);
-    await expect(page.getByRole('button', { name: t.loadMore })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: t.pager.next })).toBeDisabled();
     await context.close();
   });
 

@@ -322,11 +322,16 @@ function Disagree({ lead }: { lead: LeadDetail }) {
   );
 }
 
+const ACTIVITY_SHOWN = 8;
+
 function Activity({ events }: { events: LeadEvent[] }) {
   const t = useTranslations('leadDetail');
   const format = useFormatter();
   const now = useNow({ updateInterval: 60_000 });
   const line = useEventLine();
+  // A busy lead can have hundreds of entries: the newest few first, the rest one click away.
+  const [all, setAll] = useState(false);
+  const shown = all ? events : events.slice(0, ACTIVITY_SHOWN);
   return (
     <section
       aria-labelledby="activity"
@@ -339,7 +344,7 @@ function Activity({ events }: { events: LeadEvent[] }) {
         <p className="mt-2 text-[13px] text-muted-foreground">{t('noActivity')}</p>
       ) : (
         <ol className="mt-2 flex flex-col divide-y divide-border text-[13px]">
-          {events.map((event) => (
+          {shown.map((event) => (
             <li key={event.id} className="flex flex-wrap items-baseline justify-between gap-2 py-2">
               <span>{line(event)}</span>
               <time
@@ -353,6 +358,11 @@ function Activity({ events }: { events: LeadEvent[] }) {
           ))}
         </ol>
       )}
+      {events.length > ACTIVITY_SHOWN ? (
+        <Button variant="ghost" size="sm" className="mt-1" onClick={() => setAll((v) => !v)}>
+          {all ? t('activityLess') : t('activityMore', { count: events.length - ACTIVITY_SHOWN })}
+        </Button>
+      ) : null}
     </section>
   );
 }
