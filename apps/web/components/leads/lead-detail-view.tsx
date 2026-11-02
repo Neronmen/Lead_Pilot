@@ -135,20 +135,6 @@ function Detail({ lead }: { lead: LeadDetail }) {
       <OutcomeCard lead={lead} />
       {canManage(me.role) ? <LeadActions leadId={lead.id} /> : null}
       <Activity events={lead.events} />
-
-      {canManage(me.role) && score ? (
-        <details className="rounded-xl border border-border bg-card px-[18px] py-3 text-[13px]">
-          <summary className="cursor-pointer font-medium">{t('technical')}</summary>
-          <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-muted-foreground">
-            <dt>{t('provider')}</dt>
-            <dd>{score.provider}</dd>
-            <dt>{t('model')}</dt>
-            <dd>{score.model}</dd>
-            <dt>{t('cost')}</dt>
-            <dd className="tabular-nums">{`$${score.costUsd.toFixed(4)}`}</dd>
-          </dl>
-        </details>
-      ) : null}
     </div>
   );
 }

@@ -150,22 +150,27 @@ export class LeadsService {
       latestScore: score
         ? {
             id: score.id,
-            provider: score.provider,
-            model: score.model,
             ratedWithoutAi: score.isFallback,
             reasons: Array.isArray(output.reasons) ? output.reasons.map(String) : [],
             suggestedReply:
               typeof output.suggestedReply === 'string' ? output.suggestedReply : null,
-            costUsd: Number(score.costUsd),
             createdAt: score.createdAt.toISOString(),
           }
         : null,
       events: events.map((event) => ({
         id: event.id,
         type: event.type,
-        payload: (event.payload ?? {}) as Record<string, unknown>,
+        payload: publicPayload(event.payload),
         createdAt: event.createdAt.toISOString(),
       })),
     };
   }
+}
+
+/** Event fields that name the AI vendor, model or cost: kept in the database, never sent out. */
+const INTERNAL_PAYLOAD_KEYS = new Set(['provider', 'model', 'costUsd']);
+
+function publicPayload(payload: unknown): Record<string, unknown> {
+  const entries = Object.entries((payload ?? {}) as Record<string, unknown>);
+  return Object.fromEntries(entries.filter(([key]) => !INTERNAL_PAYLOAD_KEYS.has(key)));
 }

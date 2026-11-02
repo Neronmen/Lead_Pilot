@@ -193,7 +193,7 @@ describe('Leads list (e2e)', () => {
         id: l.id,
         domain: 'acme.com',
         status: expect.stringMatching(/SCORED|NEEDS_REVIEW/),
-        latestScore: { provider: 'mock', ratedWithoutAi: false, reasons: expect.any(Array) },
+        latestScore: { ratedWithoutAi: false, reasons: expect.any(Array) },
         companyInfo: { status: 'ok' },
       });
       expect(detail.body.latestScore.reasons.length).toBeGreaterThan(0);
@@ -205,6 +205,27 @@ describe('Leads list (e2e)', () => {
         tier: expect.any(String),
         score: expect.any(Number),
       });
+    });
+
+    it('never says which AI vendor or model rated the lead, or what it cost (old events too)', async () => {
+      const t = await setup();
+      const l = await scored(t);
+      await prisma.leadEvent.create({
+        data: {
+          workspaceId: t.workspaceId,
+          leadId: l.id,
+          type: 'scored',
+          payload: { tier: 'hot', provider: 'anthropic', model: 'claude-x', costUsd: 0.01 },
+        },
+      });
+      const detail = await request(app.getHttpServer())
+        .get(`/leads/${l.id}`)
+        .set('authorization', `Bearer ${t.owner.accessToken}`)
+        .expect(200);
+      const body = JSON.stringify(detail.body);
+      for (const leak of ['provider', '"model"', 'costUsd', 'anthropic', 'claude-x', 'mock-1']) {
+        expect(body).not.toContain(leak);
+      }
     });
 
     it('a lead of another workspace is a 404 on the page and on review, and nothing changes', async () => {

@@ -726,10 +726,6 @@
       "reviewedOverride": "A team member changed the rating to {tier}",
       "other": "Update"
     },
-    "technical": "Technical details",
-    "provider": "Rated by",
-    "model": "Model",
-    "cost": "Cost",
     "loadTitle": "Couldn’t load this lead",
     "loadBody": "Check your connection and try again.",
     "retry": "Try again",
