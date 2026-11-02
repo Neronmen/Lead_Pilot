@@ -49,6 +49,9 @@ safe to repeat.
 - `TRUST_PROXY=1` (already set): Caddy is one proxy in front of the API, so each visitor is rate limited on
   their own address.
 - `API_DOCS=off`: the Swagger page is not public.
+- `SIGNUPS=open|closed`: `closed` stops new workspaces (invites still work). Close it if you only want hand-picked customers, or to stop abuse.
+- `AI_DAILY_RATINGS_PER_WORKSPACE` / `AI_DAILY_RATINGS_GLOBAL`: fair use of the AI per 24 hours. One busy customer cannot use up the free AI, and the whole system stays under the AI service's own daily limit. Past a limit, leads are rated by simple rules and wait in the Review queue. Customers are never told which AI is used. When you move to a paid model, raise or set these to `0`.
+- `NEXT_PUBLIC_CONTACT_EMAIL`: the address shown on the Privacy Policy and Terms pages (`/privacy`, `/terms`). They are a plain template: have them read by someone who knows your local rules before you take money.
 - `NEXT_PUBLIC_DEMO_LOGIN=off`: no demo button. Do not run `pnpm --filter api seed` on a real server.
 
 ## What a customer does (the first ten minutes)

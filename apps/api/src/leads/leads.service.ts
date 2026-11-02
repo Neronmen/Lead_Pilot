@@ -11,6 +11,25 @@ import { EnrichmentService } from '../enrichment/enrichment.service';
 import type { Prisma } from '../generated/prisma/client';
 import { TenantPrisma } from '../prisma/tenant-prisma.service';
 
+/**
+ * Which AI rated a lead (and what it cost) is ours to know, not the customer's: older timeline entries
+ * still carry it in their stored payload, so it is dropped on the way out.
+ */
+function withoutVendor(payload: Record<string, unknown>): Record<string, unknown> {
+  const { provider: _provider, model: _model, costUsd: _cost, ...rest } = payload;
+  return rest;
+}
+
+/** A cell that a spreadsheet would run as a formula (=, +, -, @) is shown as text: CSV injection. */
+function csvCell(value: unknown): string {
+  let text = value === null || value === undefined ? '' : String(value);
+  if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
+/** The most leads one export holds. */
+const EXPORT_LIMIT = 10_000;
+
 /** The newest events shown on a lead's timeline. */
 const TIMELINE_LIMIT = 200;
 
@@ -105,6 +124,56 @@ export class LeadsService {
     };
   }
 
+  /** Every lead of the workspace (newest first, at most EXPORT_LIMIT) as CSV text. */
+  async exportCsv(workspaceId: string): Promise<string> {
+    const db = this.tenant.for(workspaceId);
+    const rows = await db.lead.findMany({
+      orderBy: { id: 'desc' },
+      take: EXPORT_LIMIT,
+      include: { source: { select: { name: true } } },
+    });
+    const head = [
+      'created_at',
+      'first_name',
+      'last_name',
+      'email',
+      'phone',
+      'company',
+      'country',
+      'source',
+      'status',
+      'tier',
+      'score',
+      'outcome',
+      'tags',
+      'message',
+    ];
+    const lines = [head.join(',')];
+    for (const r of rows) {
+      lines.push(
+        [
+          r.createdAt.toISOString(),
+          r.firstName,
+          r.lastName,
+          r.email,
+          r.phone,
+          r.company,
+          r.country,
+          r.source.name,
+          r.status,
+          r.tier,
+          r.score,
+          r.outcome,
+          r.tags.join(';'),
+          r.message,
+        ]
+          .map(csvCell)
+          .join(','),
+      );
+    }
+    return lines.join('\r\n') + '\r\n';
+  }
+
   /** One lead with its timeline and the AI's latest answer. Another workspace's lead is a 404. */
   async detail(workspaceId: string, id: string): Promise<LeadDetail> {
     const db = this.tenant.for(workspaceId);
@@ -150,20 +219,17 @@ export class LeadsService {
       latestScore: score
         ? {
             id: score.id,
-            provider: score.provider,
-            model: score.model,
             ratedWithoutAi: score.isFallback,
             reasons: Array.isArray(output.reasons) ? output.reasons.map(String) : [],
             suggestedReply:
               typeof output.suggestedReply === 'string' ? output.suggestedReply : null,
-            costUsd: Number(score.costUsd),
             createdAt: score.createdAt.toISOString(),
           }
         : null,
       events: events.map((event) => ({
         id: event.id,
         type: event.type,
-        payload: (event.payload ?? {}) as Record<string, unknown>,
+        payload: withoutVendor((event.payload ?? {}) as Record<string, unknown>),
         createdAt: event.createdAt.toISOString(),
       })),
     };

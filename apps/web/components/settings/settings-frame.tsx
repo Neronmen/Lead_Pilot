@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 // Only the Settings pages that exist. The rest of the design's list (Get
 // started, General, Lead sources...) joins in the milestone that builds each.
 const SECTIONS = [
+  { id: 'general', href: '/settings/general' },
   { id: 'sources', href: '/settings/sources' },
   { id: 'routing', href: '/settings/routing' },
   { id: 'integrations', href: '/settings/integrations' },

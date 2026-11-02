@@ -80,6 +80,8 @@ export interface RequestOptions<T> {
   schema?: ZodType<T>;
   /** Skip the Authorization header and the 401 retry (login, signup...). */
   anonymous?: boolean;
+  /** Return the answer as a file (a CSV export) instead of JSON. */
+  asBlob?: boolean;
 }
 
 export function createAuthClient(deps: AuthClientDeps) {
@@ -256,6 +258,7 @@ export function createAuthClient(deps: AuthClientDeps) {
       res = await send();
     }
     if (!res.ok) throw await toApiError(res);
+    if (options.asBlob) return (await res.blob()) as T;
     if (res.status === 204 || !options.schema) return undefined as T;
     const parsed = options.schema.safeParse(await res.json().catch(() => null));
     if (!parsed.success)
@@ -293,6 +296,11 @@ export function createAuthClient(deps: AuthClientDeps) {
     login: (body: unknown) => startSession('/auth/login', body),
     signup: (body: unknown) => startSession('/auth/signup', body),
     acceptInvite: (body: unknown) => startSession('/auth/invites/accept', body),
+    /** Signed in: the old password is checked, every other session ends, this one gets a new token. */
+    async changePassword(body: unknown): Promise<void> {
+      const session = await request('/auth/change-password', { body, schema: authSessionSchema });
+      storeToken(session, true);
+    },
     logout,
     getState: () => state,
     subscribe(listener: () => void) {

@@ -40,9 +40,15 @@ const DYNAMIC: Record<string, string[]> = {
   'shell.roles.${me.role}': ROLES.map((r) => `shell.roles.${r}`),
   'shell.nav.${id}': ['overview', 'leads', 'review', 'settings'].map((id) => `shell.nav.${id}`),
 
-  'settings.nav.${id}': ['sources', 'routing', 'integrations', 'ideal', 'history', 'advanced'].map(
-    (id) => `settings.nav.${id}`,
-  ),
+  'settings.nav.${id}': [
+    'general',
+    'sources',
+    'routing',
+    'integrations',
+    'ideal',
+    'history',
+    'advanced',
+  ].map((id) => `settings.nav.${id}`),
   'routing.field.${c.field}': [
     'score',
     'tier',
@@ -356,6 +362,7 @@ describe('message keys used by the app shell exist in EN and VI', () => {
     expect(ids.sort()).toEqual(['leads', 'overview', 'review', 'settings']);
     const settings = readFileSync(join(root, 'components/settings/settings-frame.tsx'), 'utf8');
     expect([...settings.matchAll(/id: '(\w+)',\s*href/g)].map((m) => m[1])).toEqual([
+      'general',
       'sources',
       'routing',
       'integrations',

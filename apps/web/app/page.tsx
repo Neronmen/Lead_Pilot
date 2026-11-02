@@ -131,8 +131,14 @@ export default async function HomePage() {
         </section>
       </main>
 
-      <footer className="mx-auto w-full max-w-5xl px-4 pb-10 text-xs text-muted-foreground">
-        {t('footer')}
+      <footer className="mx-auto flex w-full max-w-5xl flex-wrap gap-x-4 gap-y-1 px-4 pb-10 text-xs text-muted-foreground">
+        <span>{t('footer')}</span>
+        <Link href="/privacy" className="underline underline-offset-2">
+          {t('legalPrivacy')}
+        </Link>
+        <Link href="/terms" className="underline underline-offset-2">
+          {t('legalTerms')}
+        </Link>
       </footer>
     </div>
   );

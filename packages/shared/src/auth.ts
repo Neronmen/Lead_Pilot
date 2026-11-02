@@ -52,6 +52,13 @@ export const loginRequestSchema = z.strictObject({
  * Returned by signup, login, refresh and accept invite. The refresh token is
  * never in the body: it travels in an httpOnly cookie.
  */
+/** `POST /auth/change-password` (signed in): proves the old password, sets a new one, ends every other session. */
+export const changePasswordRequestSchema = z.strictObject({
+  currentPassword: passwordSchema,
+  newPassword: newPasswordSchema,
+});
+export type ChangePasswordRequest = z.infer<typeof changePasswordRequestSchema>;
+
 /** `POST /auth/forgot-password`: the answer is the same whether or not the address has an account. */
 export const forgotPasswordRequestSchema = z.strictObject({ email: emailSchema });
 

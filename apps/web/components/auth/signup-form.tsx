@@ -304,7 +304,20 @@ export function SignupForm({ next, loginHref }: { next: string | null; loginHref
           t('submit')
         )}
       </Button>
-      <p className="text-xs leading-4 text-muted-foreground">{t('agree')}</p>
+      <p className="text-xs leading-4 text-muted-foreground">
+        {t.rich('agree', {
+          terms: (chunks) => (
+            <Link href="/terms" className="underline underline-offset-2">
+              {chunks}
+            </Link>
+          ),
+          privacy: (chunks) => (
+            <Link href="/privacy" className="underline underline-offset-2">
+              {chunks}
+            </Link>
+          ),
+        })}
+      </p>
       <p className="text-center text-sm text-muted-foreground">
         {t('have')}{' '}
         <Link href={loginHref} className="text-accent-text underline underline-offset-4">

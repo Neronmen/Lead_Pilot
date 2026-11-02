@@ -26,6 +26,7 @@ export const AuditAction = {
   SourceHmacEnabled: 'source.hmac_enabled',
   SourceHmacDisabled: 'source.hmac_disabled',
   IdealCustomerUpdated: 'ideal_customer.updated',
+  WorkspaceUpdated: 'workspace.updated',
   RuleCreated: 'rule.created',
   RuleUpdated: 'rule.updated',
   RuleDeleted: 'rule.deleted',

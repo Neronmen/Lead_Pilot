@@ -106,7 +106,8 @@ test.describe('Lead detail', () => {
       /Looked up acme\.com/,
       /Received a submission/,
     ]);
-    await expect(page.getByText(t.technical)).toBeVisible(); // Owner sees technical details
+    // Nobody is told which AI rated the lead, or what it cost.
+    await expect(page.getByText(/gemini|mock-1|claude|openai|gpt/i)).toHaveCount(0);
     await context.close();
   });
 
@@ -168,7 +169,6 @@ test.describe('Lead detail', () => {
     const member = await open(browser, 'MEMBER');
     await member.page.goto(`${APP}/leads/${ANN}`);
     await expect(member.page.getByRole('heading', { name: 'Why it’s Hot' })).toBeVisible();
-    await expect(member.page.getByText(t.technical)).toHaveCount(0);
     await member.context.close();
 
     const broken = await open(browser);

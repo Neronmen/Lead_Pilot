@@ -8,3 +8,4 @@ export * from './leads.ts';
 export * from './scoring.ts';
 export * from './routing.ts';
 export * from './history.ts';
+export * from './workspace.ts';

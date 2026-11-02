@@ -352,6 +352,9 @@ export class MockApi {
         ];
   }
 
+  /** Settings > General can rename it. */
+  workspaceName = 'Northstar Growth';
+
   private me() {
     return {
       user: {
@@ -363,7 +366,7 @@ export class MockApi {
       },
       workspace: {
         id: '22222222-2222-4222-8222-222222222222',
-        name: 'Northstar Growth',
+        name: this.workspaceName,
         slug: 'northstar',
         defaultLocale: this.workspaceLocale,
         currency: 'USD',
@@ -518,8 +521,6 @@ export class MockApi {
           latestScore: lead.tier
             ? {
                 id: 'ffffffff-0000-4000-8000-000000000001',
-                provider: 'mock',
-                model: 'mock-1',
                 ratedWithoutAi: false,
                 reasons: [
                   'Uses a company email address.',
@@ -528,7 +529,6 @@ export class MockApi {
                 ],
                 suggestedReply:
                   'Hi, thanks for getting in touch. When is a good time for a short call?',
-                costUsd: 0.0021,
                 createdAt: at(30),
               }
             : null,
@@ -819,6 +819,32 @@ export class MockApi {
       if (this.refresh === 'expired')
         return json(401, { error: { code: 'AUTH_SESSION_EXPIRED', message: 'expired' } });
       return json(200, { accessToken: `token-${this.refreshCalls}`, expiresIn: 900 });
+    }
+    if (path === '/workspace' && request.method() === 'PATCH') {
+      const body = request.postDataJSON() as { name?: string };
+      if (body.name) this.workspaceName = body.name;
+      return json(200, this.me().workspace);
+    }
+    if (path === '/workspace' && request.method() === 'DELETE') {
+      const body = request.postDataJSON() as { confirm: string };
+      if (body.confirm !== this.workspaceName) {
+        return json(400, { error: { code: 'CONFIRMATION_MISMATCH', message: 'no' } });
+      }
+      return route.fulfill({ status: 204, headers: cors });
+    }
+    if (path === '/auth/change-password' && request.method() === 'POST') {
+      const body = request.postDataJSON() as { currentPassword: string };
+      if (body.currentPassword === 'wrong-password') {
+        return json(401, { error: { code: 'AUTH_INVALID_CREDENTIALS', message: 'no' } });
+      }
+      return json(200, { accessToken: `token-changed-${this.requests.length}`, expiresIn: 900 });
+    }
+    if (path === '/leads/export' && request.method() === 'GET') {
+      return route.fulfill({
+        status: 200,
+        headers: { ...cors, 'content-type': 'text/csv; charset=utf-8' },
+        body: 'created_at,email\n2026-11-03T00:00:00.000Z,ann@acme-test.com\n',
+      });
     }
     if (path === '/auth/me' && request.method() === 'GET') return json(200, this.me());
     if (path === '/auth/me' && request.method() === 'PATCH') {

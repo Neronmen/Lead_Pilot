@@ -9,7 +9,7 @@ import type { RedisWindowStore } from '../redis/redis-window.store';
 import type { Env } from '../config/env.schema';
 import { AccountService } from './account.service';
 import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
+import { AuthService, SignupGate } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { PasswordService } from './password.service';
 import { RolesGuard } from './roles.guard';
@@ -68,6 +68,7 @@ const JWT_AUDIENCE = 'leadpilot-api';
   controllers: [AuthController],
   providers: [
     AuthService,
+    SignupGate,
     AccountService,
     PasswordService,
     SessionService,

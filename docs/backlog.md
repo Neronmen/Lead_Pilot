@@ -91,6 +91,10 @@ Items raised in reviews that belong to a later milestone. Each milestone plan st
 
 ## Later (no milestone yet)
 
+- Billing and plans: nothing is charged yet. When the first customer pays, add plans, limits per plan and a payment provider; the fair-use limits (`AI_DAILY_RATINGS_*`) are the place to start.
+- Replace the free AI by a paid model when revenue allows: change `LLM_PROVIDER`/key only; the app never shows the vendor, model or cost to customers.
+- Self-service account deletion for a person (a workspace can be deleted by its Owner under Settings, General).
+
 - Ownership transfer: Owner hands the workspace to an Admin. Until then, nobody can grant, change or remove the OWNER role.
 - Password reset by email ("Forgot password?" on the Login design; the link is hidden in M1 because the feature does not exist, so users who forget a password cannot recover the account yet). Works in dev through Mailpit; production needs a free-tier email provider. **Required before any production use:** signup has no email verification, so someone can register `victim@example.com` first, and when the victim is invited they would have to know that account's password. Reset (or letting an invite link, which proves control of the mailbox, take over an account that never signed in) closes this.
 - Rate limit login per email as well as per IP (an attack spread over many IPs against one account), and consider an absolute session lifetime: each refresh renews the 14-day expiry, so an active session never ends on its own.

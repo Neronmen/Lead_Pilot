@@ -57,7 +57,8 @@
       "ideal": "Ideal customer",
       "routing": "Routing rules",
       "integrations": "Integrations",
-      "history": "Change history"
+      "history": "Change history",
+      "general": "General"
     }
   },
   "noAccess": {
@@ -130,7 +131,7 @@
       },
       "submit": "Create workspace",
       "submitting": "Creating workspace",
-      "agree": "By creating a workspace you agree to the Terms and Privacy Policy.",
+      "agree": "By creating a workspace you agree to the <terms>Terms</terms> and <privacy>Privacy Policy</privacy>.",
       "have": "Already have an account?",
       "signIn": "Sign in",
       "signInInstead": "Sign in instead",
@@ -276,7 +277,9 @@
     "RULE_ORDER_INVALID": "The rule order is out of date. Reload the page and try again.",
     "INTEGRATION_IN_USE": "Rules still use this integration. Remove it from them, or switch it off instead.",
     "URL_NOT_ALLOWED": "This address is not allowed. Use a public https address.",
-    "AUTH_TOKEN_INVALID": "This link is wrong, already used or expired. Ask for a new one."
+    "AUTH_TOKEN_INVALID": "This link is wrong, already used or expired. Ask for a new one.",
+    "SIGNUP_CLOSED": "New workspaces can’t be created right now. If you were invited, use the link in your invite email.",
+    "CONFIRMATION_MISMATCH": "The name you typed doesn’t match this workspace."
   },
   "validation": {
     "invalid_type": "This field is required.",
@@ -726,10 +729,6 @@
       "reviewedOverride": "A team member changed the rating to {tier}",
       "other": "Update"
     },
-    "technical": "Technical details",
-    "provider": "Rated by",
-    "model": "Model",
-    "cost": "Cost",
     "loadTitle": "Couldn’t load this lead",
     "loadBody": "Check your connection and try again.",
     "retry": "Try again",
@@ -1148,13 +1147,15 @@
       "t1": "Each company’s data is kept apart from every other company’s.",
       "t2": "Leads arrive over signed, checked requests; repeats never create duplicates.",
       "t3": "Tokens and secrets are stored encrypted and never shown again.",
-      "t4": "A spend limit keeps the AI cost under control, and the rules still rate leads without AI when it is reached."
+      "t4": "Fair-use limits keep ratings fast and predictable, and when a limit is reached leads are still rated by simple rules."
     },
     "cta": {
       "title": "Try it with your own leads",
       "body": "Create a workspace, connect a source and send a sample lead in a few minutes."
     },
-    "footer": "LeadPilot is a portfolio project. The demo uses made-up leads."
+    "footer": "LeadPilot. The demo uses made-up leads.",
+    "legalPrivacy": "Privacy Policy",
+    "legalTerms": "Terms of Service"
   },
   "publicForm": {
     "metaTitle": "Contact form",
@@ -1248,7 +1249,130 @@
       "rule_reordered": "{actor} changed the order of the rules.",
       "integration_connected": "{actor} connected “{name}”.",
       "integration_updated": "{actor} changed the integration “{name}”.",
-      "integration_deleted": "{actor} disconnected “{name}”."
+      "integration_deleted": "{actor} disconnected “{name}”.",
+      "workspace_updated": "{actor} changed the workspace settings."
+    }
+  },
+  "settingsGeneral": {
+    "title": "General",
+    "sub": "Your workspace, your password, a copy of your leads, and deleting the workspace."
+  },
+  "general": {
+    "workspace": {
+      "title": "Workspace",
+      "body": "The name your team sees, and the language, currency and time zone LeadPilot uses.",
+      "name": "Workspace name",
+      "language": "Workspace language",
+      "currency": "Currency",
+      "timezone": "Time zone",
+      "country": "Default country for phone numbers",
+      "noCountry": "Not set",
+      "languages": {
+        "en": "English",
+        "vi": "Tiếng Việt"
+      },
+      "currencies": {
+        "USD": "USD, US dollar",
+        "VND": "VND, Vietnamese đồng"
+      },
+      "languageHint": "The workspace language is used for the reasons written about each lead and for emails to your team.",
+      "save": "Save changes",
+      "saving": "Saving…",
+      "saved": "Saved.",
+      "failed": "Couldn’t save. Check your connection and try again."
+    },
+    "password": {
+      "title": "Your password",
+      "body": "Changing it signs you out everywhere else.",
+      "current": "Current password",
+      "new": "New password",
+      "newHint": "12 characters or more.",
+      "save": "Change password",
+      "saving": "Changing…",
+      "saved": "Password changed. Other devices were signed out.",
+      "currentMissing": "Enter your current password.",
+      "tooShort": "The new password needs 12 characters or more.",
+      "wrongCurrent": "The current password is not right.",
+      "failed": "Couldn’t change the password. Try again."
+    },
+    "export": {
+      "title": "Export your leads",
+      "body": "Download every lead as a CSV file that opens in Excel or Google Sheets (the newest 10,000).",
+      "button": "Download CSV",
+      "failed": "Couldn’t download the file. Try again."
+    },
+    "delete": {
+      "title": "Delete this workspace",
+      "body": "This removes the workspace and all of its leads, sources, rules and connections for good. It can’t be undone. Download your leads first if you need them.",
+      "open": "Delete workspace…",
+      "confirmLabel": "Type “{name}” to confirm",
+      "confirm": "Delete everything",
+      "deleting": "Deleting…",
+      "cancel": "Cancel",
+      "failed": "Couldn’t delete the workspace. Try again."
+    }
+  },
+  "legal": {
+    "brand": "LeadPilot",
+    "updated": "Last updated: November 3, 2026",
+    "contact": "Questions about this page? Write to",
+    "navLabel": "Legal pages",
+    "home": "Back to the home page",
+    "privacy": {
+      "title": "Privacy Policy",
+      "intro": "LeadPilot receives leads from your forms and tools, rates them and hands the good ones to the tools you already use. This page says what we keep and why.",
+      "s1": {
+        "title": "What we keep",
+        "body": "Your account (name, work email, a securely scrambled password), your workspace settings, and the leads your sources send us: whatever the person typed, such as name, email, phone, company and message. We also keep a short history of what happened to each lead and who changed which setting."
+      },
+      "s2": {
+        "title": "How we use it",
+        "body": "Only to run the service for you: to rate your leads, show them to your team, hand them over to the tools you connect, send you account emails (invites, password resets, alerts you asked for) and keep the service safe. We do not sell your data and we do not use it for advertising."
+      },
+      "s3": {
+        "title": "Other companies that help us",
+        "body": "To run LeadPilot we rely on outside providers, such as hosting, email delivery and an AI service that reads a lead to rate it. They receive only what they need to do that job and may only use it for us. The tools you connect (for example Slack, Telegram or a webhook address) receive the leads you tell us to send them."
+      },
+      "s4": {
+        "title": "How long we keep it",
+        "body": "For as long as your workspace exists. You can download your leads at any time from Settings, General, and an Owner can delete the whole workspace there. Deleting removes your leads, sources, rules and connections from our systems; copies in routine backups expire on their normal schedule."
+      },
+      "s5": {
+        "title": "Keeping it safe",
+        "body": "Connections are encrypted in transit. Secrets you give us, such as webhook addresses and tokens, are stored encrypted, and your workspace’s data is kept apart from other workspaces’. No system is perfect, so tell us right away if you think something is wrong."
+      },
+      "s6": {
+        "title": "Your choices",
+        "body": "You can see, correct and export your data in the app, and ask us to delete your account or workspace. If the people who fill in your forms ask you to remove their details, you can delete their leads. You are responsible for having a lawful reason to collect the leads you send to LeadPilot."
+      }
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "intro": "These terms are the agreement between you and LeadPilot when you create a workspace or use one. By doing so you agree to them.",
+      "s1": {
+        "title": "The service",
+        "body": "LeadPilot receives leads, rates how well they fit you and hands them to the tools you connect. We may improve, change or pause parts of it. While the service is in early access, features and limits can change and it may be offered free of charge."
+      },
+      "s2": {
+        "title": "Your account",
+        "body": "Keep your password private and tell us if you think someone else has it. You are responsible for what happens in your workspace, including what the people you invite do. Give us accurate information when you sign up."
+      },
+      "s3": {
+        "title": "Your data",
+        "body": "Your leads and settings stay yours. You allow us to process them only to run the service for you, as described in the Privacy Policy. You promise you have the right to collect the leads you send us and to have them rated and handed on."
+      },
+      "s4": {
+        "title": "What you may not do",
+        "body": "Do not use LeadPilot to break the law, to send spam, to attack or overload the service, to try to reach another workspace’s data, or to send us data you have no right to hold."
+      },
+      "s5": {
+        "title": "Ratings are a guide",
+        "body": "Ratings and suggested replies are made by software and can be wrong. Use your own judgement before you act on one. To keep things fast and fair for everyone, fair-use limits apply, and when a limit is reached leads are still rated by simple rules."
+      },
+      "s6": {
+        "title": "Changes, ending and liability",
+        "body": "We may update these terms and will say so in the service when it matters. You can stop at any time and delete your workspace. We may suspend a workspace that breaks these terms. The service is provided as it is, without promises about uptime or results, and our liability is limited as far as the law allows."
+      }
     }
   }
 }

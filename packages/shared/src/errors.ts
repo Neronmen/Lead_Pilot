@@ -22,6 +22,10 @@ export const ErrorCode = {
   EMAIL_TAKEN: 'EMAIL_TAKEN',
   /** A password reset or verification link that is wrong, already used or expired. */
   AUTH_TOKEN_INVALID: 'AUTH_TOKEN_INVALID',
+  /** New workspaces cannot be created right now (SIGNUPS=closed). Invites still work. */
+  SIGNUP_CLOSED: 'SIGNUP_CLOSED',
+  /** The typed name does not match the workspace's name. */
+  CONFIRMATION_MISMATCH: 'CONFIRMATION_MISMATCH',
 
   // Team (M1).
   /** Unknown, expired, cancelled or already used: one code for all of them. */

@@ -6,6 +6,7 @@ import { EnrichmentService } from '../enrichment/enrichment.service';
 import { Prisma } from '../generated/prisma/client';
 import { TenantPrisma } from '../prisma/tenant-prisma.service';
 import type { ProcessLeadJob } from '../queue/pipeline.queue';
+import { AiQuota } from './ai-quota';
 import { costUsd, LLM_PROVIDER, type LlmProvider } from './llm.provider';
 import { buildUserMessage } from './prompt';
 import { PromptService } from './prompt.service';
@@ -41,6 +42,7 @@ export class ScoringService {
     private readonly prompts: PromptService,
     @Inject(LLM_PROVIDER) private readonly llm: LlmProvider,
     private readonly config: ConfigService<Env, true>,
+    private readonly quota: AiQuota,
   ) {}
 
   async scoreLead(job: ProcessLeadJob, now: Date = new Date()): Promise<void> {
@@ -68,6 +70,16 @@ export class ScoringService {
     const limit =
       workspace.aiMonthlyLimitUsd ?? (fallbackLimit > 0 ? new Prisma.Decimal(fallbackLimit) : null);
     if (limit !== null && (spent._sum.costUsd ?? new Prisma.Decimal(0)).gte(limit)) {
+      fallback = 'limit';
+    }
+
+    // Fair use: past today's allowance (this workspace's, or the whole system's) the rules rate it.
+    // The free built-in mock costs nothing and does not count.
+    if (
+      fallback === null &&
+      this.llm.name !== 'mock' &&
+      !(await this.quota.take(job.workspaceId))
+    ) {
       fallback = 'limit';
     }
 
@@ -293,7 +305,6 @@ export class ScoringService {
             tier,
             score: output.score,
             confidence: output.confidence,
-            provider: r.provider,
             ratedWithoutAi: r.fallback !== null,
             ...(r.fallback ? { reason: r.fallback } : {}),
             infoLevel: r.level,

@@ -11,6 +11,9 @@ import {
 } from '../src/scoring/llm.provider';
 import { PipelineService } from '../src/pipeline/pipeline.service';
 import { PipelineQueue } from '../src/queue/pipeline.queue';
+import { AiQuota } from '../src/scoring/ai-quota';
+import { FixedWindowLimiter } from '../src/ingest/rate-limiter';
+import { WINDOW_STORE } from '../src/redis/redis.tokens';
 import { ScoringService } from '../src/scoring/scoring.service';
 import { createTestApp } from './utils/create-test-app';
 import { INVITES_EMAIL_PREFIX, ownerOf } from './utils/invites';
@@ -204,6 +207,37 @@ describe('Scoring (e2e)', () => {
       (await prisma.leadEvent.findFirstOrThrow({ where: { leadId: next.id, type: 'scored' } }))
         .payload,
     ).toMatchObject({ ratedWithoutAi: true, reason: 'limit' });
+  });
+
+  it('fair use: past its daily allowance a workspace is rated by the rules, and another workspace is not affected', async () => {
+    const quota = app.get(AiQuota);
+    const before = { perWorkspace: quota.perWorkspace, global: quota.global };
+    Object.assign(quota, {
+      perWorkspace: new FixedWindowLimiter(1, app.get(WINDOW_STORE), `t-ws-${Date.now()}`, 60_000),
+      global: new FixedWindowLimiter(1000, app.get(WINDOW_STORE), `t-all-${Date.now()}`, 60_000),
+    });
+    try {
+      const a = await workspace();
+      const b = await workspace();
+      llm.asked = [];
+      const first = await lead(a);
+      const second = await lead(a);
+      const other = await lead(b);
+      await run(a.workspaceId, first.id);
+      await run(a.workspaceId, second.id);
+      await run(b.workspaceId, other.id);
+      // A: one real rating, then the rules. B has its own allowance.
+      expect(llm.asked).toHaveLength(2);
+      expect((await scores(first.id))[0]).toMatchObject({ isFallback: false });
+      expect((await scores(second.id))[0]).toMatchObject({ provider: 'rules', isFallback: true });
+      expect((await scores(other.id))[0]).toMatchObject({ isFallback: false });
+      expect(
+        (await prisma.leadEvent.findFirstOrThrow({ where: { leadId: second.id, type: 'scored' } }))
+          .payload,
+      ).toMatchObject({ ratedWithoutAi: true, reason: 'limit' });
+    } finally {
+      Object.assign(quota, before);
+    }
   });
 
   it('a provider that is down makes the step fail (so the queue retries); giving up rates by the rules', async () => {

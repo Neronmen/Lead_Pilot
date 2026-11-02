@@ -63,6 +63,9 @@ const values = {
   value: 'Hot',
   conditions: 'tier is Hot',
   actions: 'email the owner',
+  // Rich-text tags (the links in the sign-up note): a tag formats to its own text.
+  terms: (chunks: unknown) => String(chunks),
+  privacy: (chunks: unknown) => String(chunks),
 };
 
 describe.each([

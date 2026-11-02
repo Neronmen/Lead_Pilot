@@ -15,6 +15,8 @@ import { SkipThrottle, ThrottlerGuard } from '@nestjs/throttler';
 import {
   type AuthSession,
   authSessionSchema,
+  type ChangePasswordRequest,
+  changePasswordRequestSchema,
   type ForgotPasswordRequest,
   forgotPasswordRequestSchema,
   type ResetPasswordRequest,
@@ -125,6 +127,26 @@ export class AuthController {
   @ApiNoContentResponse({ description: 'Verified' })
   async verifyEmail(@ZodBody(verifyEmailRequestSchema) body: VerifyEmailRequest): Promise<void> {
     await this.account.verifyEmail(body.token);
+  }
+
+  @Post('change-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Change the password of the signed-in person',
+    description:
+      'The old password must be right. Every other session ends; this browser gets a new one.',
+  })
+  @ApiZodResponse(HttpStatus.OK, authSessionSchema, 'A fresh session; refresh cookie set')
+  async changePassword(
+    @CurrentAuth() auth: AuthContext,
+    @ZodBody(changePasswordRequestSchema) body: ChangePasswordRequest,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<AuthSession> {
+    return this.startSession(
+      res,
+      await this.auth.changePassword(auth.userId, auth.workspaceId, body),
+    );
   }
 
   @Post('resend-verification')

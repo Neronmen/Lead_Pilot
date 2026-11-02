@@ -6,6 +6,7 @@ import { PipelineModule } from '../pipeline/pipeline.module';
 import { PipelineService } from '../pipeline/pipeline.service';
 import { LLM_PROVIDER, type LlmProvider } from './llm.provider';
 import { chooseLlm, geminiWarning } from './llm.factory';
+import { AiQuota } from './ai-quota';
 import { PromptService } from './prompt.service';
 import { RubricController } from './rubric.controller';
 import { RubricService } from './rubric.service';
@@ -30,6 +31,7 @@ import { ScoringService } from './scoring.service';
     },
     RubricService,
     PromptService,
+    AiQuota,
     ScoringService,
   ],
   exports: [RubricService, ScoringService],

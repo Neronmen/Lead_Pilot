@@ -67,6 +67,7 @@ export const OWN = new Set([
   'GET /auth/me',
   'PATCH /auth/me',
   'POST /auth/resend-verification',
+  'POST /auth/change-password',
   'GET /leads',
   'GET /overview',
 ]);
@@ -81,6 +82,9 @@ export const WORKSPACE_COLLECTION = new Set([
   'POST /leads/rescore',
   'GET /routing/rules',
   'GET /history',
+  'PATCH /workspace',
+  'DELETE /workspace',
+  'GET /leads/export',
   'POST /routing/rules',
   'PUT /routing/rules/order',
   'POST /routing/test',

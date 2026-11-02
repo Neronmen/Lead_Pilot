@@ -26,6 +26,9 @@ const SAME_IN_BOTH = new Set([
   'publicForm.email',
   'auth.account.forgot.email',
   'landing.brand',
+  'legal.brand',
+  'general.workspace.languages.en',
+  'general.workspace.languages.vi',
   'landing.sample.name',
   // A pattern of placeholders and product names are the same in any language.
   'routing.cond',

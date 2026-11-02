@@ -70,6 +70,10 @@ describe('Tenant isolation matrix (e2e)', () => {
     if (route === 'POST /invites')
       return req.send({ emails: [inviteeAddress('matrix')], role: 'MEMBER' });
     if (route === 'PATCH /auth/me') return req.send({ locale: 'vi' });
+    if (route === 'POST /auth/change-password')
+      return req.send({ currentPassword: 'x', newPassword: 'a-new-long-password-1' });
+    if (route === 'PATCH /workspace') return req.send({ name: 'Matrix workspace' });
+    if (route === 'DELETE /workspace') return req.send({ confirm: 'Matrix workspace' });
     if (route === 'POST /sources') return req.send({ name: 'Matrix source', type: 'WEBHOOK' });
     if (route === 'POST /leads/rescore') return req.send({ scope: 'open' });
     if (route === 'PUT /icp-rubric')

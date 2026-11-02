@@ -12,6 +12,13 @@ export const invalidCredentials = () =>
     HttpStatus.UNAUTHORIZED,
   );
 
+export const signupClosed = () =>
+  new DomainError(
+    ErrorCode.SIGNUP_CLOSED,
+    'New workspaces cannot be created right now',
+    HttpStatus.FORBIDDEN,
+  );
+
 export const tokenInvalid = () =>
   new DomainError(
     ErrorCode.AUTH_TOKEN_INVALID,

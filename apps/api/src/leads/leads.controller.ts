@@ -7,7 +7,9 @@ import {
   ParseUUIDPipe,
   Post,
   Query,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { ApiBearerAuth, ApiNoContentResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   type LeadDetail,
@@ -31,6 +33,9 @@ import { ZodValidationPipe } from '../common/validation/zod-validation.pipe';
 import { LeadsService } from './leads.service';
 import { ReviewService } from './review.service';
 
+/** Makes Excel read the CSV as UTF-8. */
+const BOM = String.fromCharCode(0xfeff);
+
 /** The Leads list, a lead's page and the review of the AI's rating. Every member can use them. */
 @ApiTags('leads')
 @ApiBearerAuth()
@@ -49,6 +54,20 @@ export class LeadsController {
     @Query(new ZodValidationPipe(listLeadsQuerySchema)) query: ListLeadsQuery,
   ): Promise<LeadList> {
     return this.leads.list(auth.workspaceId, query);
+  }
+
+  /** Before ":id" routes, so "export" is never read as an id. */
+  @Get('export')
+  @MinRole('ADMIN')
+  @ApiOperation({ summary: 'All leads as a CSV file (Owner and Admin, newest 10,000)' })
+  async export(@CurrentAuth() auth: AuthContext, @Res() res: Response): Promise<void> {
+    const csv = await this.leads.exportCsv(auth.workspaceId);
+    res
+      .status(HttpStatus.OK)
+      .type('text/csv; charset=utf-8')
+      .set('Content-Disposition', 'attachment; filename="leads.csv"')
+      .set('Cache-Control', 'no-store')
+      .send(BOM + csv);
   }
 
   /** Before ":id" routes, so "rescore" is never read as an id. */

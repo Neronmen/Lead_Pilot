@@ -57,7 +57,8 @@
       "ideal": "Khách hàng lý tưởng",
       "routing": "Quy tắc phân bổ",
       "integrations": "Tích hợp",
-      "history": "Lịch sử thay đổi"
+      "history": "Lịch sử thay đổi",
+      "general": "Chung"
     }
   },
   "noAccess": {
@@ -130,7 +131,7 @@
       },
       "submit": "Tạo không gian làm việc",
       "submitting": "Đang tạo không gian làm việc",
-      "agree": "Khi tạo không gian làm việc, bạn đồng ý với Điều khoản và Chính sách riêng tư.",
+      "agree": "Khi tạo không gian làm việc, bạn đồng ý với <terms>Điều khoản</terms> và <privacy>Chính sách quyền riêng tư</privacy>.",
       "have": "Đã có tài khoản?",
       "signIn": "Đăng nhập",
       "signInInstead": "Đăng nhập",
@@ -276,7 +277,9 @@
     "RULE_ORDER_INVALID": "Thứ tự quy tắc đã cũ. Hãy tải lại trang và thử lại.",
     "INTEGRATION_IN_USE": "Vẫn còn quy tắc đang dùng tích hợp này. Hãy gỡ nó khỏi các quy tắc, hoặc tắt tích hợp thay vì xóa.",
     "URL_NOT_ALLOWED": "Địa chỉ này không được phép. Hãy dùng địa chỉ https công khai.",
-    "AUTH_TOKEN_INVALID": "Đường dẫn này sai, đã được dùng hoặc đã hết hạn. Hãy yêu cầu đường dẫn mới."
+    "AUTH_TOKEN_INVALID": "Đường dẫn này sai, đã được dùng hoặc đã hết hạn. Hãy yêu cầu đường dẫn mới.",
+    "SIGNUP_CLOSED": "Hiện chưa thể tạo không gian làm việc mới. Nếu bạn được mời, hãy dùng liên kết trong email mời.",
+    "CONFIRMATION_MISMATCH": "Tên bạn nhập không khớp với không gian làm việc này."
   },
   "validation": {
     "invalid_type": "Ô này là bắt buộc.",
@@ -726,10 +729,6 @@
       "reviewedOverride": "Một thành viên đổi xếp hạng thành {tier}",
       "other": "Cập nhật"
     },
-    "technical": "Chi tiết kỹ thuật",
-    "provider": "Xếp hạng bởi",
-    "model": "Mô hình",
-    "cost": "Chi phí",
     "loadTitle": "Không tải được khách tiềm năng này",
     "loadBody": "Hãy kiểm tra kết nối và thử lại.",
     "retry": "Thử lại",
@@ -1148,13 +1147,15 @@
       "t1": "Dữ liệu của mỗi công ty được tách biệt hoàn toàn với công ty khác.",
       "t2": "Khách tiềm năng đến qua các yêu cầu có chữ ký, được kiểm tra; gửi lặp không tạo bản trùng.",
       "t3": "Token và bí mật được lưu mã hóa và không bao giờ hiện lại.",
-      "t4": "Hạn mức chi tiêu giữ chi phí AI trong tầm kiểm soát, và khi chạm hạn mức vẫn xếp hạng được bằng quy tắc không cần AI."
+      "t4": "Giới hạn sử dụng hợp lý giữ việc xếp hạng nhanh và ổn định, và khi chạm giới hạn khách tiềm năng vẫn được xếp hạng bằng quy tắc đơn giản."
     },
     "cta": {
       "title": "Thử với khách tiềm năng của chính bạn",
       "body": "Tạo không gian làm việc, kết nối một nguồn và gửi khách tiềm năng mẫu chỉ trong vài phút."
     },
-    "footer": "LeadPilot là dự án portfolio. Bản demo dùng khách tiềm năng giả."
+    "footer": "LeadPilot. Bản demo dùng khách tiềm năng giả.",
+    "legalPrivacy": "Chính sách quyền riêng tư",
+    "legalTerms": "Điều khoản dịch vụ"
   },
   "publicForm": {
     "metaTitle": "Biểu mẫu liên hệ",
@@ -1248,7 +1249,130 @@
       "rule_reordered": "{actor} đã đổi thứ tự các quy tắc.",
       "integration_connected": "{actor} đã kết nối “{name}”.",
       "integration_updated": "{actor} đã thay đổi tích hợp “{name}”.",
-      "integration_deleted": "{actor} đã ngắt kết nối “{name}”."
+      "integration_deleted": "{actor} đã ngắt kết nối “{name}”.",
+      "workspace_updated": "{actor} đã thay đổi cài đặt chung của không gian làm việc."
+    }
+  },
+  "settingsGeneral": {
+    "title": "Chung",
+    "sub": "Không gian làm việc, mật khẩu, bản sao danh sách khách tiềm năng và việc xoá không gian làm việc."
+  },
+  "general": {
+    "workspace": {
+      "title": "Không gian làm việc",
+      "body": "Tên mà nhóm của bạn thấy, cùng ngôn ngữ, tiền tệ và múi giờ LeadPilot dùng.",
+      "name": "Tên không gian làm việc",
+      "language": "Ngôn ngữ của không gian",
+      "currency": "Tiền tệ",
+      "timezone": "Múi giờ",
+      "country": "Quốc gia mặc định cho số điện thoại",
+      "noCountry": "Chưa đặt",
+      "languages": {
+        "en": "English",
+        "vi": "Tiếng Việt"
+      },
+      "currencies": {
+        "USD": "USD, đô la Mỹ",
+        "VND": "VND, đồng Việt Nam"
+      },
+      "languageHint": "Ngôn ngữ này dùng cho lý do viết về từng khách tiềm năng và cho email gửi đến nhóm của bạn.",
+      "save": "Lưu thay đổi",
+      "saving": "Đang lưu…",
+      "saved": "Đã lưu.",
+      "failed": "Không lưu được. Kiểm tra kết nối rồi thử lại."
+    },
+    "password": {
+      "title": "Mật khẩu của bạn",
+      "body": "Đổi mật khẩu sẽ đăng xuất bạn khỏi mọi thiết bị khác.",
+      "current": "Mật khẩu hiện tại",
+      "new": "Mật khẩu mới",
+      "newHint": "Từ 12 ký tự trở lên.",
+      "save": "Đổi mật khẩu",
+      "saving": "Đang đổi…",
+      "saved": "Đã đổi mật khẩu. Các thiết bị khác đã bị đăng xuất.",
+      "currentMissing": "Nhập mật khẩu hiện tại.",
+      "tooShort": "Mật khẩu mới cần từ 12 ký tự trở lên.",
+      "wrongCurrent": "Mật khẩu hiện tại chưa đúng.",
+      "failed": "Không đổi được mật khẩu. Hãy thử lại."
+    },
+    "export": {
+      "title": "Xuất danh sách khách tiềm năng",
+      "body": "Tải mọi khách tiềm năng về thành tệp CSV mở được bằng Excel hoặc Google Sheets (10.000 khách mới nhất).",
+      "button": "Tải tệp CSV",
+      "failed": "Không tải được tệp. Hãy thử lại."
+    },
+    "delete": {
+      "title": "Xoá không gian làm việc này",
+      "body": "Việc này xoá vĩnh viễn không gian làm việc cùng toàn bộ khách tiềm năng, nguồn, quy tắc và kết nối. Không thể hoàn tác. Hãy tải danh sách khách trước nếu bạn cần.",
+      "open": "Xoá không gian làm việc…",
+      "confirmLabel": "Gõ “{name}” để xác nhận",
+      "confirm": "Xoá tất cả",
+      "deleting": "Đang xoá…",
+      "cancel": "Huỷ",
+      "failed": "Không xoá được không gian làm việc. Hãy thử lại."
+    }
+  },
+  "legal": {
+    "brand": "LeadPilot",
+    "updated": "Cập nhật lần cuối: 3 tháng 11, 2026",
+    "contact": "Có câu hỏi về trang này? Hãy viết cho chúng tôi theo địa chỉ",
+    "navLabel": "Trang pháp lý",
+    "home": "Về trang chủ",
+    "privacy": {
+      "title": "Chính sách quyền riêng tư",
+      "intro": "LeadPilot nhận khách tiềm năng từ biểu mẫu và công cụ của bạn, chấm điểm rồi chuyển những khách tốt đến các công cụ bạn đang dùng. Trang này nói rõ chúng tôi lưu gì và vì sao.",
+      "s1": {
+        "title": "Chúng tôi lưu gì",
+        "body": "Tài khoản của bạn (tên, email công việc, mật khẩu đã được mã hoá an toàn), cài đặt không gian làm việc, và khách tiềm năng mà các nguồn gửi đến: những gì người đó đã nhập, như tên, email, điện thoại, công ty và lời nhắn. Chúng tôi cũng lưu lịch sử ngắn về những gì đã xảy ra với từng khách và ai đã đổi cài đặt nào."
+      },
+      "s2": {
+        "title": "Chúng tôi dùng để làm gì",
+        "body": "Chỉ để vận hành dịch vụ cho bạn: chấm điểm khách, hiển thị cho nhóm của bạn, chuyển đến các công cụ bạn kết nối, gửi email tài khoản (lời mời, đặt lại mật khẩu, cảnh báo bạn yêu cầu) và giữ dịch vụ an toàn. Chúng tôi không bán dữ liệu của bạn và không dùng nó để quảng cáo."
+      },
+      "s3": {
+        "title": "Các công ty khác hỗ trợ chúng tôi",
+        "body": "Để vận hành LeadPilot, chúng tôi dùng các nhà cung cấp bên ngoài, như lưu trữ, gửi email và một dịch vụ AI đọc thông tin khách để chấm điểm. Họ chỉ nhận phần cần thiết cho việc đó và chỉ được dùng cho chúng tôi. Các công cụ bạn kết nối (ví dụ Slack, Telegram hoặc một địa chỉ webhook) nhận những khách bạn bảo chúng tôi gửi đến."
+      },
+      "s4": {
+        "title": "Chúng tôi giữ bao lâu",
+        "body": "Chừng nào không gian làm việc của bạn còn tồn tại. Bạn có thể tải danh sách khách bất cứ lúc nào ở Cài đặt, Chung, và Chủ sở hữu có thể xoá toàn bộ không gian làm việc tại đó. Việc xoá gỡ khách, nguồn, quy tắc và kết nối khỏi hệ thống của chúng tôi; bản sao trong sao lưu định kỳ hết hạn theo lịch thông thường."
+      },
+      "s5": {
+        "title": "Giữ an toàn",
+        "body": "Kết nối được mã hoá khi truyền đi. Các bí mật bạn đưa cho chúng tôi, như địa chỉ webhook và token, được lưu dưới dạng mã hoá, và dữ liệu của không gian làm việc được tách biệt khỏi các không gian khác. Không hệ thống nào hoàn hảo, nên hãy báo ngay nếu bạn thấy điều gì không ổn."
+      },
+      "s6": {
+        "title": "Lựa chọn của bạn",
+        "body": "Bạn có thể xem, sửa và xuất dữ liệu ngay trong ứng dụng, và yêu cầu chúng tôi xoá tài khoản hoặc không gian làm việc. Nếu người điền biểu mẫu yêu cầu bạn xoá thông tin của họ, bạn có thể xoá khách đó. Bạn chịu trách nhiệm có cơ sở hợp pháp để thu thập các khách tiềm năng mà bạn gửi đến LeadPilot."
+      }
+    },
+    "terms": {
+      "title": "Điều khoản dịch vụ",
+      "intro": "Các điều khoản này là thoả thuận giữa bạn và LeadPilot khi bạn tạo hoặc sử dụng một không gian làm việc. Khi làm vậy, bạn đồng ý với chúng.",
+      "s1": {
+        "title": "Dịch vụ",
+        "body": "LeadPilot nhận khách tiềm năng, chấm điểm mức độ phù hợp với bạn và chuyển đến các công cụ bạn kết nối. Chúng tôi có thể cải tiến, thay đổi hoặc tạm dừng một phần dịch vụ. Trong giai đoạn truy cập sớm, tính năng và giới hạn có thể thay đổi và dịch vụ có thể được cung cấp miễn phí."
+      },
+      "s2": {
+        "title": "Tài khoản của bạn",
+        "body": "Hãy giữ kín mật khẩu và báo cho chúng tôi nếu bạn nghĩ người khác đã biết nó. Bạn chịu trách nhiệm về những gì xảy ra trong không gian làm việc của mình, kể cả hành động của người bạn mời. Hãy cung cấp thông tin chính xác khi đăng ký."
+      },
+      "s3": {
+        "title": "Dữ liệu của bạn",
+        "body": "Khách tiềm năng và cài đặt vẫn là của bạn. Bạn cho phép chúng tôi xử lý chúng chỉ để vận hành dịch vụ cho bạn, như mô tả trong Chính sách quyền riêng tư. Bạn cam kết có quyền thu thập các khách bạn gửi đến và để chúng được chấm điểm và chuyển tiếp."
+      },
+      "s4": {
+        "title": "Điều không được làm",
+        "body": "Không dùng LeadPilot để vi phạm pháp luật, gửi thư rác, tấn công hoặc làm quá tải dịch vụ, cố truy cập dữ liệu của không gian làm việc khác, hoặc gửi cho chúng tôi dữ liệu bạn không có quyền nắm giữ."
+      },
+      "s5": {
+        "title": "Điểm số chỉ để tham khảo",
+        "body": "Điểm số và gợi ý trả lời do phần mềm tạo ra và có thể sai. Hãy tự cân nhắc trước khi hành động. Để mọi người đều có trải nghiệm nhanh và công bằng, có áp dụng giới hạn sử dụng hợp lý, và khi chạm giới hạn, khách vẫn được chấm điểm bằng quy tắc đơn giản."
+      },
+      "s6": {
+        "title": "Thay đổi, chấm dứt và trách nhiệm",
+        "body": "Chúng tôi có thể cập nhật các điều khoản này và sẽ thông báo trong dịch vụ khi điều đó quan trọng. Bạn có thể dừng bất cứ lúc nào và xoá không gian làm việc. Chúng tôi có thể tạm ngưng không gian làm việc vi phạm điều khoản. Dịch vụ được cung cấp nguyên trạng, không cam kết về thời gian hoạt động hay kết quả, và trách nhiệm của chúng tôi bị giới hạn trong phạm vi pháp luật cho phép."
+      }
     }
   }
 }

@@ -55,4 +55,5 @@ export const KNOWN_ACTIONS = [
   'integration_connected',
   'integration_updated',
   'integration_deleted',
+  'workspace_updated',
 ] as const;

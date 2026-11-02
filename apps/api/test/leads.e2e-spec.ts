@@ -193,10 +193,14 @@ describe('Leads list (e2e)', () => {
         id: l.id,
         domain: 'acme.com',
         status: expect.stringMatching(/SCORED|NEEDS_REVIEW/),
-        latestScore: { provider: 'mock', ratedWithoutAi: false, reasons: expect.any(Array) },
+        latestScore: { ratedWithoutAi: false, reasons: expect.any(Array) },
         companyInfo: { status: 'ok' },
       });
       expect(detail.body.latestScore.reasons.length).toBeGreaterThan(0);
+      // Customers are never told which AI rated the lead, nor what it cost: not in the score, not in the timeline.
+      expect(JSON.stringify(detail.body)).not.toMatch(
+        /mock-1|"provider"|"model"|costUsd|anthropic|gemini|openai/i,
+      );
       const types = (detail.body.events as Array<{ type: string }>).map((e) => e.type);
       expect(types).toEqual(expect.arrayContaining(['ingested', 'enriched', 'scored']));
       expect(types.indexOf('ingested')).toBeLessThan(types.indexOf('enriched')); // newest first

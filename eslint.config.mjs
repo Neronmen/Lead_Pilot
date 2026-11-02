@@ -95,6 +95,8 @@ export default tseslint.config(
     //   lead data), which the scope cannot query.
     // - auth/account.service.ts: password reset and email verification tokens belong to the user (global),
     //   and work before any workspace is known, like the rest of auth.
+    // - workspaces/workspaces.service.ts: deleting a workspace removes the workspace row itself, which the
+    //   scoped client may not do (and the cascade takes the workspace's data with it).
     // - seed/run-seed.ts: a command-line script that removes the demo account's workspace and counts
     //   what it made. It talks to the API over HTTP for everything else.
     // - ingest/ingest-auth.service.ts: finds a source by its API key prefix
@@ -112,6 +114,7 @@ export default tseslint.config(
       'apps/api/src/scoring/prompt.service.ts',
       'apps/api/src/seed/run-seed.ts',
       'apps/api/src/auth/account.service.ts',
+      'apps/api/src/workspaces/workspaces.service.ts',
     ],
     rules: { 'no-restricted-imports': 'off', 'no-restricted-syntax': 'off' },
   },

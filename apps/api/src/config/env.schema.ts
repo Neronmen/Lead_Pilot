@@ -54,6 +54,8 @@ export const envSchema = z
     ACTIONS_MODE: z.enum(['mock', 'live']).default('mock'),
     // How many reverse proxies sit in front of the API (0: none). Needed so the rate limits see each
     // visitor's own address and not the proxy's. Never "true": a client could then spoof its address.
+    // "closed": nobody can create a new workspace (invites still work). For private launches and for stopping abuse.
+    SIGNUPS: z.enum(['open', 'closed']).default('open'),
     TRUST_PROXY: z.coerce.number().int().min(0).max(5).default(0),
     // Whether the API documentation (Swagger at /docs) is served. Switch it off for a public deployment.
     API_DOCS: z.enum(['on', 'off']).default('on'),
@@ -68,6 +70,10 @@ export const envSchema = z
     // being refused. 0 = no pacing.
     LLM_MAX_REQUESTS_PER_MINUTE: z.coerce.number().int().min(0).max(10_000).default(0),
     AI_DEFAULT_MONTHLY_LIMIT_USD: z.coerce.number().min(0).default(5),
+    // Fair use of the AI, per day: one workspace's share, and the whole system's (keep it under the AI
+    // service's own daily limit). Past either, leads are rated by simple rules. 0 = no limit.
+    AI_DAILY_RATINGS_PER_WORKSPACE: z.coerce.number().int().min(0).default(150),
+    AI_DAILY_RATINGS_GLOBAL: z.coerce.number().int().min(0).default(400),
     ANTHROPIC_API_KEY: z.string().trim().min(10).optional(),
     OPENAI_API_KEY: z.string().trim().min(10).optional(),
     GEMINI_API_KEY: z.string().trim().min(10).optional(),

@@ -1,12 +1,35 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
-import type { LoginRequest, MeResponse, SignupRequest, UpdateMeRequest } from '@leadpilot/shared';
+import { ConfigService } from '@nestjs/config';
+import type { Env } from '../config/env.schema';
+import type {
+  ChangePasswordRequest,
+  LoginRequest,
+  MeResponse,
+  SignupRequest,
+  UpdateMeRequest,
+} from '@leadpilot/shared';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { emailTaken, invalidCredentials, noWorkspace, sessionExpired } from './auth.errors';
+import {
+  emailTaken,
+  invalidCredentials,
+  noWorkspace,
+  sessionExpired,
+  signupClosed,
+} from './auth.errors';
 import { AccountService } from './account.service';
 import { PasswordService } from './password.service';
 import { type IssuedSession, isForeignKeyViolation, SessionService } from './session.service';
+
+/** Whether new workspaces can be created (SIGNUPS). A test can close it. */
+@Injectable()
+export class SignupGate {
+  open: boolean;
+  constructor(config: ConfigService<Env, true>) {
+    this.open = config.get('SIGNUPS', { infer: true }) === 'open';
+  }
+}
 
 /**
  * Accounts and sign-in. This module uses the raw PrismaService (ESLint
@@ -22,10 +45,12 @@ export class AuthService {
     private readonly passwords: PasswordService,
     private readonly sessions: SessionService,
     private readonly account: AccountService,
+    private readonly gate: SignupGate,
   ) {}
 
   /** Creates the user, the workspace and the OWNER membership in one transaction. */
   async signup(input: SignupRequest): Promise<IssuedSession> {
+    if (!this.gate.open) throw signupClosed();
     if (await this.emailExists(input.email)) throw emailTaken();
     const passwordHash = await this.passwords.hash(input.password);
 
@@ -104,6 +129,33 @@ export class AuthService {
     }
     await this.sessions.touchMembership(membership.workspaceId, user.id);
     return session;
+  }
+
+  /**
+   * Signed in and wants a new password: the old one must be right. Every refresh token of the account
+   * is revoked (a stolen session ends here) and the person gets a fresh session in this browser.
+   */
+  async changePassword(
+    userId: string,
+    workspaceId: string,
+    input: ChangePasswordRequest,
+  ): Promise<IssuedSession> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { passwordHash: true },
+    });
+    if (!(await this.passwords.verify(user?.passwordHash, input.currentPassword))) {
+      throw invalidCredentials();
+    }
+    const passwordHash = await this.passwords.hash(input.newPassword);
+    await this.prisma.$transaction([
+      this.prisma.user.update({ where: { id: userId }, data: { passwordHash } }),
+      this.prisma.refreshToken.updateMany({
+        where: { userId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      }),
+    ]);
+    return this.sessions.issue(this.prisma, userId, workspaceId);
   }
 
   async me(userId: string, workspaceId: string): Promise<MeResponse> {
