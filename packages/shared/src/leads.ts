@@ -69,17 +69,16 @@ export const leadListSchema = z.object({
   nextCursor: idSchema.nullable(),
 });
 
-/** The AI's latest answer about a lead, as the detail page shows it. */
+/**
+ * The AI's latest answer about a lead, as the detail page shows it. Which AI vendor and model
+ * rated it, and what it cost, stay internal (in the database): customers never see them.
+ */
 export const leadScoreSchema = z.object({
   id: idSchema,
-  /** "anthropic" | "openai" | "mock" | "rules". */
-  provider: z.string(),
-  model: z.string(),
   /** True when the rules rated it, not the AI (budget reached, or the AI's answer was unusable). */
   ratedWithoutAi: z.boolean(),
   reasons: z.array(z.string()),
   suggestedReply: z.string().nullable(),
-  costUsd: z.number(),
   createdAt: timestampSchema,
 });
 

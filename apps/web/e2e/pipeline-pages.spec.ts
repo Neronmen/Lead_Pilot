@@ -106,7 +106,7 @@ test.describe('Lead detail', () => {
       /Looked up acme\.com/,
       /Received a submission/,
     ]);
-    await expect(page.getByText(t.technical)).toBeVisible(); // Owner sees technical details
+    await expect(page.getByText(/mock-1|\$0\.0/)).toHaveCount(0); // no AI model or cost, even for the Owner
     await context.close();
   });
 
@@ -157,9 +157,7 @@ test.describe('Lead detail', () => {
     await context.close();
   });
 
-  test('a lead that is not found, a member (no technical details), and an error', async ({
-    browser,
-  }) => {
+  test('a lead that is not found, a member, and an error', async ({ browser }) => {
     const missing = await open(browser);
     await missing.page.goto(`${APP}/leads/00000000-0000-4000-8000-00000000dead`);
     await expect(missing.page.getByRole('heading', { name: t.notFoundTitle })).toBeVisible();
@@ -168,7 +166,6 @@ test.describe('Lead detail', () => {
     const member = await open(browser, 'MEMBER');
     await member.page.goto(`${APP}/leads/${ANN}`);
     await expect(member.page.getByRole('heading', { name: 'Why it’s Hot' })).toBeVisible();
-    await expect(member.page.getByText(t.technical)).toHaveCount(0);
     await member.context.close();
 
     const broken = await open(browser);

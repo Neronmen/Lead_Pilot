@@ -293,7 +293,6 @@ export class ScoringService {
             tier,
             score: output.score,
             confidence: output.confidence,
-            provider: r.provider,
             ratedWithoutAi: r.fallback !== null,
             ...(r.fallback ? { reason: r.fallback } : {}),
             infoLevel: r.level,

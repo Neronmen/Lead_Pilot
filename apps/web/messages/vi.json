@@ -726,10 +726,6 @@
       "reviewedOverride": "Một thành viên đổi xếp hạng thành {tier}",
       "other": "Cập nhật"
     },
-    "technical": "Chi tiết kỹ thuật",
-    "provider": "Xếp hạng bởi",
-    "model": "Mô hình",
-    "cost": "Chi phí",
     "loadTitle": "Không tải được khách tiềm năng này",
     "loadBody": "Hãy kiểm tra kết nối và thử lại.",
     "retry": "Thử lại",

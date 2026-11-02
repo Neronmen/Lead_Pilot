@@ -518,8 +518,6 @@ export class MockApi {
           latestScore: lead.tier
             ? {
                 id: 'ffffffff-0000-4000-8000-000000000001',
-                provider: 'mock',
-                model: 'mock-1',
                 ratedWithoutAi: false,
                 reasons: [
                   'Uses a company email address.',
@@ -528,7 +526,6 @@ export class MockApi {
                 ],
                 suggestedReply:
                   'Hi, thanks for getting in touch. When is a good time for a short call?',
-                costUsd: 0.0021,
                 createdAt: at(30),
               }
             : null,
