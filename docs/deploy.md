@@ -89,13 +89,12 @@ safe to repeat.
   demo and your own testing. For real customers use the provider's paid tier (billing on, data not used for
   training) or an Anthropic/OpenAI key, and keep `AI_DEFAULT_MONTHLY_LIMIT_USD` low. LeadPilot rates leads by
   simple rules, marked "Rated without AI", once a workspace reaches its monthly limit.
-- The cost of each rating is shown in the lead's technical details (Owner and Admin).
+- Customers never see which AI or model is used, nor its cost (that is on purpose). Costs are in the server logs and the usage numbers only you can read.
 
 ## Known limits
 
 - One API process runs the workers. To scale, run a second API container with `QUEUE_WORKERS=on` (jobs are safe
   to run twice) and keep the web container separate.
 - No billing or plans: access is by sign-up. Add payment (for example Stripe Checkout) before charging.
-- No single sign-on, no audit export, no data-deletion button: delete a workspace from the database on request.
-- Registration is open: anyone can create a workspace. Put the app behind an allow-list or add an invite-only
-  switch before a public launch if that matters.
+- No single sign-on. An Owner can export leads and delete the workspace under Settings > General.
+- Registration is open by default. Set `SIGNUPS=closed` for an invite-only launch.
